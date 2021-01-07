@@ -14,4 +14,4 @@ chmod -R 777 /var/lib/smart-home/grafana
 mkdir -p /opt/mosquitto/data/
 mkdir -p /var/log/mosquitto
 
-# TODO setup mosquitto passwd file
+# TODO setup mosquitto passwd file -
