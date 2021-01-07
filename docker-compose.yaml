@@ -11,14 +11,16 @@ services:
       - "8082:8082" # web server
       - "1880:1880" # node-red
     volumes:
-      - iobrokerdata:/opt/iobroker
+      # apparently the new volume management does not work as expected
+      #- iobrokerdata:/opt/iobroker
+      - /var/lib/smart-home/iobroker:/opt/iobroker
   # influx db
   influxdb:
     image: library/influxdb:1.8-alpine
     container_name: influxdb
     restart: unless-stopped
-    ports:
-      - "8086:8086"
+    #ports:
+    #  - "8086:8086"
     environment:
       - INFLUXDB_DB=influx
       - INFLUXDB_ADMIN_USER=admin
@@ -28,7 +30,8 @@ services:
       - INFLUXDB_WRITE_USER=iobroker
       - INFLUXDB_WRITE_USER_PASSWORD=${INFLUXDB_IOBROKER_PASSWORD}
     volumes:
-      - influxdb-storage:/var/lib/influxdb
+      #- influxdb-storage:/var/lib/influxdb
+      - /var/lib/smart-home/influxdb:/var/lib/influxdb
   # chronograf (influx admin ui)
   chronograf:
     hostname: chronograf
@@ -38,7 +41,8 @@ services:
     ports:
       - '8888:8888'
     volumes:
-      - chronograf-storage:/var/lib/chronograf
+      #- chronograf-storage:/var/lib/chronograf
+      - /var/lib/smart-home/chronograf:/var/lib/chronograf
     depends_on:
       - influxdb
     environment:
@@ -54,8 +58,9 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - grafana-storage:/var/lib/grafana
-      - ./grafana-provisioning/:/etc/grafana/provisioning # TODO
+      #- grafana-storage:/var/lib/grafana
+      - /var/lib/smart-home/grafana:/var/lib/grafana
+      - ./grafana-provisioning/:/etc/grafana/provisioning
     depends_on:
       - influxdb
     environment:
@@ -69,13 +74,13 @@ services:
     restart: unless-stopped
     ports:
       - "1883:1883"
-      - "9001:9001"
+      # websockets not needed for the time being - "9001:9001"
     volumes:
-      - /opt/mosquitto/config:/mosquitto/config # TODO move to etc
+      - /etc/mosquitto:/mosquitto/config
       - /opt/mosquitto/data:/mosquitto/data
-      - /opt/mosquitto/log:/mosquitto/log # /var/log/mosquitto
-volumes:
-  iobrokerdata:
-  influxdb-storage:
-  chronograf-storage:
-  grafana-storage:
+      - /var/log/mosquitto:/mosquitto/log
+#volumes:
+  #iobrokerdata:
+  #influxdb-storage:
+  #chronograf-storage:
+  #grafana-storage:

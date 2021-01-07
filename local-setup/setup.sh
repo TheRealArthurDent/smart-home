@@ -1,0 +1,12 @@
+#!/bin/bash
+
+mkdir -p /etc/docker/smart-home
+cp .env /etc/docker/smart-home/.env
+chmod 600 /etc/docker/smart-home/.env
+
+mkdir -p /etc/mosquitto
+cp mosquitto.conf /etc/mosquitto/mosquitto.conf
+chmod 600 /etc/mosquitto/mosquitto.conf
+
+mkdir -p /opt/mosquitto/data/
+mkdir -p /var/log/mosquitto
