@@ -10,3 +10,5 @@ chmod 600 /etc/mosquitto/mosquitto.conf
 
 mkdir -p /opt/mosquitto/data/
 mkdir -p /var/log/mosquitto
+
+# TODO setup mosquitto passwd file
