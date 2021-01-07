@@ -76,7 +76,7 @@ services:
       - "1883:1883"
       # websockets not needed for the time being - "9001:9001"
     volumes:
-      - /etc/mosquitto:/mosquitto/config
+      - /etc/docker/smart-home/mosquitto:/mosquitto/config
       - /opt/mosquitto/data:/mosquitto/data
       - /var/log/mosquitto:/mosquitto/log
 #volumes:
