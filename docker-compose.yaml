@@ -6,17 +6,20 @@ services:
     container_name: iobroker
     image: buanet/iobroker:v5.1.0
     restart: unless-stopped
-    ports:
-      - "8081:8081" # UI
-      - "8082:8082" # web server
-      - "1880:1880" # node-red
+    #ports:
+      #- "8081:8081" # UI
+      #- "8082:8082" # web server
+      #- "1880:1880" # node-red
     volumes:
       # apparently the new volume management does not work as expected
       #- iobrokerdata:/opt/iobroker
       - /var/lib/smart-home/iobroker:/opt/iobroker
+    networks:
+      - nginx
+      - default
   # influx db
   influxdb:
-    image: library/influxdb:1.8-alpine
+    image: library/influxdb:1.8 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
     container_name: influxdb
     restart: unless-stopped
     #ports:
@@ -32,11 +35,13 @@ services:
     volumes:
       #- influxdb-storage:/var/lib/influxdb
       - /var/lib/smart-home/influxdb:/var/lib/influxdb
+    networks:
+      - default
   # chronograf (influx admin ui)
   chronograf:
     hostname: chronograf
     container_name: chronograf
-    image: library/chronograf:1.8-alpine
+    image: library/chronograf:1.8 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
     restart: unless-stopped
     ports:
       - '8888:8888'
@@ -46,17 +51,21 @@ services:
     depends_on:
       - influxdb
     environment:
+      - BASE_PATH=/chronograf
       - INFLUXDB_URL=http://influxdb:8086
       - INFLUXDB_USERNAME=admin
       - INFLUXDB_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+    networks:
+      - nginx
+      - default
   # grafana
   grafana:
     hostname: grafana
     container_name: grafana
     image: grafana/grafana:7.3.6
     restart: unless-stopped
-    ports:
-      - '3000:3000'
+    #ports:
+    #  - '3000:3000'
     volumes:
       #- grafana-storage:/var/lib/grafana
       - /var/lib/smart-home/grafana:/var/lib/grafana
@@ -66,6 +75,12 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:%(http_port)s/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      #- GF_INSTALL_PLUGINS=grafana-image-renderer
+    networks:
+      - nginx
+      - default
   # MQTT broker
   mosquitto:
     hostname: mosquitto
@@ -79,8 +94,16 @@ services:
       - /etc/docker/smart-home/mosquitto:/mosquitto/config
       - /opt/mosquitto/data:/mosquitto/data
       - /var/log/mosquitto:/mosquitto/log
+    networks:
+      - default
 #volumes:
   #iobrokerdata:
   #influxdb-storage:
   #chronograf-storage:
   #grafana-storage:
+networks:
+  nginx:
+    external:
+      name: nginx
+  default:
+    driver: bridge
