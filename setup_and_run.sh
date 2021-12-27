@@ -1,6 +1,8 @@
 #!/bin/bash
 
-cd setup
-bash setup.sh
-cd ..
+(
+  cd setup || exit
+  bash setup.sh
+)
+
 bash run.sh
