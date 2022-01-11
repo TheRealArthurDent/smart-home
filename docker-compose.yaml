@@ -105,6 +105,9 @@ services:
     networks:
       #- smart-home
       - default # needed to expose port 1883
+    labels:
+      # disable watchtower since we cannot go to 2.x
+      com.centurylinklabs.watchtower.enable: false
 volumes:
   iobroker-storage:
   influxdb-storage:
