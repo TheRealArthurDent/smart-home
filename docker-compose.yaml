@@ -31,6 +31,8 @@ services:
     networks:
       - default
       #- smart-home
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8086/ping" ]
   # chronograf (influx admin ui)
   chronograf:
     hostname: chronograf
@@ -89,6 +91,8 @@ services:
       #- smart-home
     #dns:
       #- 172.30.2.1
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:3000" ]
   # MQTT broker
   mosquitto:
     hostname: mosquitto
