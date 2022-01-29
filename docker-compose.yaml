@@ -9,10 +9,11 @@ services:
     volumes:
       - iobroker-storage:/opt/iobroker
     networks:
-      - nginx
-      - default
-      #- siz
-      #- smart-home
+      - siz # accessibility by nginx
+      - smart-home # influxdb, mqtt
+      - outbound # internet
+    dns:
+      - 172.30.1.153
   # influx db
   influxdb:
     image: influxdb:1.8 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
@@ -29,8 +30,7 @@ services:
     volumes:
       - influxdb-storage:/var/lib/influxdb
     networks:
-      - default
-      #- smart-home
+      - smart-home
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8086/ping" ]
   # chronograf (influx admin ui)
@@ -48,10 +48,8 @@ services:
       - INFLUXDB_USERNAME=admin
       - INFLUXDB_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
     networks:
-      - nginx
-      - default
-      #- siz
-      #- smart-home
+      - siz # accessibility by nginx
+      - smart-home # influxdb
   # telegraf (export from mqtt to influx)
   telegraf:
     hostname: telegraf
@@ -67,8 +65,7 @@ services:
     depends_on:
       - influxdb
     networks:
-      - default
-      #- smart-home
+      - smart-home # influxdb
   # grafana
   grafana:
     hostname: grafana
@@ -85,12 +82,12 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_INSTALL_PLUGINS=natel-discrete-panel
     networks:
-      - nginx
-      - default
-      #- siz
-      #- smart-home
-    #dns:
-      #- 172.30.2.1
+      - siz # accessibility by nginx
+      - smart-home # get data from influxdb
+      - outbound # internet
+    dns:
+      #- 127.0.0.1
+      - 172.30.1.153
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider", "http://localhost:3000" ]
   # MQTT broker
@@ -107,8 +104,8 @@ services:
       - /opt/mosquitto/data:/mosquitto/data
       - /var/log/mosquitto:/mosquitto/log
     networks:
-      #- smart-home
       - default # needed to expose port 1883
+      - smart-home
     labels:
       # disable watchtower since we cannot go to 2.x
       com.centurylinklabs.watchtower.enable: false
@@ -118,13 +115,14 @@ volumes:
   chronograf-storage:
   grafana-storage:
 networks:
-  nginx:
-    name: nginx
   default:
     driver: bridge
-  #siz:
-  #  name: siz
-  #  external: true
-  #smart-home:
-  #  name: smart-home
-  #  internal: true
+  siz:
+    name: siz
+    external: true
+  outbound:
+    name: outbound
+    external: true
+  smart-home:
+    name: smart-home
+    internal: true
