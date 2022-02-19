@@ -66,6 +66,7 @@ services:
     restart: unless-stopped
     volumes:
       - /etc/docker/smart-home/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /etc/docker/smart-home/telegraf/cpu_temp.sh:/usr/local/sbin/cpu_temp.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /sys:/rootfs/sys:ro
       - /proc:/rootfs/proc:ro

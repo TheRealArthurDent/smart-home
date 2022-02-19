@@ -36,5 +36,7 @@ if [ ! -f "$TELEGRAF_PATH" ]; then
    sed -i -e "s/\$INFLUXDB_WRITE_PASSWORD/$INFLUXDB_WRITE_PASSWORD/g" $TELEGRAF_PATH/telegraf.conf
    sed -i -e "s/\$MOSQUITTO_PASSWD/$MOSQUITTO_PASSWD/g" $TELEGRAF_PATH/telegraf.conf
    chmod 644 $TELEGRAF_PATH/telegraf.conf
+   cp telegraf/cpu_temp.sh $TELEGRAF_PATH/cpu_temp.sh
+   chmod 550 $TELEGRAF_PATH/cpu_temp.sh
 fi
 
