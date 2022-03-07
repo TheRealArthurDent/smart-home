@@ -8,3 +8,13 @@ Setup for the smart home environment containing mqtt, iobroker and peripherals
 3. Return to root folder
 4. Execute 'sudo bash run.sh'
 5. Be happy
+
+### iobroker cheat sheet
+## upgrade
+from raspi:
+docker exec -it -u 82 iobroker /bin/bash
+
+iob stop<br/>
+iob update<br/>
+iob upgrade self<br/>
+iob start<br/>
