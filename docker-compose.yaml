@@ -4,7 +4,7 @@ services:
   iobroker:
     hostname: iobroker
     container_name: iobroker
-    image: buanet/iobroker:v6.0.0
+    image: buanet/iobroker:v6.1.0
     restart: unless-stopped
     volumes:
       - iobroker-storage:/opt/iobroker
@@ -37,6 +37,9 @@ services:
       - smart-home
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8086/ping" ]
+    labels:
+      diun.watch_repo: 'true'
+      diun.include_tags: '^1.8$$'
   # chronograf (influx admin ui)
   chronograf:
     hostname: chronograf
@@ -83,7 +86,7 @@ services:
   grafana:
     hostname: grafana
     container_name: grafana
-    image: grafana/grafana:8.4.1
+    image: grafana/grafana:8.4.3
     restart: unless-stopped
     volumes:
       - grafana-storage:/var/lib/grafana
