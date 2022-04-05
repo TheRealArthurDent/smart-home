@@ -12,7 +12,7 @@ Setup for the smart home environment containing mqtt, iobroker and peripherals
 ### iobroker cheat sheet
 ## upgrade
 from raspi:
-docker exec -it -u 82 iobroker /bin/bash
+docker exec -it -u 0 iobroker /bin/bash
 
 iob stop<br/>
 iob update<br/>

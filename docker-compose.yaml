@@ -65,7 +65,7 @@ services:
   telegraf:
     hostname: telegraf
     container_name: telegraf
-    image: telegraf:1.21 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
+    image: telegraf:1.22 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
     restart: unless-stopped
     volumes:
       - /etc/docker/smart-home/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
@@ -81,12 +81,12 @@ services:
     labels:
       diun.watch_repo: 'true'
       diun.include_tags: '^[1-9]+\.[0-9]+$$'
-      diun.exclude_tags: '^[01]\.([0-9]|[01][0-9]])$$' # ignore all until incl. 1.19
+      diun.exclude_tags: '^[01]\.([0-9]|[01][0-9]|20|21])$$' # ignore all until incl. 1.19
   # grafana
   grafana:
     hostname: grafana
     container_name: grafana
-    image: grafana/grafana:8.4.3
+    image: grafana/grafana:8.4.5
     restart: unless-stopped
     volumes:
       - grafana-storage:/var/lib/grafana
