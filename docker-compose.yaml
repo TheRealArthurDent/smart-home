@@ -114,12 +114,12 @@ services:
     labels:
       diun.watch_repo: 'true'
       diun.include_tags: '^[1-9]+\.[0-9]+$$'
-      diun.exclude_tags: '^[01]\.([0-9]|[01][0-9]|20|21])$$' # ignore all until incl. 1.19
+      diun.exclude_tags: '^[01]\.([0-9]|[01][0-9]|20|21)$$' # ignore all until incl. 1.21
   # grafana
   grafana:
     hostname: grafana
     container_name: grafana
-    image: grafana/grafana:8.4.5
+    image: grafana/grafana:8.5.1
     pull_policy: always
     restart: unless-stopped
     volumes:
@@ -143,7 +143,7 @@ services:
     labels:
       diun.watch_repo: 'true'
       diun.include_tags: '^[8-9]\.[0-9]+\.[0-9]+$$'
-      diun.exclude_tags: '^8\.[0-3]\.[0-9]+$$' # ignore all until incl. 8.3.#
+      diun.exclude_tags: '^8\.[0-4]\.[0-9]+$$' # ignore all until incl. 8.4.#
   # MQTT broker
   mosquitto:
     hostname: mosquitto
