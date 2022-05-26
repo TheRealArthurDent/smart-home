@@ -18,6 +18,35 @@ services:
     labels:
       diun.watch_repo: 'true'
       diun.include_tags: '^v[6-9]\.[0-9]+\.[0-9]+$$'
+  # deConz
+  deconz:
+    hostname: deconz
+    container_name: deconz
+    image: deconzcommunity/deconz:2.16.01
+    pull_policy: always
+    restart: unless-stopped
+    volumes:
+      - deconz-storage:/opt/deCONZ
+    env_file:
+      - /etc/docker/smart-home/.env
+    devices:
+      - /dev/${DECONZ_DEVICE_TYPE}:/dev/ttyACM0
+    environment:
+      TZ: 'Europe/Berlin'
+      #DECONZ_DEVICE: /dev/ttyACM0
+      DECONZ_WEB_PORT: 443
+      DECONZ_WS_PORT: 8443
+    networks:
+      - siz # accessibility by nginx
+      - smart-home # iobroker and node-red access
+      - outbound # internet
+    dns:
+      - 172.30.1.153
+    ports:
+      - "8088:443" # for f***in stupid hue essentials app
+    labels:
+      diun.watch_repo: 'true'
+      diun.include_tags: '^stable$$'
   # influx db
   influxdb:
     container_name: influxdb
@@ -140,6 +169,7 @@ volumes:
   influxdb-storage:
   chronograf-storage:
   grafana-storage:
+  deconz-storage:
 networks:
   default:
     driver: bridge
