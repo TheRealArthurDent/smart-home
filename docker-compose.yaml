@@ -75,7 +75,7 @@ services:
   chronograf:
     hostname: chronograf
     container_name: chronograf
-    image: chronograf:1.9 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
+    image: chronograf:1.10 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
     #pull_policy: always
     restart: unless-stopped
     volumes:
