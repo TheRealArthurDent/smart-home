@@ -22,7 +22,7 @@ services:
   deconz:
     hostname: deconz
     container_name: deconz
-    image: deconzcommunity/deconz:2.17.01
+    image: deconzcommunity/deconz:2.19.02
     #pull_policy: always
     restart: unless-stopped
     volumes:
@@ -36,6 +36,7 @@ services:
       #DECONZ_DEVICE: /dev/ttyACM0
       DECONZ_WEB_PORT: 443
       DECONZ_WS_PORT: 8443
+      DECONZ_VNC_MODE: 1
     networks:
       - siz # accessibility by nginx
       - smart-home # iobroker and node-red access
@@ -44,6 +45,8 @@ services:
       - 172.30.1.153
     ports:
       - "8088:443" # for f***in stupid hue essentials app
+      - "5900:5900"
+      - "6080:6080"
     labels:
       diun.watch_repo: 'true'
       diun.include_tags: '^stable$$'
