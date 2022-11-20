@@ -97,7 +97,7 @@ services:
   telegraf:
     hostname: telegraf
     container_name: telegraf
-    image: telegraf:1.23 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
+    image: telegraf:1.24 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
     #pull_policy: always
     restart: unless-stopped
     volumes:
