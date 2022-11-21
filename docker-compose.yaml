@@ -122,7 +122,7 @@ services:
   grafana:
     hostname: grafana
     container_name: grafana
-    image: grafana/grafana:9.1.4
+    image: grafana/grafana:9.2.5
     #pull_policy: always
     restart: unless-stopped
     volumes:
@@ -151,14 +151,14 @@ services:
   mosquitto:
     hostname: mosquitto
     container_name: mqtt
-    image: eclipse-mosquitto:1.6
+    image: eclipse-mosquitto:2.0.15
     #pull_policy: always
     restart: unless-stopped
     ports:
       - "1883:1883"
       # websockets not needed for the time being - "9001:9001"
     volumes:
-      - /etc/docker/smart-home/mosquitto:/mosquitto/config
+      - /etc/docker/smart-home/mosquitto:/mosquitto/config:ro
       - /opt/mosquitto/data:/mosquitto/data
       - /var/log/mosquitto:/mosquitto/log
     networks:
