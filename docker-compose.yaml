@@ -27,6 +27,7 @@ services:
     restart: unless-stopped
     volumes:
       - deconz-storage:/opt/deCONZ
+      - ikea-tradfri-firmware-storage:/opt/deCONZ/otau
     env_file:
       - /etc/docker/smart-home/.env
     devices:
@@ -38,6 +39,7 @@ services:
       - DECONZ_WS_PORT=8443
       - DECONZ_VNC_MODE=1
       - DECONZ_VNC_PASSWORD=${DECONZ_VNC_PASSWORD}
+      - DEBUG_OTA=1
     networks:
       - siz # accessibility by nginx
       - smart-home # iobroker and node-red access
@@ -49,6 +51,17 @@ services:
     labels:
       diun.watch_repo: 'true'
       diun.include_tags: '^stable$$'
+  firmware-download:
+    container_name: firmware-download
+    build:
+      context: ./firmware-download
+    restart: unless-stopped
+    volumes:
+      - ikea-tradfri-firmware-storage:/root/otau
+    networks:
+      - outbound # internet
+    dns:
+      - 172.30.1.153
   # influx db
   influxdb:
     container_name: influxdb
@@ -172,6 +185,7 @@ volumes:
   chronograf-storage:
   grafana-storage:
   deconz-storage:
+  ikea-tradfri-firmware-storage:
 networks:
   default:
     driver: bridge
