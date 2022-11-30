@@ -1,19 +1,60 @@
 #!/bin/bash
+set +x
 
 ARTIFACT=smart-home
+DEFAULT_TARGET="raspi"
+TARGET=$1
+PORT=$2
+USER=$3
 
-echo "Deploying $ARTIFACT to raspberry pi..."
+if [ -z "$TARGET" ]; then
+  TARGET=$DEFAULT_TARGET
+fi
+if [ -z "$PORT" ]; then
+  if [ "$TARGET" = "$DEFAULT_TARGET" ]; then
+    PORT="1357"
+  elif [ "$TARGET" = "erdbeere" ]; then
+    PORT="1358"
+  else
+    echo "unknown target - defaulting to ssh port 22"
+    PORT="22"
+  fi
+fi
+if [ -z "$USER" ]; then
+  if [ "$TARGET" = "$DEFAULT_TARGET" ]; then
+    USER="pi"
+  elif [ "$TARGET" = "erdbeere" ]; then
+    USER="held"
+  else
+    echo "unknown target - defaulting to ssh port 22"
+    USER="pi"
+  fi
+fi
+
+echo "Deploying $ARTIFACT to $TARGET..."
 
 TARGET_FOLDER=dev/$ARTIFACT
 
-ssh pi@raspi -p 1357 'mkdir -p ~/dev/smart-home/setup'
-scp -P 1357 ./docker-compose.yaml pi@raspi:~/$TARGET_FOLDER
-scp -P 1357 ./run.sh pi@raspi:~/$TARGET_FOLDER
-# TODO remove the string "--env-file $ENV_FILE " from this file, because raspi's version of docker-compose doesn't know that yet
-ssh pi@raspi -p 1357 "cd ~/dev/smart-home && pwd && sed -i -e 's/--env-file \$ENV_FILE //g' run.sh"
+ssh $USER@$TARGET -p $PORT 'mkdir -p ~/dev/$ARTIFACT'
 
-scp -P 1357 -r ./setup/mosquitto/ pi@raspi:~/$TARGET_FOLDER/setup
-scp -P 1357 -r ./setup/telegraf/ pi@raspi:~/$TARGET_FOLDER/setup
-scp -P 1357 ./setup/setup.sh pi@raspi:~/$TARGET_FOLDER/setup
+echo "Deleting old tmp folders"
+find /tmp -type d -regextype egrep -iregex "/tmp/$ARTIFACT-[a-z0-9]+" -mtime +30 -exec rm -rf {} + 2>/dev/null
 
-ssh pi@raspi -p 1357 'cd ~/dev/smart-home/setup && pwd && sudo bash setup.sh && cd .. && sudo bash run.sh'
+(
+  tmp_dir=$(mktemp -d -t $ARTIFACT-XXXXXXXXXX)
+  echo "Created new tmp folder $tmp_dir"
+  cp docker-compose.yaml  $tmp_dir
+  cp run.sh               $tmp_dir
+  cp -r setup             $tmp_dir
+  rm $tmp_dir/setup/.env
+  (
+    cd $tmp_dir || exit
+    grep -rl '%HOSTNAME%' | xargs -i@ sed -i "s/%HOSTNAME%/$TARGET/g" @
+    if [ "$TARGET" != "DEFAULT_TARGET" ]; then
+      sed -i "s/$DEFAULT_TARGET/$TARGET/g" docker-compose.yaml
+    fi
+    tar -cf install.tar *
+    scp -P $PORT install.tar $USER@$TARGET:$TARGET_FOLDER
+    ssh $USER@$TARGET -p $PORT 'cd ~/dev/smart-home && ls && tar xf install.tar && rm install.tar && cd setup && sudo bash setup.sh && cd .. && sudo bash run.sh && echo "Deployment finished."'
+  )
+)
