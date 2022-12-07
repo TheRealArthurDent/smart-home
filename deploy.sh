@@ -16,4 +16,6 @@ scp -P 1357 -r ./setup/mosquitto/ pi@raspi:~/$TARGET_FOLDER/setup
 scp -P 1357 -r ./setup/telegraf/ pi@raspi:~/$TARGET_FOLDER/setup
 scp -P 1357 ./setup/setup.sh pi@raspi:~/$TARGET_FOLDER/setup
 
+scp -P 1357 -r ./firmware-download/ pi@raspi:~/$TARGET_FOLDER/firmware-download
+
 ssh pi@raspi -p 1357 'cd ~/dev/smart-home/setup && pwd && sudo bash setup.sh && cd .. && sudo bash run.sh'
