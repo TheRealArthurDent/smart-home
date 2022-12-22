@@ -9,6 +9,7 @@ services:
     restart: unless-stopped
     volumes:
       - iobroker-storage:/opt/iobroker
+      - ./setup/iobroker/userscript_firststart.sh:/opt/userscripts/userscript_firststart.sh
     networks:
       - siz # accessibility by nginx
       - smart-home # influxdb, mqtt
