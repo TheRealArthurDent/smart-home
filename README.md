@@ -1,6 +1,8 @@
 # smart-home
 Setup for the smart home environment containing mqtt, iobroker and peripherals
 
+[![Spell Check](https://github.com/TheRealArthurDent/smart-home/actions/workflows/spell-check.yaml/badge.svg)](https://github.com/TheRealArthurDent/smart-home/actions/workflows/spell-check.yaml)
+
 ### local setup
 
 1. Change to folder local-setup
