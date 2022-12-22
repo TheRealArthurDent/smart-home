@@ -46,6 +46,7 @@ find /tmp -type d -regextype egrep -iregex "/tmp/$ARTIFACT-[a-z0-9]+" -mtime +30
   cp docker-compose.yaml  $tmp_dir
   cp run.sh               $tmp_dir
   cp -r setup             $tmp_dir
+  cp -r firmware-download $tmp_dir
   rm $tmp_dir/setup/.env
   (
     cd $tmp_dir || exit
