@@ -1,0 +1,13 @@
+FROM python:3.11-alpine
+
+RUN apk add wget
+
+WORKDIR /usr/firmware-download
+
+# Copy files
+COPY entrypoint.sh .
+COPY download-ikea-firmware.sh .
+COPY crontab .
+
+# Run cron on container startup
+ENTRYPOINT ["./entrypoint.sh"]
