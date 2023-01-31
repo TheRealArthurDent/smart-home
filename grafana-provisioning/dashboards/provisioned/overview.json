@@ -133,6 +133,7 @@
         }
       ],
       "title": "CPU Temp",
+      "description": "Displays the host's current CPU temperature.",
       "type": "gauge"
     },
     {
@@ -409,6 +410,7 @@
         }
       ],
       "title": "Shelly Temperature",
+      "description": "Displays temperatures of all shellies.",
       "type": "gauge"
     },
     {
