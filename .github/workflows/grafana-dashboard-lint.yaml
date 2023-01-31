@@ -8,7 +8,7 @@ on:
   repository_dispatch:
 
 jobs:
-  spellcheck:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,10 +18,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.14'
+          go-version: '1.17'
 
       - name: Install dashboard-linter
         run: go install github.com/grafana/dashboard-linter@latest
 
       - name: Linting
-        run: dashboard-linter lint grafana-provsioning/dashboards/provisioned/overview.json
+        run: dashboard-linter lint grafana-provisioning/dashboards/provisioned/overview.json
