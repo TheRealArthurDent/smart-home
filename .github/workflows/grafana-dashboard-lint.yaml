@@ -27,4 +27,9 @@ jobs:
         run: dashboard-linter rules
 
       - name: Linting
-        run: for FILE in grafana-provisioning/dashboards/provisioned/*.json; do dashboard-linter lint $FILE --strict --verbose; done
+        run: |
+          for FILE in grafana-provisioning/dashboards/provisioned/*.json
+          do
+            echo "Linting $FILE"
+            dashboard-linter lint $FILE --strict --verbose; 
+          done
