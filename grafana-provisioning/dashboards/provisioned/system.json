@@ -33,7 +33,6 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -170,7 +169,8 @@
             },
             "thresholdsStyle": {
               "mode": "area"
-            }
+            },
+            "unit": "celsius"
           },
           "decimals": 0,
           "mappings": [],
