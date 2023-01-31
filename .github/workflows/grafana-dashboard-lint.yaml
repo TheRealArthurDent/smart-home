@@ -1,0 +1,27 @@
+name: Grafana Dashboard Lint
+
+# See: https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  repository_dispatch:
+
+jobs:
+  spellcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.14'
+
+      - name: Install dashboard-linter
+        run: go install github.com/grafana/dashboard-linter@latest
+
+      - name: Linting
+        run: dashboard-linter lint grafana-provsioning/dashboards/provisioned/overview.json

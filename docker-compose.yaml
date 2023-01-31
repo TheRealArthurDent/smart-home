@@ -115,14 +115,16 @@ services:
     networks:
       - smart-home # influxdb
   # grafana
-  grafana:
+  grafana-prov:
     hostname: grafana
-    container_name: grafana
+    container_name: grafana-prov
+    ports:
+      - "3000:3000"
     image: grafana/grafana:9.3.6
     #pull_policy: always
     restart: unless-stopped
     volumes:
-      - grafana-storage:/var/lib/grafana
+      - grafana-prov-storage:/var/lib/grafana
       - ./grafana-provisioning/:/etc/grafana/provisioning
     depends_on:
       - influxdb
@@ -161,6 +163,7 @@ volumes:
   influxdb-storage:
   chronograf-storage:
   grafana-storage:
+  grafana-prov-storage:
   deconz-storage:
   ikea-tradfri-firmware-storage:
 networks:
