@@ -43,10 +43,11 @@ find /tmp -type d -regextype egrep -iregex "/tmp/$ARTIFACT-[a-z0-9]+" -mtime +30
 (
   tmp_dir=$(mktemp -d -t $ARTIFACT-XXXXXXXXXX)
   echo "Created new tmp folder $tmp_dir"
-  cp docker-compose.yaml  $tmp_dir
-  cp run.sh               $tmp_dir
-  cp -r setup             $tmp_dir
-  cp -r firmware-download $tmp_dir
+  cp docker-compose.yaml      $tmp_dir
+  cp run.sh                   $tmp_dir
+  cp -r setup                 $tmp_dir
+  cp -r firmware-download     $tmp_dir
+  cp -r grafana-provisioning  $tmp_dir
   rm $tmp_dir/setup/.env
   (
     cd $tmp_dir || exit
@@ -54,8 +55,11 @@ find /tmp -type d -regextype egrep -iregex "/tmp/$ARTIFACT-[a-z0-9]+" -mtime +30
     if [ "$TARGET" != "DEFAULT_TARGET" ]; then
       sed -i "s/$DEFAULT_TARGET/$TARGET/g" docker-compose.yaml
     fi
+    echo "Building tar ball"
     tar -cf install.tar *
+    echo "Copying tar ball"
     scp -P $PORT install.tar $USER@$TARGET:$TARGET_FOLDER
-    ssh $USER@$TARGET -p $PORT 'cd ~/dev/smart-home && ls && tar xf install.tar && rm install.tar && cd setup && sudo bash setup.sh && cd .. && sudo bash run.sh && echo "Deployment finished."'
+    echo "Installing..."
+    ssh $USER@$TARGET -p $PORT 'cd ~/dev/smart-home && ls && sudo tar xf install.tar && rm install.tar && cd setup && sudo bash setup.sh && cd .. && sudo bash run.sh && echo "Deployment finished."'
   )
 )
