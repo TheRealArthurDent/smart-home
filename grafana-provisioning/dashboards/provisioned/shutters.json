@@ -347,6 +347,7 @@
         }
       ],
       "title": "Position",
+      "description": "Displays the current position of every shutter.",
       "transparent": true,
       "type": "bargauge"
     },
@@ -612,6 +613,7 @@
         }
       ],
       "title": "Temperature",
+      "description": "Displays the current temperature of every shutter's respective shelly.",
       "transparent": true,
       "type": "gauge"
     },
@@ -1039,6 +1041,8 @@
           "tags": []
         }
       ],
+      "title": "Temperature graph",
+      "description": "Displays the temperature of every shutter's respective shelly over time.",
       "transparent": true,
       "type": "timeseries"
     }
