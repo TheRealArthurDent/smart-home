@@ -31,7 +31,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb"
+        "uid": "InfluxDB"
       },
       "fieldConfig": {
         "defaults": {
