@@ -169,8 +169,7 @@
             },
             "thresholdsStyle": {
               "mode": "area"
-            },
-            "unit": "celsius"
+            }
           },
           "decimals": 0,
           "mappings": [],
@@ -192,7 +191,8 @@
                 "value": 75
               }
             ]
-          }
+          },
+          "unit": "celsius"
         },
         "overrides": []
       },
