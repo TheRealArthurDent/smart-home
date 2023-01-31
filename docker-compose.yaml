@@ -126,6 +126,7 @@ services:
     volumes:
       - grafana-prov-storage:/var/lib/grafana
       - ./grafana-provisioning/:/etc/grafana/provisioning
+      - /etc/docker/smart-home/secrets/:/etc/secrets/:ro
     depends_on:
       - influxdb
     environment:
