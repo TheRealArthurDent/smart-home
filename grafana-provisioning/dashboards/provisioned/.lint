@@ -1,0 +1,3 @@
+exclusions:
+  template-datasource-rule:
+    reason: Only works for Prometheus or Loki datasources.
