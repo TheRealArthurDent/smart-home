@@ -2,6 +2,7 @@
 Setup for the smart home environment containing mqtt, iobroker and peripherals
 
 [![Spell Check](https://github.com/TheRealArthurDent/smart-home/actions/workflows/spell-check.yaml/badge.svg)](https://github.com/TheRealArthurDent/smart-home/actions/workflows/spell-check.yaml)
+[![Grafana Dashboard Lint](https://github.com/TheRealArthurDent/smart-home/actions/workflows/grafana-dashboard-lint.yaml/badge.svg)](https://github.com/TheRealArthurDent/smart-home/actions/workflows/grafana-dashboard-lint.yaml)
 
 ### local setup
 
