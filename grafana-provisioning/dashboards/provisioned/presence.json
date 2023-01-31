@@ -347,6 +347,7 @@
       },
       "timeTextColor": "#d8d9da",
       "title": "Presence",
+      "description": "Displays the presence of several devices over time.",
       "transparent": true,
       "type": "natel-discrete-panel",
       "units": "short",

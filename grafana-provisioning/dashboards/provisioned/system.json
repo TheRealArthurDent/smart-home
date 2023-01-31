@@ -126,6 +126,7 @@
         }
       ],
       "title": "CPU Temp",
+      "description": "Displays the host's current CPU temperature.",
       "type": "gauge"
     },
     {
@@ -257,6 +258,7 @@
         }
       ],
       "title": "CPU Temp",
+      "description": "Displays the host's CPU temperature over time.",
       "type": "timeseries"
     },
     {
@@ -356,6 +358,7 @@
         }
       ],
       "title": "CPU usage",
+      "description": "Displays the host's current CPU usage.",
       "type": "gauge"
     },
     {
@@ -484,6 +487,7 @@
         }
       ],
       "title": "CPU usage",
+      "description": "Displays the host's CPU usage over time.",
       "type": "timeseries"
     },
     {
@@ -580,6 +584,7 @@
         }
       ],
       "title": "Memory usage",
+      "description": "Displays the host's current memory usage.",
       "type": "gauge"
     },
     {
@@ -730,6 +735,7 @@
         }
       ],
       "title": "Memory usage",
+      "description": "Displays the host's memory usage over time.",
       "type": "timeseries"
     }
   ],
