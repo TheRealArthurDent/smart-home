@@ -94,7 +94,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -138,7 +138,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "fgB7GHRRk"
+        "uid": "InfluxDB"
       },
       "fieldConfig": {
         "defaults": {
@@ -202,7 +202,7 @@
           "alias": "Office",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -243,7 +243,7 @@
           "alias": "Terrasse",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -285,7 +285,7 @@
           "alias": "Garden",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -327,7 +327,7 @@
           "alias": "Kitchen",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -369,7 +369,7 @@
           "alias": "Bedroom",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -414,7 +414,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "fgB7GHRRk"
+        "uid": "InfluxDB"
       },
       "fieldConfig": {
         "defaults": {
@@ -513,7 +513,7 @@
           "alias": "used",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -554,7 +554,7 @@
           "alias": "free",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -623,7 +623,7 @@
       "crosshairColor": "#8F070C",
       "datasource": {
         "type": "influxdb",
-        "uid": "fgB7GHRRk"
+        "uid": "InfluxDB"
       },
       "display": "timeline",
       "expandFromQueryS": 0,
@@ -669,7 +669,7 @@
           "alias": "Presence",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "hide": false,

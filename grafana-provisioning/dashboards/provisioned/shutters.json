@@ -31,7 +31,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "fgB7GHRRk"
+        "uid": "InfluxDB"
       },
       "description": "",
       "fieldConfig": {
@@ -144,7 +144,7 @@
           "alias": "Office",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -185,7 +185,7 @@
           "alias": "Terrasse",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -226,7 +226,7 @@
           "alias": "Garden",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -267,7 +267,7 @@
           "alias": "Kitchen",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -308,7 +308,7 @@
           "alias": "Bedroom",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -353,7 +353,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "fgB7GHRRk"
+        "uid": "InfluxDB"
       },
       "fieldConfig": {
         "defaults": {
@@ -409,7 +409,7 @@
           "alias": "Office",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -450,7 +450,7 @@
           "alias": "Terrasse",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -491,7 +491,7 @@
           "alias": "Garden",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -532,7 +532,7 @@
           "alias": "Kitchen",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -573,7 +573,7 @@
           "alias": "Bedroom",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -750,7 +750,7 @@
       },
       "datasource": {
         "type": "influxdb",
-        "uid": "fgB7GHRRk"
+        "uid": "InfluxDB"
       },
       "fieldConfig": {
         "defaults": {
@@ -835,7 +835,7 @@
           "alias": "Office",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -878,7 +878,7 @@
           "alias": "Terrasse",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -919,7 +919,7 @@
           "alias": "Garden",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -960,7 +960,7 @@
           "alias": "Kitchen",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {
@@ -1001,7 +1001,7 @@
           "alias": "Bedroom",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [
             {

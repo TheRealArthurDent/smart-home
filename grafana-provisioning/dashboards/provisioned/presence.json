@@ -50,7 +50,7 @@
       "crosshairColor": "#8F070C",
       "datasource": {
         "type": "influxdb",
-        "uid": "fgB7GHRRk"
+        "uid": "InfluxDB"
       },
       "display": "timeline",
       "expandFromQueryS": 0,
@@ -91,7 +91,7 @@
           "alias": "Presence",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "hide": false,
@@ -116,7 +116,7 @@
           "alias": "Marijke Android",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "measurement": "fb-checkpresence.0.Marijke Android.presence",
@@ -140,7 +140,7 @@
           "alias": "Marijke BMW-Laptop",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "measurement": "fb-checkpresence.0.Marijke BMW-Laptop.presence",
@@ -164,7 +164,7 @@
           "alias": "Marijke Laptop",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "measurement": "fb-checkpresence.0.Marijke Laptop.presence",
@@ -188,7 +188,7 @@
           "alias": "Marijke iPhone",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "measurement": "fb-checkpresence.0.Marijke iPhone.presence",
@@ -212,7 +212,7 @@
           "alias": "Mika Android",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "measurement": "fb-checkpresence.0.Mika Android.presence",
@@ -236,7 +236,7 @@
           "alias": "Mika BMW-Laptop",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "measurement": "fb-checkpresence.0.Mika BMW-Laptop.presence",
@@ -260,7 +260,7 @@
           "alias": "Mika Laptop",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "measurement": "fb-checkpresence.0.Mika Laptop.presence",
@@ -284,7 +284,7 @@
           "alias": "Mika iPhone",
           "datasource": {
             "type": "influxdb",
-            "uid": "fgB7GHRRk"
+            "uid": "InfluxDB"
           },
           "groupBy": [],
           "measurement": "fb-checkpresence.0.Mika iPhone.presence",

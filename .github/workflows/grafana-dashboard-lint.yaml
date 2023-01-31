@@ -23,5 +23,8 @@ jobs:
       - name: Install dashboard-linter
         run: go install github.com/grafana/dashboard-linter@latest
 
+      - name: Rules
+        run: dashboard-linter rules
+
       - name: Linting
-        run: dashboard-linter lint grafana-provisioning/dashboards/provisioned/overview.json
+        run: dashboard-linter lint grafana-provisioning/dashboards/provisioned/overview.json --strict
