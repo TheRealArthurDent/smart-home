@@ -273,6 +273,7 @@
         }
       ],
       "title": "Temperature",
+      "description": "Displays all measured temperature values.",
       "transparent": true,
       "type": "timeseries"
     },
@@ -530,6 +531,7 @@
         }
       ],
       "title": "Humidity",
+      "description": "Displays all measured humidity values.",
       "transparent": true,
       "type": "timeseries"
     },
@@ -697,6 +699,7 @@
         }
       ],
       "title": "Brightness",
+      "description": "Displays all measured brightness values.",
       "transparent": true,
       "type": "timeseries"
     },
@@ -718,7 +721,6 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -937,6 +939,8 @@
           "tags": []
         }
       ],
+      "title": "Battery level",
+      "description": "Displays the battery level of all supporting sensors in gauges.",
       "transparent": true,
       "type": "gauge"
     },
@@ -1188,6 +1192,8 @@
           "tags": []
         }
       ],
+      "title": "Battery level",
+      "description": "Displays the battery level of all supporting sensors in graphs.",
       "transparent": true,
       "type": "timeseries"
     }
