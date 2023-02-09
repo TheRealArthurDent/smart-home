@@ -19,5 +19,5 @@ contactPoints:
           # <string, required>
           chatid: $__file{/etc/secrets/telegram_chatid}
           # <string>
-          message: |
-            {{ template "default.message" . }}
+          #message: |
+          #  {{ template "default.message" . }}

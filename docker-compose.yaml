@@ -10,6 +10,11 @@ services:
     volumes:
       - iobroker-storage:/opt/iobroker
       - ./setup/iobroker/userscript_firststart.sh:/opt/userscripts/userscript_firststart.sh
+    ports:
+      - "8082:8082"
+      - "8083:8083"
+      - "8400:8400"
+      - "8091:8091"
     networks:
       - siz # accessibility by nginx
       - smart-home # influxdb, mqtt
@@ -124,7 +129,7 @@ services:
     #pull_policy: always
     restart: unless-stopped
     volumes:
-      - grafana-prov-storage:/var/lib/grafana
+      #- grafana-prov-storage:/var/lib/grafana
       - ./grafana-provisioning/:/etc/grafana/provisioning
       - /etc/docker/smart-home/secrets/:/etc/secrets/:ro
     depends_on:
@@ -133,6 +138,7 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_INSTALL_PLUGINS=natel-discrete-panel
+      - GF_LOG_LEVEL=debug
     networks:
       - siz # accessibility by nginx
       - smart-home # get data from influxdb
@@ -164,7 +170,7 @@ volumes:
   influxdb-storage:
   chronograf-storage:
   grafana-storage:
-  grafana-prov-storage:
+  #grafana-prov-storage:
   deconz-storage:
   ikea-tradfri-firmware-storage:
 networks:
