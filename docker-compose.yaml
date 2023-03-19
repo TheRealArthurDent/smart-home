@@ -20,7 +20,7 @@ services:
   deconz:
     hostname: deconz
     container_name: deconz
-    image: deconzcommunity/deconz:2.21.00
+    image: deconzcommunity/deconz:2.21.01
     #pull_policy: always
     restart: unless-stopped
     volumes:
