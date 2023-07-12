@@ -118,7 +118,7 @@ services:
   grafana:
     hostname: grafana
     container_name: grafana
-    image: grafana/grafana:10.0.0
+    image: grafana/grafana:10.0.2
     #pull_policy: always
     restart: unless-stopped
     volumes:
