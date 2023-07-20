@@ -20,7 +20,7 @@ services:
   deconz:
     hostname: deconz
     container_name: deconz
-    image: deconzcommunity/deconz:2.22.01
+    image: deconzcommunity/deconz:2.22.02
     #pull_policy: always
     restart: unless-stopped
     volumes:
@@ -100,7 +100,7 @@ services:
   telegraf:
     hostname: telegraf
     container_name: telegraf
-    image: telegraf:1.26 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
+    image: telegraf:1.27 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
     #pull_policy: always
     restart: unless-stopped
     volumes:
@@ -118,7 +118,7 @@ services:
   grafana:
     hostname: grafana
     container_name: grafana
-    image: grafana/grafana:9.5.3
+    image: grafana/grafana:10.0.2
     #pull_policy: always
     restart: unless-stopped
     volumes:
