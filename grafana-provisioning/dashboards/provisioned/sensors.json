@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 7,
+  "id": 12,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -33,6 +33,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays all measured temperature values.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -270,10 +271,51 @@
             ]
           ],
           "tags": []
+        },
+        {
+          "alias": "Plants",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "sensors.0.garden.temperature",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "E",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
         }
       ],
       "title": "Temperature",
-      "description": "Displays all measured temperature values.",
       "transparent": true,
       "type": "timeseries"
     },
@@ -282,6 +324,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays all measured humidity values.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -528,10 +571,51 @@
             ]
           ],
           "tags": []
+        },
+        {
+          "alias": "Plants",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "sensors.0.garden.humidity",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "E",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
         }
       ],
       "title": "Humidity",
-      "description": "Displays all measured humidity values.",
       "transparent": true,
       "type": "timeseries"
     },
@@ -540,6 +624,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays all measured brightness values.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -699,7 +784,6 @@
         }
       ],
       "title": "Brightness",
-      "description": "Displays all measured brightness values.",
       "transparent": true,
       "type": "timeseries"
     },
@@ -721,6 +805,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the battery level of all supporting sensors in gauges.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -769,7 +854,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.0.2",
       "targets": [
         {
           "alias": "Livingroom",
@@ -937,10 +1022,51 @@
             ]
           ],
           "tags": []
+        },
+        {
+          "alias": "Plants",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "sensors.0.garden.battery",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "E",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
         }
       ],
       "title": "Battery level",
-      "description": "Displays the battery level of all supporting sensors in gauges.",
       "transparent": true,
       "type": "gauge"
     },
@@ -949,6 +1075,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the battery level of all supporting sensors in graphs.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1190,16 +1317,57 @@
             ]
           ],
           "tags": []
+        },
+        {
+          "alias": "Plants",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "sensors.0.garden.battery",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "E",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
         }
       ],
       "title": "Battery level",
-      "description": "Displays the battery level of all supporting sensors in graphs.",
       "transparent": true,
       "type": "timeseries"
     }
   ],
   "refresh": "1m",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -1213,6 +1381,6 @@
   "timezone": "",
   "title": "Sensors",
   "uid": "sensors",
-  "version": 10,
+  "version": 3,
   "weekStart": ""
 }
