@@ -60,7 +60,7 @@ services:
   # influx db
   influxdb:
     container_name: influxdb
-    image: influxdb:1.8 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
+    image: influxdb:2.7 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
     #pull_policy: always
     restart: unless-stopped
     environment:
