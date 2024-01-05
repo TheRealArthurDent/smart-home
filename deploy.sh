@@ -13,6 +13,8 @@ fi
 if [ -z "$PORT" ]; then
   if [ "$TARGET" = "$DEFAULT_TARGET" ]; then
     PORT="1357"
+  elif [ "$TARGET" = "raspi2" ]; then
+    PORT="1357"
   elif [ "$TARGET" = "erdbeere" ]; then
     PORT="1358"
   else
@@ -23,6 +25,8 @@ fi
 if [ -z "$USER" ]; then
   if [ "$TARGET" = "$DEFAULT_TARGET" ]; then
     USER="pi"
+  elif [ "$TARGET" = "raspi2" ]; then
+    USER="smarthome"
   elif [ "$TARGET" = "erdbeere" ]; then
     USER="held"
   else
@@ -30,6 +34,10 @@ if [ -z "$USER" ]; then
     USER="pi"
   fi
 fi
+
+echo Synching clocks
+sudo ntpdate pool.ntp.org
+ssh $USER@$TARGET -p $PORT 'timedatectl'
 
 echo "Deploying $ARTIFACT to $TARGET..."
 
@@ -55,6 +63,7 @@ find /tmp -type d -regextype egrep -iregex "/tmp/$ARTIFACT-[a-z0-9]+" -mtime +30
       sed -i "s/$DEFAULT_TARGET/$TARGET/g" docker-compose.yaml
     fi
     tar -cf install.tar *
+    ssh $USER@$TARGET -p $PORT 'mkdir -p ~/dev/smart-home'
     scp -P $PORT install.tar $USER@$TARGET:$TARGET_FOLDER
     ssh $USER@$TARGET -p $PORT 'cd ~/dev/smart-home && ls && tar xf install.tar && rm install.tar && cd setup && sudo bash setup.sh && cd .. && sudo bash run.sh && echo "Deployment finished."'
   )
