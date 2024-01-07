@@ -89,7 +89,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.1.2",
       "targets": [
         {
           "datasource": {
@@ -197,7 +197,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.1.2",
       "targets": [
         {
           "alias": "Office",
@@ -760,7 +760,7 @@
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -774,6 +774,6 @@
   "timezone": "",
   "title": "Overview",
   "uid": "overview",
-  "version": 16,
+  "version": 17,
   "weekStart": ""
 }

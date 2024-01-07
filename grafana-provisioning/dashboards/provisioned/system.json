@@ -33,6 +33,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the host's current CPU temperature.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -81,7 +82,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.1.2",
       "targets": [
         {
           "datasource": {
@@ -125,7 +126,6 @@
         }
       ],
       "title": "CPU Temp",
-      "description": "Displays the host's current CPU temperature.",
       "type": "gauge"
     },
     {
@@ -133,6 +133,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the host's CPU temperature over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -152,6 +153,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineStyle": {
               "fill": "solid"
@@ -161,8 +163,8 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
-            "spanNulls": false,
+            "showPoints": "never",
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -258,7 +260,6 @@
         }
       ],
       "title": "CPU Temp",
-      "description": "Displays the host's CPU temperature over time.",
       "type": "timeseries"
     },
     {
@@ -266,6 +267,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the host's current CPU usage.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -314,7 +316,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.1.2",
       "targets": [
         {
           "datasource": {
@@ -358,7 +360,6 @@
         }
       ],
       "title": "CPU usage",
-      "description": "Displays the host's current CPU usage.",
       "type": "gauge"
     },
     {
@@ -366,6 +367,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the host's CPU usage over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -385,14 +387,15 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
-            "spanNulls": false,
+            "showPoints": "never",
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -487,7 +490,6 @@
         }
       ],
       "title": "CPU usage",
-      "description": "Displays the host's CPU usage over time.",
       "type": "timeseries"
     },
     {
@@ -495,6 +497,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the host's current memory usage.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -539,7 +542,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.1.2",
       "targets": [
         {
           "datasource": {
@@ -584,7 +587,6 @@
         }
       ],
       "title": "Memory usage",
-      "description": "Displays the host's current memory usage.",
       "type": "gauge"
     },
     {
@@ -592,6 +594,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the host's memory usage over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -611,14 +614,15 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
-            "spanNulls": false,
+            "showPoints": "never",
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -735,12 +739,11 @@
         }
       ],
       "title": "Memory usage",
-      "description": "Displays the host's memory usage over time.",
       "type": "timeseries"
     }
   ],
   "refresh": "",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -754,6 +757,6 @@
   "timezone": "",
   "title": "System",
   "uid": "system",
-  "version": 6,
+  "version": 8,
   "weekStart": ""
 }

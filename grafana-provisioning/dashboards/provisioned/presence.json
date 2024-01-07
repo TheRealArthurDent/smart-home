@@ -380,7 +380,7 @@
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -394,6 +394,6 @@
   "timezone": "",
   "title": "Presence",
   "uid": "presence",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
