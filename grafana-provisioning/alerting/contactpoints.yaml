@@ -16,8 +16,12 @@ contactPoints:
         settings:
           # <string, required>
           bottoken: $__file{/etc/secrets/telegram_bottoken}
+          # ChatId masked as a "multiline" string to make ure it's a string.
+          # Otherwise the file's content could be interpreted as a number
+          # while grafana expects a string.
           # <string, required>
-          chatid: $__file{/etc/secrets/telegram_chatid}
+          chatid: > 
+            $__file{/etc/secrets/telegram_chatid}
           # <string>
           #message: |
           #  {{ template "default.message" . }}
