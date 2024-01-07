@@ -33,7 +33,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
-      "description": "",
+      "description": "Displays the current position of every shutter.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -348,7 +348,6 @@
         }
       ],
       "title": "Position",
-      "description": "Displays the current position of every shutter.",
       "transparent": true,
       "type": "bargauge"
     },
@@ -623,6 +622,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the position of every shutter over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -672,7 +672,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -908,6 +909,7 @@
         }
       ],
       "timeFrom": "7d",
+      "title": "Position graph",
       "transparent": true,
       "type": "timeseries"
     },
