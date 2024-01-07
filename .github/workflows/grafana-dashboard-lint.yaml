@@ -3,6 +3,8 @@ name: Grafana Dashboard Lint
 # See: https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
   repository_dispatch:
@@ -31,5 +33,5 @@ jobs:
           for FILE in grafana-provisioning/dashboards/provisioned/*.json
           do
             echo "Linting $FILE"
-            dashboard-linter lint $FILE --strict --verbose; 
+            dashboard-linter lint $FILE --strict --verbose;
           done
