@@ -752,7 +752,7 @@
       },
       "targets": [
         {
-          "alias": "Wakup",
+          "alias": "Wakeup",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"

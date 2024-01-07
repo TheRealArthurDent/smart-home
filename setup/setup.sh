@@ -39,4 +39,3 @@ if [ ! -f "$TELEGRAF_PATH" ]; then
    cp telegraf/cpu_temp.sh $TELEGRAF_PATH/cpu_temp.sh
    chmod 550 $TELEGRAF_PATH/cpu_temp.sh
 fi
-

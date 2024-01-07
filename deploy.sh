@@ -35,10 +35,6 @@ if [ -z "$USER" ]; then
   fi
 fi
 
-echo Synching clocks
-sudo ntpdate pool.ntp.org
-ssh $USER@$TARGET -p $PORT 'timedatectl'
-
 echo "Deploying $ARTIFACT to $TARGET..."
 
 TARGET_FOLDER=dev/$ARTIFACT
