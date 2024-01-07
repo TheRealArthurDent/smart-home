@@ -13,7 +13,7 @@ fi
 if [ -z "$PORT" ]; then
   if [ "$TARGET" = "$DEFAULT_TARGET" ]; then
     PORT="1357"
-  elif [ "$TARGET" = "raspi2" ]; then
+  elif [ "$TARGET" = "himbeere" ]; then
     PORT="1357"
   elif [ "$TARGET" = "erdbeere" ]; then
     PORT="1358"
@@ -24,9 +24,9 @@ if [ -z "$PORT" ]; then
 fi
 if [ -z "$USER" ]; then
   if [ "$TARGET" = "$DEFAULT_TARGET" ]; then
-    USER="pi"
-  elif [ "$TARGET" = "raspi2" ]; then
     USER="smarthome"
+  elif [ "$TARGET" = "himbeere" ]; then
+    USER="pi"
   elif [ "$TARGET" = "erdbeere" ]; then
     USER="held"
   else
@@ -43,7 +43,7 @@ echo "Deploying $ARTIFACT to $TARGET..."
 
 TARGET_FOLDER=dev/$ARTIFACT
 
-ssh $USER@$TARGET -p $PORT 'mkdir -p ~/dev/$ARTIFACT'
+ssh $USER@$TARGET -p $PORT 'mkdir -p ~/$TARGET_FOLDER'
 
 echo "Deleting old tmp folders"
 find /tmp -type d -regextype egrep -iregex "/tmp/$ARTIFACT-[a-z0-9]+" -mtime +30 -exec rm -rf {} + 2>/dev/null
