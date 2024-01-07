@@ -60,7 +60,7 @@ services:
   # influx db
   influxdb:
     container_name: influxdb
-    image: influxdb:1.8 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
+    image: influxdb:1.8.10 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
     #pull_policy: always
     restart: unless-stopped
     environment:
@@ -100,7 +100,7 @@ services:
   telegraf:
     hostname: telegraf
     container_name: telegraf
-    image: telegraf:1.28 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
+    image: telegraf:1.29 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
     #pull_policy: always
     restart: unless-stopped
     volumes:
@@ -118,12 +118,13 @@ services:
   grafana:
     hostname: grafana
     container_name: grafana
-    image: grafana/grafana:10.1.2
+    image: grafana/grafana:10.2.3
     #pull_policy: always
     restart: unless-stopped
     volumes:
       - grafana-storage:/var/lib/grafana
       - ./grafana-provisioning/:/etc/grafana/provisioning
+      - /etc/docker/smart-home/secrets/:/etc/secrets/:ro
     depends_on:
       - influxdb
     environment:

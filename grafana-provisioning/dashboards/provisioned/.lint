@@ -1,0 +1,9 @@
+exclusions:
+  template-datasource-rule:
+    reason: Only works for Prometheus or Loki datasources.
+  panel-datasource-rule:
+    reason: Apparently I am too stupid to get the idea of it.
+  panel-title-description-rule:
+    reason: Sometimes a dashboard looks cleaner without a title.
+    entries:
+    - dashboard: Battery levels

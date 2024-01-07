@@ -1,0 +1,81 @@
+# config file version
+apiVersion: 1
+
+# List of rule groups to import or update
+groups:
+  # <int> organization ID, default = 1
+  - orgId: 1
+    # <string, required> name of the rule group
+    name: Host
+    # <string, required> name of the folder the rule group will be stored in
+    folder: General Alerting
+    # <duration, required> interval that the rule group should evaluated at
+    interval: 5m
+    # <list, required> list of rules that are part of the rule group
+    rules:
+      # <string, required> unique identifier for the rule
+      - uid: host_disc_usage_percent
+        # <string, required> title of the rule that will be displayed in the UI
+        allowUiUpdates: true
+        title: Host disc usage alert percent
+        # <string, required> which query should be used for the condition
+        condition: A
+        # <list, required> list of query objects that should be executed on each
+        #                  evaluation - should be obtained through the API
+        data:
+          - refId: A
+            datasourceUid: 'InfluxDB'
+            relativeTimeRange:
+              from: 600
+              to: 0
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 3
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+                  type: query
+              datasource:
+                type: InfluxDB
+                uid: InfluxDB
+                version: Flux
+                #uid: '__expr__'
+              #expression: SELECT mean("free") / 1073741824 FROM influx.autogen.disk WHERE $timeFilter GROUP BY time($__interval) fill(null)
+              #expression: SELECT mean(free) FROM influx.autogen.disk WHERE time >= 1675382101308ms AND time <= 1675382701308ms GROUP BY time(1s) ORDER BY time ASC
+              #expression: FROM default disk WHERE SELECT field(free) mean() math(/ 1073741824) GROUP BY time($__interval) fill(null)
+              rawQuery: true
+              query: SELECT mean(free) / 1073741824 FROM influx.autogen.disk WHERE $timeFilter GROUP BY time($__interval) fill(null)
+              intervalMs: 10000
+              maxDataPoints: 43200
+              refId: A
+              type: math
+        # <string> UID of a dashboard that the alert rule should be linked to
+        dashboardUid: overview
+        # <int> ID of the panel that the alert rule should be linked to
+        panelId: 6
+        # <string> the state the alert rule will have when no data is returned
+        #          possible values: "NoData", "Alerting", "OK", default = NoData
+        noDataState: NoData
+        # <string> the state the alert rule will have when the query execution
+        #          failed - possible values: "Error", "Alerting", "OK"
+        #          default = Alerting
+        # <duration, required> for how long should the alert fire before alerting
+        for: 15m
+        # <map<string, string>> a map of strings to pass around any data
+        annotations:
+          some_key: some_value
+          summary: Free disc space has dropped below 5 GB.
+
+        # <map<string, string> a map of strings that can be used to filter and
+        #                      route alerts
+        labels:
+          team: sre_team_1
+        message: |
+          Free disc space has dropped below 5 GB.

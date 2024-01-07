@@ -1,0 +1,27 @@
+# config file version
+apiVersion: 1
+
+# List of contact points to import or update
+contactPoints:
+  # <int> organization ID, default = 1
+  - orgId: 1
+    # <string, required> name of the contact point
+    name: telegram
+    receivers:
+      # <string, required> unique identifier for the receiver
+      - uid: telegram
+        # <string, required> type of the receiver
+        type: telegram
+        # <object, required> settings for the specific receiver type
+        settings:
+          # <string, required>
+          bottoken: $__file{/etc/secrets/telegram_bottoken}
+          # ChatId masked as a "multiline" string to make sure it's a string.
+          # Otherwise the file's content could be interpreted as a number
+          # while grafana expects a string.
+          # <string, required>
+          chatid: >
+            $__file{/etc/secrets/telegram_chatid}
+          # <string>
+          #message: |
+          #  {{ template "default.message" . }}
