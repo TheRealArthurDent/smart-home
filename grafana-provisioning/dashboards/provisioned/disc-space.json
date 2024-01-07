@@ -69,6 +69,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the disc usage over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
