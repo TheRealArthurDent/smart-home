@@ -27,7 +27,6 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -758,7 +757,6 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
