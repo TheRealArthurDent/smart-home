@@ -376,6 +376,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "Displays the position of shutters over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -673,7 +674,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
-      "description": "",
+      "description": "Displays the status and brightness of lights over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
