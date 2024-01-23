@@ -4,7 +4,7 @@ services:
   iobroker:
     hostname: iobroker
     container_name: iobroker
-    image: buanet/iobroker:v9.0.1
+    image: buanet/iobroker:v9.1.0
     #pull_policy: always
     restart: unless-stopped
     volumes:
