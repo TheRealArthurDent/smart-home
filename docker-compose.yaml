@@ -5,11 +5,15 @@ services:
     hostname: iobroker
     container_name: iobroker
     image: buanet/iobroker:v9.1.0
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - iobroker-storage:/opt/iobroker
       - ./setup/iobroker/userscript_firststart.sh:/opt/userscripts/userscript_firststart.sh
+    env_file:
+      - /etc/docker/smart-home/.env
+    environment:
+      - GITHUB_USER=${GITHUB_USER}
+      - GITHUB_EMAIL=${GITHUB_EMAIL}
     networks:
       - siz # accessibility by nginx
       - smart-home # influxdb, mqtt
@@ -21,15 +25,14 @@ services:
     hostname: deconz
     container_name: deconz
     image: deconzcommunity/deconz:2.24.3
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - deconz-storage:/opt/deCONZ
       - ikea-tradfri-firmware-storage:/opt/deCONZ/otau
-    env_file:
-      - /etc/docker/smart-home/.env
     devices:
       - /dev/${DECONZ_DEVICE_TYPE}:/dev/ttyACM0
+    env_file:
+      - /etc/docker/smart-home/.env
     environment:
       - TZ='Europe/Berlin'
       #DECONZ_DEVICE=/dev/ttyACM0
@@ -61,7 +64,6 @@ services:
   influxdb:
     container_name: influxdb
     image: influxdb:1.8.10 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
-    #pull_policy: always
     restart: unless-stopped
     environment:
       - INFLUXDB_DB=influx
@@ -83,7 +85,6 @@ services:
     hostname: chronograf
     container_name: chronograf
     image: chronograf:1.10 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - chronograf-storage:/var/lib/chronograf
@@ -101,7 +102,6 @@ services:
     hostname: telegraf
     container_name: telegraf
     image: telegraf:1.29 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - /etc/docker/smart-home/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
@@ -119,7 +119,6 @@ services:
     hostname: grafana
     container_name: grafana
     image: grafana/grafana:10.2.3
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - grafana-storage:/var/lib/grafana
