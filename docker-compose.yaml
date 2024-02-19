@@ -5,31 +5,74 @@ services:
     hostname: iobroker
     container_name: iobroker
     image: buanet/iobroker:v9.1.1
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - iobroker-storage:/opt/iobroker
       - ./setup/iobroker/userscript_firststart.sh:/opt/userscripts/userscript_firststart.sh
+    env_file:
+      - /etc/docker/smart-home/.env
+    environment:
+      - GITHUB_USER=${GITHUB_USER}
+      - GITHUB_EMAIL=${GITHUB_EMAIL}
     networks:
       - siz # accessibility by nginx
       - smart-home # influxdb, mqtt
       - outbound # internet
     dns:
       - 172.30.1.153
+  # redis-overcommit-on-host - solves https://github.com/jemalloc/jemalloc/issues/1328
+  redis-overcommit:
+    container_name: redis-overcommit
+    build: https://github.com/bkuhl/redis-overcommit-on-host.git
+    restart: "no"
+    privileged: true
+    volumes:
+      - /proc/sys/vm:/mnt/vm
+  iobroker-states-redis:
+    hostname: iobroker-states-redis
+    container_name: iobroker-states-redis
+    image: redis:7.2.4-alpine
+    restart: unless-stopped
+    depends_on:
+      - redis-overcommit
+    env_file:
+      - /etc/docker/smart-home/.env
+    command: redis-server --save 300 1 --loglevel warning --port ${IOBROKER_STATES_REDIS_PORT}
+    volumes:
+      - iobroker-states-redis-storage:/data
+    networks:
+      - smart-home
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-p", "${IOBROKER_STATES_REDIS_PORT}", "--raw", "incr", "ping" ]
+  iobroker-objects-redis:
+    hostname: iobroker-objects-redis
+    container_name: iobroker-objects-redis
+    image: redis:7.2.4-alpine
+    restart: unless-stopped
+    depends_on:
+      - redis-overcommit
+    env_file:
+      - /etc/docker/smart-home/.env
+    command: redis-server --save 300 1 --loglevel warning --port ${IOBROKER_OBJECTS_REDIS_PORT}
+    volumes:
+      - iobroker-objects-redis-storage:/data
+    networks:
+      - smart-home
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-p", "${IOBROKER_OBJECTS_REDIS_PORT}", "--raw", "incr", "ping" ]
   # deConz
   deconz:
     hostname: deconz
     container_name: deconz
     image: deconzcommunity/deconz:2.25.3
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - deconz-storage:/opt/deCONZ
       - ikea-tradfri-firmware-storage:/opt/deCONZ/otau
-    env_file:
-      - /etc/docker/smart-home/.env
     devices:
       - /dev/${DECONZ_DEVICE_TYPE}:/dev/ttyACM0
+    env_file:
+      - /etc/docker/smart-home/.env
     environment:
       - TZ='Europe/Berlin'
       #DECONZ_DEVICE=/dev/ttyACM0
@@ -61,7 +104,6 @@ services:
   influxdb:
     container_name: influxdb
     image: influxdb:1.8.10 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
-    #pull_policy: always
     restart: unless-stopped
     environment:
       - INFLUXDB_DB=influx
@@ -83,7 +125,6 @@ services:
     hostname: chronograf
     container_name: chronograf
     image: chronograf:1.10 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - chronograf-storage:/var/lib/chronograf
@@ -101,7 +142,6 @@ services:
     hostname: telegraf
     container_name: telegraf
     image: telegraf:1.29 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - /etc/docker/smart-home/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
@@ -119,7 +159,6 @@ services:
     hostname: grafana
     container_name: grafana
     image: grafana/grafana:10.3.1
-    #pull_policy: always
     restart: unless-stopped
     volumes:
       - grafana-storage:/var/lib/grafana
@@ -159,6 +198,8 @@ services:
       - smart-home
 volumes:
   iobroker-storage:
+  iobroker-states-redis-storage:
+  iobroker-objects-redis-storage:
   influxdb-storage:
   chronograf-storage:
   grafana-storage:
