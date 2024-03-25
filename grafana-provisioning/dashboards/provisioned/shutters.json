@@ -183,7 +183,7 @@
           "tags": []
         },
         {
-          "alias": "Terrasse",
+          "alias": "Terrace",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -448,7 +448,7 @@
           "tags": []
         },
         {
-          "alias": "Terrasse",
+          "alias": "Terrace",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -740,7 +740,7 @@
           "tags": []
         },
         {
-          "alias": "Terrasse",
+          "alias": "Terrace",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -1174,7 +1174,7 @@
           "tags": []
         },
         {
-          "alias": "Terrasse",
+          "alias": "Terrace",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"

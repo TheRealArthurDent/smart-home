@@ -40,6 +40,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -82,7 +83,8 @@
               }
             ]
           },
-          "unit": "celsius"
+          "unit": "celsius",
+          "unitScale": true
         },
         "overrides": []
       },
@@ -148,7 +150,7 @@
           "tags": []
         },
         {
-          "alias": "Sleepingroom",
+          "alias": "Bedroom",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -168,7 +170,7 @@
             }
           ],
           "hide": false,
-          "measurement": "sensors.0.sleepingroom.temperature",
+          "measurement": "sensors.0.bedroom.temperature",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "B",
@@ -232,7 +234,7 @@
           "tags": []
         },
         {
-          "alias": "Terrasse",
+          "alias": "Terrace",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -332,6 +334,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -383,7 +386,8 @@
               }
             ]
           },
-          "unit": "humidity"
+          "unit": "humidity",
+          "unitScale": true
         },
         "overrides": []
       },
@@ -533,7 +537,7 @@
           "tags": []
         },
         {
-          "alias": "Terrasse",
+          "alias": "Terrace",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -633,6 +637,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -678,7 +683,8 @@
               }
             ]
           },
-          "unit": "lux"
+          "unit": "lux",
+          "unitScale": true
         },
         "overrides": []
       },
@@ -792,8 +798,7 @@
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 38,
-  "style": "dark",
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": []
@@ -806,6 +811,6 @@
   "timezone": "",
   "title": "Sensors",
   "uid": "sensors",
-  "version": 13,
+  "version": 14,
   "weekStart": ""
 }

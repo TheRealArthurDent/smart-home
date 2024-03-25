@@ -241,7 +241,7 @@
           "tags": []
         },
         {
-          "alias": "Terrasse",
+          "alias": "Terrace",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
