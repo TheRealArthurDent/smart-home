@@ -1,0 +1,7 @@
+## Template file if you ever have to drop an alerting rule.
+#apiVersion: 1
+#
+## List of alert rule UIDs that should be deleted
+#deleteRules:
+#  - orgId: 1
+#    uid: host_disc_usage_percent

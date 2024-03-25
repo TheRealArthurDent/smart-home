@@ -14,68 +14,83 @@ groups:
     # <list, required> list of rules that are part of the rule group
     rules:
       # <string, required> unique identifier for the rule
-      - uid: host_disc_usage_percent
+      - uid: host_disc_free_space
         # <string, required> title of the rule that will be displayed in the UI
         allowUiUpdates: true
-        title: Host disc usage alert percent
+        title: Host disc free space
         # <string, required> which query should be used for the condition
-        condition: A
-        # <list, required> list of query objects that should be executed on each
-        #                  evaluation - should be obtained through the API
+        condition: B
         data:
           - refId: A
-            datasourceUid: 'InfluxDB'
             relativeTimeRange:
               from: 600
               to: 0
+            datasourceUid: InfluxDB
+            model:
+              datasource:
+                type: influxdb
+                uid: InfluxDB
+              groupBy:
+                - params:
+                    - $__interval
+                  type: time
+                - params:
+                    - "null"
+                  type: fill
+              hide: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+              measurement: disk
+              orderByTime: ASC
+              policy: default
+              refId: A
+              resultFormat: time_series
+              select:
+                - - params:
+                      - free
+                    type: field
+                  - params: []
+                    type: mean
+                  - params:
+                      - ' / 1073741824'
+                    type: math
+              tags: []
+          - refId: B
+            datasourceUid: __expr__
             model:
               conditions:
                 - evaluator:
                     params:
-                      - 3
-                    type: gt
+                      - 50
+                      - 0
+                    type: lt
                   operator:
                     type: and
                   query:
                     params:
                       - A
                   reducer:
+                    params: []
                     type: last
                   type: query
               datasource:
-                type: InfluxDB
-                uid: InfluxDB
-                version: Flux
-                #uid: '__expr__'
-              #expression: SELECT mean("free") / 1073741824 FROM influx.autogen.disk WHERE $timeFilter GROUP BY time($__interval) fill(null)
-              #expression: SELECT mean(free) FROM influx.autogen.disk WHERE time >= 1675382101308ms AND time <= 1675382701308ms GROUP BY time(1s) ORDER BY time ASC
-              #expression: FROM default disk WHERE SELECT field(free) mean() math(/ 1073741824) GROUP BY time($__interval) fill(null)
-              rawQuery: true
-              query: SELECT mean(free) / 1073741824 FROM influx.autogen.disk WHERE $timeFilter GROUP BY time($__interval) fill(null)
-              intervalMs: 10000
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: ""
+              hide: false
+              intervalMs: 1000
               maxDataPoints: 43200
-              refId: A
-              type: math
-        # <string> UID of a dashboard that the alert rule should be linked to
-        dashboardUid: overview
-        # <int> ID of the panel that the alert rule should be linked to
-        panelId: 6
-        # <string> the state the alert rule will have when no data is returned
-        #          possible values: "NoData", "Alerting", "OK", default = NoData
+              refId: B
+              type: classic_conditions
+        dashboardUid: disc-space
+        panelId: 2
         noDataState: NoData
-        # <string> the state the alert rule will have when the query execution
-        #          failed - possible values: "Error", "Alerting", "OK"
-        #          default = Alerting
-        # <duration, required> for how long should the alert fire before alerting
+        execErrState: Alerting
         for: 15m
-        # <map<string, string>> a map of strings to pass around any data
         annotations:
-          some_key: some_value
-          summary: Free disc space has dropped below 5 GB.
-
-        # <map<string, string> a map of strings that can be used to filter and
-        #                      route alerts
-        labels:
-          team: sre_team_1
-        message: |
-          Free disc space has dropped below 5 GB.
+          __dashboardUid__: disc-space
+          __panelId__: "2"
+          summary: Free disc space has dropped below 50 GB.
+        labels: {}
+        isPaused: false
