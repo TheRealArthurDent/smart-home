@@ -39,13 +39,12 @@ groups:
                 - params:
                     - "null"
                   type: fill
-              intervalMs: 1000
+              intervalMs: 86400000
               limit: ""
-              maxDataPoints: 43200
+              maxDataPoints: 1
               measurement: sensors.0.livingroom.reachable
               orderByTime: ASC
               policy: default
-              query: SELECT mean("value") FROM "sensors.0.livingroom.reachable" WHERE $timeFilter GROUP BY time($__interval) fill(null)
               rawQuery: false
               rawSql: ""
               refId: A
@@ -55,7 +54,7 @@ groups:
                       - value
                     type: field
                   - params: [ ]
-                    type: mean
+                    type: last
               slimit: ""
               tags: [ ]
               tz: ""
@@ -82,12 +81,12 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: A
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               reducer: last
               refId: B
               settings:
-                mode: ""
+                mode: dropNN
               type: reduce
           - refId: C
             relativeTimeRange:
@@ -119,8 +118,8 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: B
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               refId: C
               type: threshold
         dashboardUid: battery-levels
@@ -158,13 +157,12 @@ groups:
                 - params:
                     - "null"
                   type: fill
-              intervalMs: 1000
+              intervalMs: 86400000
               limit: ""
-              maxDataPoints: 43200
+              maxDataPoints: 1
               measurement: sensors.0.bedroom.reachable
               orderByTime: ASC
               policy: default
-              query: SELECT mean("value") FROM "sensors.0.bedroom.reachable" WHERE $timeFilter GROUP BY time($__interval) fill(null)
               rawQuery: false
               rawSql: ""
               refId: A
@@ -174,7 +172,7 @@ groups:
                       - value
                     type: field
                   - params: [ ]
-                    type: mean
+                    type: last
               slimit: ""
               tags: [ ]
               tz: ""
@@ -201,12 +199,12 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: A
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               reducer: last
               refId: B
               settings:
-                mode: ""
+                mode: dropNN
               type: reduce
           - refId: C
             relativeTimeRange:
@@ -238,8 +236,8 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: B
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               refId: C
               type: threshold
         dashboardUid: battery-levels
@@ -277,13 +275,12 @@ groups:
                 - params:
                     - "null"
                   type: fill
-              intervalMs: 1000
+              intervalMs: 86400000
               limit: ""
-              maxDataPoints: 43200
+              maxDataPoints: 1
               measurement: sensors.0.office.reachable
               orderByTime: ASC
               policy: default
-              query: SELECT mean("value") FROM "sensors.0.office.reachable" WHERE $timeFilter GROUP BY time($__interval) fill(null)
               rawQuery: false
               rawSql: ""
               refId: A
@@ -293,7 +290,7 @@ groups:
                       - value
                     type: field
                   - params: [ ]
-                    type: mean
+                    type: last
               slimit: ""
               tags: [ ]
               tz: ""
@@ -320,12 +317,12 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: A
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               reducer: last
               refId: B
               settings:
-                mode: ""
+                mode: dropNN
               type: reduce
           - refId: C
             relativeTimeRange:
@@ -357,8 +354,8 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: B
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               refId: C
               type: threshold
         dashboardUid: battery-levels
@@ -396,13 +393,12 @@ groups:
                 - params:
                     - "null"
                   type: fill
-              intervalMs: 1000
+              intervalMs: 86400000
               limit: ""
-              maxDataPoints: 43200
+              maxDataPoints: 1
               measurement: sensors.outside.0.reachable
               orderByTime: ASC
               policy: default
-              query: SELECT mean("value") FROM "sensors.outside.0.reachable" WHERE $timeFilter GROUP BY time($__interval) fill(null)
               rawQuery: false
               rawSql: ""
               refId: A
@@ -412,7 +408,7 @@ groups:
                       - value
                     type: field
                   - params: [ ]
-                    type: mean
+                    type: last
               slimit: ""
               tags: [ ]
               tz: ""
@@ -439,12 +435,12 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: A
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               reducer: last
               refId: B
               settings:
-                mode: ""
+                mode: dropNN
               type: reduce
           - refId: C
             relativeTimeRange:
@@ -476,8 +472,8 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: B
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               refId: C
               type: threshold
         dashboardUid: battery-levels
@@ -515,13 +511,12 @@ groups:
                 - params:
                     - "null"
                   type: fill
-              intervalMs: 1000
+              intervalMs: 86400000
               limit: ""
-              maxDataPoints: 43200
+              maxDataPoints: 1
               measurement: sensors.0.garden.reachable
               orderByTime: ASC
               policy: default
-              query: SELECT mean("value") FROM "sensors.0.garden.reachable" WHERE $timeFilter GROUP BY time($__interval) fill(null)
               rawQuery: false
               rawSql: ""
               refId: A
@@ -531,7 +526,7 @@ groups:
                       - value
                     type: field
                   - params: [ ]
-                    type: mean
+                    type: last
               slimit: ""
               tags: [ ]
               tz: ""
@@ -558,12 +553,12 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: A
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               reducer: last
               refId: B
               settings:
-                mode: ""
+                mode: dropNN
               type: reduce
           - refId: C
             relativeTimeRange:
@@ -595,8 +590,8 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: B
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               refId: C
               type: threshold
         dashboardUid: battery-levels
@@ -635,13 +630,12 @@ groups:
                 - params:
                     - "null"
                   type: fill
-              intervalMs: 1000
+              intervalMs: 86400000
               limit: ""
-              maxDataPoints: 43200
+              maxDataPoints: 1
               measurement: sensors.light.livingroom.reachable
               orderByTime: ASC
               policy: default
-              query: SELECT mean("value") FROM "sensors.light.livingroom.reachable" WHERE $timeFilter GROUP BY time($__interval) fill(null)
               rawQuery: false
               rawSql: ""
               refId: A
@@ -651,7 +645,7 @@ groups:
                       - value
                     type: field
                   - params: [ ]
-                    type: mean
+                    type: last
               slimit: ""
               tags: [ ]
               tz: ""
@@ -678,12 +672,12 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: A
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               reducer: last
               refId: B
               settings:
-                mode: ""
+                mode: dropNN
               type: reduce
           - refId: C
             relativeTimeRange:
@@ -715,8 +709,8 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: B
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               refId: C
               type: threshold
         dashboardUid: battery-levels
@@ -754,13 +748,12 @@ groups:
                 - params:
                     - "null"
                   type: fill
-              intervalMs: 1000
+              intervalMs: 86400000
               limit: ""
-              maxDataPoints: 43200
+              maxDataPoints: 1
               measurement: sensors.light.office.reachable
               orderByTime: ASC
               policy: default
-              query: SELECT mean("value") FROM "sensors.light.office.reachable" WHERE $timeFilter GROUP BY time($__interval) fill(null)
               rawQuery: false
               rawSql: ""
               refId: A
@@ -770,7 +763,7 @@ groups:
                       - value
                     type: field
                   - params: [ ]
-                    type: mean
+                    type: last
               slimit: ""
               tags: [ ]
               tz: ""
@@ -797,12 +790,12 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: A
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               reducer: last
               refId: B
               settings:
-                mode: ""
+                mode: dropNN
               type: reduce
           - refId: C
             relativeTimeRange:
@@ -834,8 +827,8 @@ groups:
                 type: __expr__
                 uid: __expr__
               expression: B
-              intervalMs: 1000
-              maxDataPoints: 43200
+              intervalMs: 86400000
+              maxDataPoints: 1
               refId: C
               type: threshold
         dashboardUid: battery-levels
