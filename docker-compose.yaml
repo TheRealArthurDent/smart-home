@@ -169,7 +169,6 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-      - GF_INSTALL_PLUGINS=natel-discrete-panel
     networks:
       - siz # accessibility by nginx
       - smart-home # get data from influxdb
