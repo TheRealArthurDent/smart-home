@@ -29,63 +29,85 @@
   "liveNow": false,
   "panels": [
     {
-      "backgroundColor": "rgba(128,128,128,0.1)",
-      "colorMaps": [
-        {
-          "$$hashKey": "object:934",
-          "color": "#CCC",
-          "text": "N/A"
-        },
-        {
-          "$$hashKey": "object:504",
-          "color": "#73BF69",
-          "text": "present"
-        },
-        {
-          "$$hashKey": "object:507",
-          "color": "#FFB357",
-          "text": "away"
-        }
-      ],
-      "crosshairColor": "#8F070C",
       "datasource": {
         "type": "influxdb",
         "uid": "InfluxDB"
       },
-      "display": "timeline",
-      "expandFromQueryS": 0,
-      "extendLastValue": true,
+      "description": "Displays the presence of several devices over time.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "fillOpacity": 100,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "false": {
+                  "color": "light-orange",
+                  "index": 0,
+                  "text": "away"
+                },
+                "null": {
+                  "color": "#cccccc",
+                  "index": 2,
+                  "text": "N/A"
+                },
+                "true": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "present"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
-        "h": 17,
+        "h": 12,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "highlightOnMouseover": true,
-      "id": 2,
-      "legendPercentDecimals": 0,
-      "legendSortBy": "-ms",
-      "lineColor": "rgba(0,0,0,0.1)",
-      "metricNameColor": "#000000",
-      "pluginVersion": "7.3.7",
-      "rangeMaps": [
-        {
-          "$$hashKey": "object:925",
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
+      "id": 3,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.95,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
-      ],
-      "rowHeight": 26,
-      "showDistinctCount": false,
-      "showLegend": true,
-      "showLegendCounts": false,
-      "showLegendNames": true,
-      "showLegendPercent": true,
-      "showLegendTime": true,
-      "showLegendValues": true,
-      "showTimeAxis": true,
-      "showTransitionCount": false,
+      },
+      "pluginVersion": "7.3.7",
       "targets": [
         {
           "alias": "Presence",
@@ -305,83 +327,13 @@
           "tags": []
         }
       ],
-      "textSize": 16,
-      "textSizeTime": 12,
-      "timeOptions": [
-        {
-          "name": "Years",
-          "value": "years"
-        },
-        {
-          "name": "Months",
-          "value": "months"
-        },
-        {
-          "name": "Weeks",
-          "value": "weeks"
-        },
-        {
-          "name": "Days",
-          "value": "days"
-        },
-        {
-          "name": "Hours",
-          "value": "hours"
-        },
-        {
-          "name": "Minutes",
-          "value": "minutes"
-        },
-        {
-          "name": "Seconds",
-          "value": "seconds"
-        },
-        {
-          "name": "Milliseconds",
-          "value": "milliseconds"
-        }
-      ],
-      "timePrecision": {
-        "name": "Minutes",
-        "value": "minutes"
-      },
-      "timeTextColor": "#d8d9da",
       "title": "Presence",
-      "description": "Displays the presence of several devices over time.",
       "transparent": true,
-      "type": "natel-discrete-panel",
-      "units": "short",
-      "use12HourClock": false,
-      "useTimePrecision": false,
-      "valueMaps": [
-        {
-          "$$hashKey": "object:923",
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        },
-        {
-          "$$hashKey": "object:500",
-          "op": "=",
-          "text": "present",
-          "value": "true"
-        },
-        {
-          "$$hashKey": "object:502",
-          "op": "=",
-          "text": "away",
-          "value": "false"
-        }
-      ],
-      "valueTextColor": "#000000",
-      "writeAllValues": false,
-      "writeLastValue": true,
-      "writeMetricNames": true
+      "type": "state-timeline"
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 38,
-  "style": "dark",
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": []
@@ -394,6 +346,6 @@
   "timezone": "",
   "title": "Presence",
   "uid": "presence",
-  "version": 4,
+  "version": 5,
   "weekStart": ""
 }
