@@ -121,22 +121,22 @@ services:
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8086/ping" ]
   # chronograf (influx admin ui)
-  chronograf:
-    hostname: chronograf
-    container_name: chronograf
-    image: chronograf:1.10 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
-    restart: unless-stopped
-    volumes:
-      - chronograf-storage:/var/lib/chronograf
-    depends_on:
-      - influxdb
-    environment:
-      - INFLUXDB_URL=http://influxdb:8086
-      - INFLUXDB_USERNAME=admin
-      - INFLUXDB_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
-    networks:
-      - siz # accessibility by nginx
-      - smart-home # influxdb
+  #chronograf:
+  #  hostname: chronograf
+  #  container_name: chronograf
+  #  image: chronograf:1.10 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
+  #  restart: unless-stopped
+  #  volumes:
+  #    - chronograf-storage:/var/lib/chronograf
+  #  depends_on:
+  #    - influxdb
+  #  environment:
+  #    - INFLUXDB_URL=http://influxdb:8086
+  #    - INFLUXDB_USERNAME=admin
+  #    - INFLUXDB_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+  #  networks:
+  #    - siz # accessibility by nginx
+  #    - smart-home # influxdb
   # telegraf (export from mqtt to influx)
   telegraf:
     hostname: telegraf
@@ -200,7 +200,7 @@ volumes:
   iobroker-states-redis-storage:
   iobroker-objects-redis-storage:
   influxdb-storage:
-  chronograf-storage:
+  #chronograf-storage:
   grafana-storage:
   deconz-storage:
   ikea-tradfri-firmware-storage:
