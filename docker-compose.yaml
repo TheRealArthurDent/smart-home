@@ -23,7 +23,8 @@ services:
   # redis-overcommit-on-host - solves https://github.com/jemalloc/jemalloc/issues/1328
   redis-overcommit:
     container_name: redis-overcommit
-    build: https://github.com/bkuhl/redis-overcommit-on-host.git
+    build:
+      context: https://github.com/bkuhl/redis-overcommit-on-host.git
     restart: "no"
     privileged: true
     volumes:
@@ -150,6 +151,8 @@ services:
       - /sys:/rootfs/sys:ro
       - /proc:/rootfs/proc:ro
       - /etc:/rootfs/etc:ro
+    user:
+      "telegraf:992"
     depends_on:
       - influxdb
     networks:

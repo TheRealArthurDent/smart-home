@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 17,
+  "id": 9,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -30,7 +30,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-GrYlRd"
+            "mode": "continuous-RdYlGr"
           },
           "mappings": [],
           "thresholds": {
@@ -45,8 +45,7 @@
                 "value": 80
               }
             ]
-          },
-          "unitScale": true
+          }
         },
         "overrides": []
       },
@@ -75,7 +74,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "10.3.3",
+      "pluginVersion": "11.0.0",
       "targets": [
         {
           "alias": "Button | Shutter Bedroom",
@@ -810,8 +809,7 @@
               }
             ]
           },
-          "unit": "percent",
-          "unitScale": true
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -834,6 +832,7 @@
           "sortDesc": false
         },
         "tooltip": {
+          "maxHeight": 600,
           "mode": "single",
           "sort": "none"
         }
@@ -1542,8 +1541,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "dark-red",
-                "value": null
+                "color": "dark-red"
               },
               {
                 "color": "transparent",
@@ -1584,7 +1582,7 @@
       "pluginVersion": "10.3.3",
       "targets": [
         {
-          "alias": "\uD83C\uDF21\uFE0F Livingroom",
+          "alias": "🌡️ Livingroom",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -1626,7 +1624,7 @@
           "tags": []
         },
         {
-          "alias": "\uD83C\uDF21\uFE0F Bedroom",
+          "alias": "🌡️ Bedroom",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -1668,7 +1666,7 @@
           "tags": []
         },
         {
-          "alias": "\uD83C\uDF21\uFE0F Office",
+          "alias": "🌡️ Office",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -1710,7 +1708,7 @@
           "tags": []
         },
         {
-          "alias": "\uD83C\uDF21\uFE0F Terrace",
+          "alias": "🌡️ Terrace",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -1752,7 +1750,7 @@
           "tags": []
         },
         {
-          "alias": "\uD83C\uDF21\uFE0F Garden",
+          "alias": "🌡️ Garden",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -1794,7 +1792,7 @@
           "tags": []
         },
         {
-          "alias": "☀\uFE0F Livingroom",
+          "alias": "☀️ Livingroom",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -1836,7 +1834,7 @@
           "tags": []
         },
         {
-          "alias": "☀\uFE0F Office",
+          "alias": "☀️ Office",
           "datasource": {
             "type": "influxdb",
             "uid": "InfluxDB"
@@ -1894,6 +1892,7 @@
     "from": "now-30d",
     "to": "now"
   },
+  "timeRangeUpdatedDuringEditOrView": false,
   "timepicker": {
     "hidden": true,
     "refresh_intervals": [
@@ -1905,6 +1904,6 @@
   "timezone": "",
   "title": "Battery levels",
   "uid": "battery-levels",
-  "version": 7,
+  "version": 8,
   "weekStart": ""
 }
