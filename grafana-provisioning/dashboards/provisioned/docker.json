@@ -20,7 +20,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 10585,
   "graphTooltip": 0,
-  "id": 19,
+  "id": 20,
   "links": [],
   "panels": [
     {
@@ -28,6 +28,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "The number of docker containers currently running.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -64,7 +65,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
+        "w": 6,
         "x": 0,
         "y": 0
       },
@@ -131,7 +132,7 @@
         }
       ],
       "timeFrom": "now-5m",
-      "title": "Running Docker",
+      "title": "Running Containers",
       "type": "stat"
     },
     {
@@ -139,6 +140,119 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "The number of docker containers currently paused.",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#299c46",
+                "value": null
+              },
+              {
+                "color": "#629e51",
+                "value": 0
+              },
+              {
+                "color": "#bf1b00",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 13,
+      "maxDataPoints": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "docker",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "n_containers_paused"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "timeFrom": "now-5m",
+      "title": "Paused Containers",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "description": "The number of docker containers currently stopped.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -175,8 +289,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
-        "x": 4,
+        "w": 6,
+        "x": 12,
         "y": 0
       },
       "hideTimeOverride": true,
@@ -241,7 +355,7 @@
         }
       ],
       "timeFrom": "now-5m",
-      "title": "Stopped Docker",
+      "title": "Stopped Containers",
       "type": "stat"
     },
     {
@@ -249,6 +363,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "The number of docker images currently cached on this host.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -285,8 +400,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
-        "x": 8,
+        "w": 6,
+        "x": 18,
         "y": 0
       },
       "hideTimeOverride": true,
@@ -359,185 +474,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Status"
-              },
-              {
-                "id": "unit",
-                "value": "short"
-              },
-              {
-                "id": "custom.align"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "short"
-              },
-              {
-                "id": "decimals",
-                "value": 2
-              },
-              {
-                "id": "custom.hidden",
-                "value": true
-              },
-              {
-                "id": "custom.align"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "hideTimeOverride": true,
-      "id": 11,
-      "maxDataPoints": 1,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true
-      },
-      "pluginVersion": "11.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "InfluxDB"
-          },
-          "groupBy": [],
-          "measurement": "docker",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "B",
-          "resultFormat": "table",
-          "select": [
-            [
-              {
-                "params": [
-                  "n_containers_running"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "last"
-              },
-              {
-                "params": [
-                  "running"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "n_containers_paused"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "last"
-              },
-              {
-                "params": [
-                  "paused"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "n_containers_stopped"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "last"
-              },
-              {
-                "params": [
-                  "stopped"
-                ],
-                "type": "alias"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "timeFrom": "5m",
-      "title": "Docker Status",
-      "transformations": [
-        {
-          "id": "merge",
-          "options": {
-            "reducers": []
-          }
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "InfluxDB"
-      },
+      "description": "The CPU usage per container over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -680,6 +617,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "The memory usage per container over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -822,6 +760,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "The RX and TX traffic per container over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1019,6 +958,7 @@
         "type": "influxdb",
         "uid": "InfluxDB"
       },
+      "description": "The disk IO usage per container over time.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1255,6 +1195,6 @@
   "timezone": "",
   "title": "Docker",
   "uid": "docker",
-  "version": 3,
+  "version": 7,
   "weekStart": ""
 }
