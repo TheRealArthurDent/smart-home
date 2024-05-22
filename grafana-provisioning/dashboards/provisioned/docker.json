@@ -899,9 +899,14 @@
               {
                 "params": [],
                 "type": "last"
+              },
+              {
+                "params": [],
+                "type": "non_negative_difference"
               }
             ]
-          ]
+          ],
+          "tags": []
         },
         {
           "alias": "$tag_container_name TX traffic",
@@ -945,9 +950,14 @@
               {
                 "params": [],
                 "type": "last"
+              },
+              {
+                "params": [],
+                "type": "non_negative_difference"
               }
             ]
-          ]
+          ],
+          "tags": []
         }
       ],
       "title": "Traffic",
@@ -1096,10 +1106,15 @@
               },
               {
                 "params": [],
-                "type": "mean"
+                "type": "last"
+              },
+              {
+                "params": [],
+                "type": "non_negative_difference"
               }
             ]
-          ]
+          ],
+          "tags": []
         },
         {
           "alias": "$tag_container_name IO_read",
@@ -1142,10 +1157,15 @@
               },
               {
                 "params": [],
-                "type": "mean"
+                "type": "last"
+              },
+              {
+                "params": [],
+                "type": "non_negative_difference"
               }
             ]
-          ]
+          ],
+          "tags": []
         }
       ],
       "title": "Disk IO",
@@ -1156,8 +1176,7 @@
   "schemaVersion": 39,
   "tags": [
     "Docker",
-    "Telegraf",
-    "InfluxDB"
+    "Telegraf"
   ],
   "templating": {
     "list": []
@@ -1195,6 +1214,6 @@
   "timezone": "",
   "title": "Docker",
   "uid": "docker",
-  "version": 7,
+  "version": 8,
   "weekStart": ""
 }
