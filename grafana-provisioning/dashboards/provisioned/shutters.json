@@ -1091,7 +1091,7 @@
           },
           "mappings": [],
           "max": 80,
-          "min": 40,
+          "min": 30,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1153,8 +1153,6 @@
           "measurement": "shellies.shutter-office.temperature",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT mean(\"value\") FROM \"shellies.shutter-office.temperature\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
-          "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -1347,7 +1345,11 @@
   "refresh": "5m",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "ioBroker",
+    "Shutter",
+    "Shelly"
+  ],
   "templating": {
     "list": []
   },
@@ -1359,6 +1361,6 @@
   "timezone": "",
   "title": "Shutters",
   "uid": "shutters",
-  "version": 24,
+  "version": 25,
   "weekStart": ""
 }

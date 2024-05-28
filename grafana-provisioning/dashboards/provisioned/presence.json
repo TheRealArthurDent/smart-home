@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 58,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -103,6 +103,7 @@
         "rowHeight": 0.95,
         "showValue": "auto",
         "tooltip": {
+          "maxHeight": 600,
           "mode": "single",
           "sort": "none"
         }
@@ -120,7 +121,7 @@
           "measurement": "node-red.0.presence.presence",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "I",
+          "refId": "A",
           "resultFormat": "time_series",
           "select": [
             [
@@ -142,30 +143,6 @@
           },
           "groupBy": [],
           "measurement": "fb-checkpresence.0.Marijke Android.presence",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "alias": "Marijke BMW-Laptop",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "InfluxDB"
-          },
-          "groupBy": [],
-          "measurement": "fb-checkpresence.0.Marijke BMW-Laptop.presence",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "B",
@@ -207,30 +184,6 @@
           "tags": []
         },
         {
-          "alias": "Marijke iPhone",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "InfluxDB"
-          },
-          "groupBy": [],
-          "measurement": "fb-checkpresence.0.Marijke iPhone.presence",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "D",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
           "alias": "Mika Android",
           "datasource": {
             "type": "influxdb",
@@ -240,31 +193,7 @@
           "measurement": "fb-checkpresence.0.Mika Android.presence",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "E",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "alias": "Mika BMW-Laptop",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "InfluxDB"
-          },
-          "groupBy": [],
-          "measurement": "fb-checkpresence.0.Mika BMW-Laptop.presence",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "F",
+          "refId": "D",
           "resultFormat": "time_series",
           "select": [
             [
@@ -288,31 +217,7 @@
           "measurement": "fb-checkpresence.0.Mika Laptop.presence",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "G",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "alias": "Mika iPhone",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "InfluxDB"
-          },
-          "groupBy": [],
-          "measurement": "fb-checkpresence.0.Mika iPhone.presence",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "H",
+          "refId": "E",
           "resultFormat": "time_series",
           "select": [
             [
@@ -342,10 +247,11 @@
     "from": "now-24h",
     "to": "now"
   },
+  "timeRangeUpdatedDuringEditOrView": false,
   "timepicker": {},
   "timezone": "",
   "title": "Presence",
   "uid": "presence",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }

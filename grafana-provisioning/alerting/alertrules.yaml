@@ -89,8 +89,8 @@ groups:
         execErrState: Alerting
         for: 15m
         annotations:
-          __dashboardUid__: disc-space
-          __panelId__: "2"
+          __dashboardUid__: system
+          __panelId__: "17"
           summary: Free disc space has dropped below 50 GB.
         labels: {}
         isPaused: false

@@ -7,3 +7,4 @@ exclusions:
     reason: Sometimes a dashboard looks cleaner without a title.
     entries:
     - dashboard: Battery levels
+    - dashboard: System
