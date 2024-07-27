@@ -16,7 +16,7 @@
     ]
   },
   "description": "Docker Metrics with influx and Telegraf",
-  "editable": true,
+  "editable": false,
   "fiscalYearStartMonth": 0,
   "gnetId": 10585,
   "graphTooltip": 0,
