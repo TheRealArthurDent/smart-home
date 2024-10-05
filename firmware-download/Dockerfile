@@ -1,6 +1,7 @@
 FROM python:3.12-alpine
 
 RUN apk add wget
+test
 
 WORKDIR /usr/firmware-download
 
