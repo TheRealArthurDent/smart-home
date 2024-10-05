@@ -185,7 +185,7 @@ services:
   mosquitto:
     hostname: mosquitto
     container_name: mqtt
-    image: eclipse-mosquitto:2.0.18
+    image: eclipse-mosquitto:2.0.19
     #pull_policy: always
     restart: unless-stopped
     ports:
