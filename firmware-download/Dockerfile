@@ -1,6 +1,6 @@
 FROM python:3.12-alpine
 
-RUN apk add --no-cache wget=1.24.5-r0
+RUN apk add wget
 
 WORKDIR /usr/firmware-download
 
