@@ -34,5 +34,4 @@ jobs:
           do
             echo "Linting $FILE"
             dashboard-linter lint "$FILE" --strict --verbose;
-            test
           done
