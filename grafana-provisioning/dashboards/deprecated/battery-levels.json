@@ -1902,7 +1902,7 @@
     ]
   },
   "timezone": "",
-  "title": "Battery levels",
+  "title": "Deprecated - Battery levels",
   "uid": "battery-levels",
   "version": 8,
   "weekStart": ""

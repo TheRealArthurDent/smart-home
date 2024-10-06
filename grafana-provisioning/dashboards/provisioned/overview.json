@@ -43,7 +43,7 @@
             {
               "targetBlank": true,
               "title": "",
-              "url": "https://grafana.raspi/d/_yHxT4ggk/system?orgId=1"
+              "url": "https://grafana.raspi/d/system/system?orgId=1"
             }
           ],
           "mappings": [],
@@ -155,7 +155,7 @@
             {
               "targetBlank": true,
               "title": "",
-              "url": "https://grafana.raspi/d/YZflkcaGk/shutters?orgId=1"
+              "url": "https://grafana.raspi/d/shutters/shutters?orgId=1"
             }
           ],
           "mappings": [],
@@ -486,7 +486,7 @@
         {
           "targetBlank": true,
           "title": "Show details",
-          "url": "https://grafana.raspi/d/2ffIohZgz/disc-space?orgId=1"
+          "url": "https://grafana.raspi/d/disc-space/disc-space?orgId=1"
         }
       ],
       "options": {
@@ -671,7 +671,7 @@
         {
           "targetBlank": true,
           "title": "Show  details",
-          "url": "https://grafana.raspi/d/n874W0WRk/presence?orgId=1"
+          "url": "https://grafana.raspi/d/presence/presence?orgId=1"
         }
       ],
       "options": {
