@@ -18,10 +18,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.1
 
       - name: Spell check
-        uses: codespell-project/actions-codespell@master
+        uses: codespell-project/actions-codespell@v2.1
         with:
           check_filenames: true
           ignore_words_list: siz

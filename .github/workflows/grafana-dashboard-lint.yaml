@@ -15,12 +15,23 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.0
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.0.2
         with:
           go-version: '1.23'
+
+      # Cache Go modules to speed up subsequent builds
+      - name: Cache Go modules
+        uses: actions/cache@v4.1.1
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-mod-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            go-mod-${{ runner.os }}-
 
       - name: Install dashboard-linter
         run: go install github.com/grafana/dashboard-linter@latest
