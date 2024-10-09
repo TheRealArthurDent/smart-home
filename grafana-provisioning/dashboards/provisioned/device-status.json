@@ -70,7 +70,8 @@
                 "value": 1
               }
             ]
-          }
+          },
+          "unit": "string"
         },
         "overrides": []
       },
@@ -154,7 +155,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "string"
         },
         "overrides": []
       },
