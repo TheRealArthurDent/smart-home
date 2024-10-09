@@ -1,6 +1,6 @@
 FROM python:3.13-alpine
 
-RUN apk add wget
+# RUN apk add wget - wget is already installed
 
 WORKDIR /usr/firmware-download
 

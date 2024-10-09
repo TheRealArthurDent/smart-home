@@ -1,0 +1,43 @@
+Influx measurements and grafana dashboards
+
+Measurement naming
+
+<DeviceType>.<Room>.<Function>.<Attribute>
+
+<DeviceType>: Sensor, Button, Switch, Dimmer
+<Room>: Livingroom, Office, Bedroom, Bathroom, ...
+<Function>: Whatever - may be separated by colons :
+            e.g. Light:Desk
+<Attribute>: measured attribute (on, battery, reachable, temperature)
+
+
+
+
+Sensor.Office.Temperature.reachable
+Sensor.Abstellkammer(?).Leakage.reachable
+Sensor.Livingroom.Door.reachable (which door?)   -> 	Sensor.Livingroom.Door:Terrace.reachable (yes)
+														Sensor.Livingroom.Door.Terrace.reachable
+
+Switch:Floor:DayNight.battery
+
+Sensor.Livingroom.Light.reachable
+
+Sensor.Livingroom.Light:Deko.reachable
+
+Shellies:
+Shelly.Bedroom.Shutter.reachable
+Shelly.Livingroom.Shutter:Kitchen.reachable
+Shelly.Livingroom.Shutter:Garden.reachable
+Shelly.Livingroom.Shutter:Terrace.reachable
+Shelly.Office.Shutter.reachable
+
+
+
+
+Then work with templated dashboards.
+
+
+
+
+
+SELECT last("value") FROM /${deviceType}\.${room}\.${function}.*\.reachable/ WHERE $timeFilter GROUP BY time($__interval) fill(null)
