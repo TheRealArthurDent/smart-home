@@ -104,7 +104,7 @@ services:
   # influx db
   influxdb:
     container_name: influxdb
-    image: influxdb:1.8.10 # -alpine is not available for linux/arm/v7 and therefore not usable on raspi
+    image: influxdb:1.11.7-alpine
     restart: unless-stopped
     environment:
       - INFLUXDB_DB=influx
@@ -115,6 +115,13 @@ services:
       - INFLUXDB_WRITE_USER=write
       - INFLUXDB_WRITE_USER_PASSWORD=${INFLUXDB_READ_PASSWORD}
       - INFLUXDB_MONITOR_STORE_ENABLED=FALSE
+      - INFLUXDB_LOGGING_LEVEL=warn
+      # Apparently the following doesn't work since 2019....
+      # https://github.com/influxdata/influxdb/issues/15360
+      - INFLUXDB_HTTP_ACCESS_LOG_STATUS_FILTERS_0=4xx
+      - INFLUXDB_HTTP_ACCESS_LOG_STATUS_FILTERS_1=5xx
+      # Hence deactivating HTTP request logging altogether
+      - INFLUXDB_HTTP_LOG_ENABLED=false
     volumes:
       - influxdb-storage:/var/lib/influxdb
     networks:
