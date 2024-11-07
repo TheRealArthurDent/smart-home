@@ -166,7 +166,7 @@
               "type": "fill"
             }
           ],
-          "measurement": "shellies.shutter-terrasse.position",
+          "measurement": "shellies.shutter-terrace.position",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "B",
@@ -435,7 +435,7 @@
               "type": "fill"
             }
           ],
-          "measurement": "shellies.shutter-terrasse.temperature",
+          "measurement": "shellies.shutter-terrace.temperature",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "B",
@@ -729,7 +729,7 @@
             }
           ],
           "hide": false,
-          "measurement": "shellies.shutter-terrasse.position",
+          "measurement": "shellies.shutter-terrace.position",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "B",
@@ -1163,7 +1163,7 @@
               "type": "fill"
             }
           ],
-          "measurement": "shellies.shutter-terrasse.temperature",
+          "measurement": "shellies.shutter-terrace.temperature",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "B",

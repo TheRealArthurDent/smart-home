@@ -556,7 +556,7 @@
             }
           ],
           "hide": false,
-          "measurement": "shellies.shutter-terrasse.position",
+          "measurement": "shellies.shutter-terrace.position",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "D",
