@@ -149,7 +149,7 @@ services:
   telegraf:
     hostname: telegraf
     container_name: telegraf
-    image: telegraf:1.33-alpine
+    image: telegraf:1.34-alpine
     restart: unless-stopped
     volumes:
       - /etc/docker/smart-home/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
