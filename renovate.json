@@ -17,6 +17,16 @@
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["major"],
       "automerge": false
+    },
+    {
+      "description": "Pin deconz stable versions.",
+      "groupName": "deconz",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["deconzcommunity/deconz"],
+      "matchManagers": ["docker-compose"],
+      "versioning": "loose",
+      "pinDigests": true,
+      "rangeStrategy": "pin"
     }
   ]
 }
