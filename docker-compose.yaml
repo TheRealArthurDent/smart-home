@@ -69,13 +69,14 @@ services:
     restart: unless-stopped
     volumes:
       - deconz-storage:/opt/deCONZ
+      - /etc/localtime:/etc/localtime:ro
       - ikea-tradfri-firmware-storage:/opt/deCONZ/otau
     devices:
       - /dev/${DECONZ_DEVICE_TYPE}:/dev/ttyACM0
     env_file:
       - /etc/docker/smart-home/.env
     environment:
-      - TZ='Europe/Berlin'
+      - TZ=Europe/Berlin
       #DECONZ_DEVICE=/dev/ttyACM0
       - DECONZ_WEB_PORT=443
       - DECONZ_WS_PORT=8443
