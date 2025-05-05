@@ -165,6 +165,7 @@ services:
       - influxdb
     networks:
       - smart-home # influxdb
+      - outbound  # For dns_query
   # grafana
   grafana:
     hostname: grafana
