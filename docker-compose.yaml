@@ -65,7 +65,7 @@ services:
   deconz:
     hostname: deconz
     container_name: deconz
-    image: deconzcommunity/deconz:stable@sha256:f475106d11641936faade8e45303f86e6aaba431b378069b4237b0702488b738
+    image: deconzcommunity/deconz:stable@sha256:0a700ad8245ea9e80c31231057581a9468f22319050a468a94b39d5caa56bb0b
     restart: unless-stopped
     volumes:
       - deconz-storage:/opt/deCONZ
