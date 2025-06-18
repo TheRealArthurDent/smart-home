@@ -170,7 +170,7 @@ services:
   grafana:
     hostname: grafana
     container_name: grafana
-    image: grafana/grafana:12.0.1
+    image: grafana/grafana:12.0.2
     restart: unless-stopped
     volumes:
       - grafana-storage:/var/lib/grafana
