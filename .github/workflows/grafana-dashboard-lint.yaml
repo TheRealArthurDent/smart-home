@@ -20,7 +20,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5.5.0
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       # Cache Go modules to speed up subsequent builds
       - name: Cache Go modules
