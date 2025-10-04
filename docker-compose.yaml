@@ -32,7 +32,7 @@ services:
   iobroker-states-redis:
     hostname: iobroker-states-redis
     container_name: iobroker-states-redis
-    image: redis:7.4.5-alpine
+    image: redis:8.2.2-alpine
     restart: unless-stopped
     depends_on:
       - redis-overcommit
@@ -48,7 +48,7 @@ services:
   iobroker-objects-redis:
     hostname: iobroker-objects-redis
     container_name: iobroker-objects-redis
-    image: redis:7.4.5-alpine
+    image: redis:8.2.2-alpine
     restart: unless-stopped
     depends_on:
       - redis-overcommit
