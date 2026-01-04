@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   # iobroker
   iobroker:
@@ -57,7 +56,7 @@ services:
     volumes:
       - deconz-storage:/opt/deCONZ
       - /etc/localtime:/etc/localtime:ro
-      - ikea-tradfri-firmware-storage:/opt/deCONZ/otau
+      - ikea-tradfri-firmware-storage:/opt/deCONZ/otau:ro
     devices:
       - /dev/${DECONZ_DEVICE_TYPE}:/dev/ttyACM0
     env_file:
@@ -80,11 +79,10 @@ services:
       - "8088:443" # for f***in stupid hue essentials app
   firmware-download:
     container_name: firmware-download
-    build:
-      context: ./firmware-download
+    image: ghcr.io/therealarthurdent/ikea-firmware-downloader:latest@sha256:1da72c891db0d53a2659051636e2b5731d5ca664cfff378573baa84811c1b2c8
     restart: unless-stopped
     volumes:
-      - ikea-tradfri-firmware-storage:/root/otau
+      - ikea-tradfri-firmware-storage:/home/downloader/otau
     networks:
       - outbound # internet
     dns:

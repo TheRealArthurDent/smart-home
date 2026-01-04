@@ -26,6 +26,16 @@
       "versioning": "loose",
       "pinDigests": true,
       "rangeStrategy": "pin"
+    },
+    {
+      "description": "Pin IKEA firmware downloader latest versions.",
+      "groupName": "ikea-fw-downloader",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/therealarthurdent/ikea-firmware-downloader"],
+      "matchManagers": ["docker-compose"],
+      "versioning": "loose",
+      "pinDigests": true,
+      "rangeStrategy": "pin"
     }
   ]
 }
