@@ -24,16 +24,6 @@ jobs:
         with:
           reporter: github-pr-review
 
-      - name: Docker lint
-        uses: reviewdog/action-hadolint@v1.50.2
-        with:
-          reporter: github-pr-review
-          # Ignore https://github.com/hadolint/hadolint/wiki/DL3018
-          # and    https://github.com/hadolint/hadolint/wiki/DL3019
-          # We want to install wget from alpine's cache,
-          # so we can keep the build offline.
-          hadolint_ignore: DL3018 DL3019
-
       - name: YAML lint
         uses: reviewdog/action-yamllint@v1.21.0
         with:

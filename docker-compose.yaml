@@ -79,8 +79,7 @@ services:
       - "8088:443" # for f***in stupid hue essentials app
   firmware-download:
     container_name: firmware-download
-    build:
-      context: ./firmware-download
+    image: ghcr.io/therealarthurdent/ikea-firmware-downloader:latest@sha256:1da72c891db0d53a2659051636e2b5731d5ca664cfff378573baa84811c1b2c8
     restart: unless-stopped
     volumes:
       - ikea-tradfri-firmware-storage:/home/downloader/otau
@@ -88,7 +87,6 @@ services:
       - outbound # internet
     dns:
       - 172.30.1.153
-    user: downloader
   # influx db
   influxdb:
     container_name: influxdb
