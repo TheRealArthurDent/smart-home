@@ -25,14 +25,11 @@ services:
     container_name: iobroker-states-redis
     image: arm64v8/redis:8.2.2-alpine
     restart: unless-stopped
-    depends_on:
-      - redis-overcommit
     env_file:
       - /etc/docker/smart-home/.env
     command: redis-server --save 300 1 --loglevel warning --port ${IOBROKER_STATES_REDIS_PORT}
     volumes:
       - iobroker-states-redis-storage:/data
-      -
     networks:
       - smart-home
     healthcheck:
@@ -42,8 +39,6 @@ services:
     container_name: iobroker-objects-redis
     image: arm64v8/redis:8.2.2-alpine
     restart: unless-stopped
-    depends_on:
-      - redis-overcommit
     env_file:
       - /etc/docker/smart-home/.env
     command: redis-server --save 300 1 --loglevel warning --port ${IOBROKER_OBJECTS_REDIS_PORT}
@@ -173,6 +168,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_AUTH_ANONYMOUS_ENABLED=true
     networks:
       - siz # accessibility by nginx
       - smart-home # get data from influxdb

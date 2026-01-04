@@ -7,4 +7,4 @@ crontab crontab
 
 # Start cron
 echo "Starting cron..."
-crond -f -l 8
+exec crond -f -l 8
