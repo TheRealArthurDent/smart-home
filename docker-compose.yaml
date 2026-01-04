@@ -22,7 +22,7 @@ services:
   iobroker-states-redis:
     hostname: iobroker-states-redis
     container_name: iobroker-states-redis
-    image: arm64v8/redis:8.2.2-alpine
+    image: arm64v8/redis:8.4.0-alpine
     restart: unless-stopped
     env_file:
       - /etc/docker/smart-home/.env
@@ -36,7 +36,7 @@ services:
   iobroker-objects-redis:
     hostname: iobroker-objects-redis
     container_name: iobroker-objects-redis
-    image: arm64v8/redis:8.2.2-alpine
+    image: arm64v8/redis:8.4.0-alpine
     restart: unless-stopped
     env_file:
       - /etc/docker/smart-home/.env
