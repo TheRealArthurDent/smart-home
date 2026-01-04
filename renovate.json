@@ -12,8 +12,7 @@
     },
     {
       "description": "Create PRs for major changes to github-actions.",
-      "groupName": "github-actions MAJOR",
-      "commitMessagePrefix": "[MAJOR] ",
+      "groupName": "github-actions",
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["major"],
       "automerge": false
