@@ -3,8 +3,6 @@
 echo "Initial download of IKEA Tradfri firmware"
 sh download-ikea-firmware.sh
 
-crontab crontab
-
 # Start cron
-echo "Starting cron..."
-exec crond -f -l 8
+echo "Starting supercronic..."
+exec supercronic crontab

@@ -1,1 +1,1 @@
-0 1 * * SUN /usr/firmware-download/download-ikea-firmware.sh
+0 1 * * SUN /home/downloader/download-ikea-firmware.sh
