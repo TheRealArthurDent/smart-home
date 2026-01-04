@@ -2,6 +2,8 @@ FROM python:3.14-alpine
 
 # RUN apk add wget - wget is already installed
 
+USER nobody
+
 WORKDIR /usr/firmware-download
 
 # Copy files
