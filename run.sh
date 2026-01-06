@@ -5,8 +5,10 @@ if [ -f "$ENV_FILE" ]; then
     export DOCKER_CLIENT_TIMEOUT=180
     export COMPOSE_HTTP_TIMEOUT=180
 
-    docker compose pull
-    docker compose --env-file $ENV_FILE up -d
+    nice -n 10 docker compose --env-file $ENV_FILE config --services | while read service; do
+      nice -n 10 docker compose --env-file $ENV_FILE pull "$service"
+    done
+    nice -n 10 docker compose --env-file $ENV_FILE up -d
 else
     echo "$ENV_FILE does not exist."
 fi
