@@ -66,7 +66,7 @@ services:
       #DECONZ_DEVICE=/dev/ttyACM0
       - DECONZ_WEB_PORT=443
       - DECONZ_WS_PORT=8443
-      - DECONZ_VNC_MODE=1
+      - DECONZ_VNC_MODE=0  # websockify causing 100% cpu utilization since using Debian Trixie
       - DECONZ_VNC_PASSWORD=${DECONZ_VNC_PASSWORD}
       - DEBUG_OTA=1
     networks:
