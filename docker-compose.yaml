@@ -3,7 +3,7 @@ services:
   iobroker:
     hostname: iobroker
     container_name: iobroker
-    image: buanet/iobroker:v11.0.0
+    image: buanet/iobroker:v11.1.0
     restart: unless-stopped
     volumes:
       - iobroker-storage:/opt/iobroker
