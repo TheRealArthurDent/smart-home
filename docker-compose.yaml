@@ -79,7 +79,7 @@ services:
       - "8088:443" # for f***in stupid hue essentials app
   firmware-download:
     container_name: firmware-download
-    image: ghcr.io/therealarthurdent/ikea-firmware-downloader:latest@sha256:7a87e80edd90b146ad4335360cc1c95f623aab8e0d7184b8d20477ae0f293bbf
+    image: ghcr.io/therealarthurdent/ikea-firmware-downloader:latest@sha256:fda8ab805d2fd939ecbd20a26d431e2472e3541214050b88ca795d17303b3d17
     restart: unless-stopped
     volumes:
       - ikea-tradfri-firmware-storage:/home/downloader/otau
