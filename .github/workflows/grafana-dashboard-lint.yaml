@@ -1,4 +1,4 @@
-name: Grafana Dashboard Lint
+﻿name: Grafana Dashboard Lint
 
 # See: https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows
 on:
@@ -8,6 +8,9 @@ on:
   pull_request:
   workflow_dispatch:
   repository_dispatch:
+
+env:
+  GRAFANA_DASHBOARD_LINTER_VERSION: v0.2.0
 
 jobs:
   lint:
@@ -34,12 +37,25 @@ jobs:
             go-mod-${{ runner.os }}-
 
       - name: Install dashboard-linter
-        run: go install github.com/grafana/dashboard-linter@latest
-
+        shell: bash
+        # run: go install github.com/grafana/dashboard-linter@latest
+        # does not currently work because go.mod contains a replace directive
+        # Go refuses to install a module with replaces.
+        # Build from a checkout instead.
+        # See https://github.com/grafana/dashboard-linter/blob/main/README.md
+        run: |
+          VERSION="${{ env.GRAFANA_DASHBOARD_LINTER_VERSION }}"
+          VERSION_NO_V="${VERSION#v}"
+          URL="https://github.com/grafana/dashboard-linter/releases/download/"
+          URL+="${VERSION}/"
+          URL+="dashboard-linter_${VERSION_NO_V}_linux_amd64.tar.gz"
+          curl -sSfL "$URL" | tar -xz -C /usr/local/bin dashboard-linter
       - name: Rules
+        shell: bash
         run: dashboard-linter rules
 
       - name: Linting
+        shell: bash
         run: |
           for FILE in grafana-provisioning/dashboards/provisioned/*.json
           do
