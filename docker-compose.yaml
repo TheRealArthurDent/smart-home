@@ -151,6 +151,9 @@ services:
     networks:
       - smart-home # influxdb
       - outbound  # For dns_query
+    # Limits
+    cpus: "0.5"
+    mem_limit: 256M
   # grafana
   grafana:
     hostname: grafana
@@ -176,6 +179,7 @@ services:
       - 172.30.1.153
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider", "http://localhost:3000" ]
+    mem_limit: 512M
   # MQTT broker
   mosquitto:
     hostname: mosquitto

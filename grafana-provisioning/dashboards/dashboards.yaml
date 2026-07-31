@@ -14,11 +14,14 @@ providers:
     # <bool> disable dashboard deletion
     disableDeletion: false
     # <int> how often Grafana will scan for changed dashboards
-    updateIntervalSeconds: 30
+    # Deactivated for good.
+    # This was causing 20+ MB/s read spikes every 30s due to re-indexing
+    updateIntervalSeconds: 0
     # <bool> allow updating provisioned dashboards from the UI
-    allowUiUpdates: true
+    allowUiUpdates: false
     options:
-      # <string, required> path to dashboard files on disk. Required when using the 'file' type
+      # <string, required> path to dashboard files on disk.
+      # Required when using the 'file' type
       path: /etc/grafana/provisioning/dashboards
       # <bool> use folder names from filesystem to create folders in Grafana
       foldersFromFilesStructure: true
