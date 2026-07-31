@@ -14,9 +14,11 @@ providers:
     # <bool> disable dashboard deletion
     disableDeletion: false
     # <int> how often Grafana will scan for changed dashboards
-    updateIntervalSeconds: 30
+    # INCREASED from 30s to 3600s (1 hour) to prevent constant re-indexing on RPi
+    # This was causing 20+ MB/s read spikes every 30s due to dashboard re-indexing
+    updateIntervalSeconds: 0
     # <bool> allow updating provisioned dashboards from the UI
-    allowUiUpdates: true
+    allowUiUpdates: false
     options:
       # <string, required> path to dashboard files on disk. Required when using the 'file' type
       path: /etc/grafana/provisioning/dashboards
