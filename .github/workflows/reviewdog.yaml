@@ -20,12 +20,12 @@ jobs:
           ignore: mosquitto
 
       - name: Action lint
-        uses: reviewdog/action-actionlint@v1.73.0
+        uses: reviewdog/action-actionlint@v1.73.1
         with:
           reporter: github-pr-review
 
       - name: YAML lint
-        uses: reviewdog/action-yamllint@v1.23.0
+        uses: reviewdog/action-yamllint@v1.23.1
         with:
           reporter: github-pr-review
 
