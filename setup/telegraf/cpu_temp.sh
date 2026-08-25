@@ -1,3 +1,3 @@
-#!/bin/bash
+#!/bin/sh
 
 sensors | grep temp1 | sed -e 's/temp1:[ ]*[+]//g' | sed 's/°C//g' | sed 's/(.*)//g' | sed 's/^[ \t]*//;s/[ \t]*$//'
