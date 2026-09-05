@@ -11,6 +11,14 @@
       "automergeType": "branch"
     },
     {
+      "description": "Auto merge ikea-firmware-downloader",
+      "groupName": "ikea-firmware-downloader",
+      "matchPackageNames": "ghcr.io/therealarthurdent/ikea-firmware-downloader",
+      "automerge": true,
+      "addLabels": ["auto-merge"],
+      "automergeType": "branch"
+    },
+    {
       "description": "Create PRs for major changes to github-actions.",
       "groupName": "github-actions",
       "matchManagers": ["github-actions"],
