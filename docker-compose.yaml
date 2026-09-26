@@ -90,7 +90,7 @@ services:
   # influx db
   influxdb:
     container_name: influxdb
-    image: influxdb:1.12.4-alpine
+    image: influxdb:1.13.1-alpine
     restart: unless-stopped
     environment:
       - INFLUXDB_DB=influx
