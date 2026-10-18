@@ -8,8 +8,6 @@ services:
     volumes:
       - iobroker-storage:/opt/iobroker
       - ./setup/iobroker/userscript_firststart.sh:/opt/userscripts/userscript_firststart.sh
-    env_file:
-      - /etc/docker/smart-home/.env
     environment:
       - GITHUB_USER=${GITHUB_USER}
       - GITHUB_EMAIL=${GITHUB_EMAIL}
@@ -24,8 +22,6 @@ services:
     container_name: iobroker-states-redis
     image: arm64v8/redis:8.10.2-alpine
     restart: unless-stopped
-    env_file:
-      - /etc/docker/smart-home/.env
     command: redis-server --save 300 1 --loglevel warning --port ${IOBROKER_STATES_REDIS_PORT}
     volumes:
       - iobroker-states-redis-storage:/data
@@ -38,8 +34,6 @@ services:
     container_name: iobroker-objects-redis
     image: arm64v8/redis:8.10.2-alpine
     restart: unless-stopped
-    env_file:
-      - /etc/docker/smart-home/.env
     command: redis-server --save 300 1 --loglevel warning --port ${IOBROKER_OBJECTS_REDIS_PORT}
     volumes:
       - iobroker-objects-redis-storage:/data
@@ -59,8 +53,6 @@ services:
       - ikea-tradfri-firmware-storage:/opt/deCONZ/otau:ro
     devices:
       - /dev/${DECONZ_DEVICE_TYPE}:/dev/ttyACM0
-    env_file:
-      - /etc/docker/smart-home/.env
     environment:
       - TZ=Europe/Berlin
       #DECONZ_DEVICE=/dev/ttyACM0
