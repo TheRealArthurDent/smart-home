@@ -1,0 +1,34 @@
+# Deploys the smart-home stack, replacing deploy.sh (#7). raspberry's bootstrap.yaml must have run on the host.
+# ansible-playbook deploy.yaml --limit testbed --check --diff
+- name: Require --limit
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Ensure the run is limited to explicit hosts
+      ansible.builtin.assert:
+        that: ansible_limit is defined
+        fail_msg: "Run with --limit <host>"
+        quiet: true
+      tags: always
+
+# With --limit, the play above matches no host and is skipped. This one stops a limit that selects several hosts
+# (all, *, a list or a group), so a run never reaches production by accident. assert needs no connection.
+- name: Require --limit to select exactly one host
+  hosts: all
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Ensure the run is limited to one host
+      ansible.builtin.assert:
+        that: ansible_play_hosts_all | length == 1
+        fail_msg: "Run with --limit <one host>"
+        quiet: true
+      tags: always
+
+
+- name: Deploy the smart-home stack
+  hosts: all
+  become: true
+  gather_facts: false
+  roles:
+    - smart_home

@@ -1,5 +1,11 @@
-# Python tooling for tests and git hooks.
+# Python tooling for the control node, tests and git hooks.
 # Install with: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+ansible-core==2.21.5
+ansible-lint==26.10.1
+
+# Tests
+molecule==26.10.0
+molecule-plugins[docker]==26.10.12
 pytest==9.1.1
 pyyaml==6.0.3
 

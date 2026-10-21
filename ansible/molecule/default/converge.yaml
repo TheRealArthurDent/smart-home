@@ -1,0 +1,8 @@
+- name: Converge
+  hosts: all
+  gather_facts: false
+  vars:
+    # No Docker daemon runs inside the test container.
+    smart_home_manage_containers: false
+  roles:
+    - smart_home

@@ -1,0 +1,34 @@
+---
+# Compose recreates a container whose definition changed; these cover the config files mounted into one.
+- name: Restart mosquitto
+  community.docker.docker_compose_v2:
+    project_src: "{{ smart_home_compose_dir }}"
+    project_name: "{{ smart_home_project_name }}"
+    env_files:
+      - "{{ smart_home_env_file }}"
+    services:
+      - mosquitto
+    state: restarted
+  when: smart_home_manage_containers | bool
+
+- name: Restart telegraf
+  community.docker.docker_compose_v2:
+    project_src: "{{ smart_home_compose_dir }}"
+    project_name: "{{ smart_home_project_name }}"
+    env_files:
+      - "{{ smart_home_env_file }}"
+    services:
+      - telegraf
+    state: restarted
+  when: smart_home_manage_containers | bool
+
+- name: Restart grafana
+  community.docker.docker_compose_v2:
+    project_src: "{{ smart_home_compose_dir }}"
+    project_name: "{{ smart_home_project_name }}"
+    env_files:
+      - "{{ smart_home_env_file }}"
+    services:
+      - grafana
+    state: restarted
+  when: smart_home_manage_containers | bool

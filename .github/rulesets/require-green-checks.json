@@ -32,6 +32,14 @@
           {
             "context": "spellcheck",
             "integration_id": 15368
+          },
+          {
+            "context": "Ansible lint",
+            "integration_id": 15368
+          },
+          {
+            "context": "Molecule",
+            "integration_id": 15368
           }
         ],
         "strict_required_status_checks_policy": true

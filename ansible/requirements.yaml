@@ -1,0 +1,6 @@
+---
+# Ansible Galaxy requirements for the playbook and role in ansible/
+collections:
+  # Pinned; Renovate's ansible-galaxy manager updates the versions.
+  - name: community.docker
+    version: 5.4.0

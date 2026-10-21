@@ -138,6 +138,10 @@ services:
       - /etc:/rootfs/etc:ro
     user:
       "telegraf:992"
+    # telegraf.conf references these as $VAR; Telegraf resolves them from its environment.
+    environment:
+      - INFLUXDB_WRITE_PASSWORD=${INFLUXDB_WRITE_PASSWORD}
+      - MOSQUITTO_PASSWD=${MOSQUITTO_PASSWD}
     depends_on:
       - influxdb
     networks:

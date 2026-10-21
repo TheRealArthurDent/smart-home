@@ -1,0 +1,17 @@
+---
+# Config of the smart-home stack lives below this directory. raspberry's secrets role writes the .env here.
+smart_home_dir: /etc/docker/smart-home
+smart_home_env_file: "{{ smart_home_dir }}/.env"
+# deploy.sh ran Compose in ~/dev/smart-home, so the running containers belong to the project "smart-home".
+# Keep the name, or Compose would start a second stack whose fixed container names collide.
+smart_home_project_name: smart-home
+# docker-compose.yaml with the files it mounts by relative path (grafana-provisioning/, setup/iobroker/)
+smart_home_compose_dir: "{{ smart_home_dir }}/compose"
+# The repo checkout the role copies the stack from: the compose file and setup/ are used as they are, without
+# templated copies.
+smart_home_repo_dir: "{{ (role_path | realpath) ~ '/../../..' }}"
+# uid of the mosquitto user in the eclipse-mosquitto image. Its entrypoint chowns /mosquitto to it on every start.
+smart_home_mosquitto_uid: 1883
+smart_home_mosquitto_user: mosquitto
+# Compose up and restarts need a running Docker daemon (false in Molecule).
+smart_home_manage_containers: true
