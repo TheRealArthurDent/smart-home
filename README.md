@@ -4,6 +4,17 @@ Setup for the smart home environment containing mqtt, iobroker and peripherals
 [![Spell Check](https://github.com/TheRealArthurDent/smart-home/actions/workflows/spell-check.yaml/badge.svg)](https://github.com/TheRealArthurDent/smart-home/actions/workflows/spell-check.yaml)
 [![Grafana Dashboard Lint](https://github.com/TheRealArthurDent/smart-home/actions/workflows/grafana-dashboard-lint.yaml/badge.svg)](https://github.com/TheRealArthurDent/smart-home/actions/workflows/grafana-dashboard-lint.yaml)
 
+### Development
+
+```sh
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/pre-commit install
+.venv/bin/pytest tests
+```
+
+Secrets come from KeePass: [raspberry](https://github.com/TheRealArthurDent/raspberry)'s `secrets` role renders
+`/etc/docker/smart-home/.env` on the Pi. `setup/.env.example` lists its keys. Notes for Claude Code are in
+`CLAUDE.md`.
+
 ### local setup
 
 1. Change to folder local-setup
