@@ -1,13 +1,25 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "pre-commit": {
+    "enabled": true
+  },
   "packageRules": [
     {
       "description": "Auto merge all minor and patch updates to github-actions. Do it without a PR to reduce noise.",
       "groupName": "github-actions",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "automerge": true,
-      "addLabels": ["auto-merge"],
+      "addLabels": [
+        "auto-merge"
+      ],
       "automergeType": "branch"
     },
     {
@@ -15,22 +27,34 @@
       "groupName": "ikea-firmware-downloader",
       "matchPackageNames": "ghcr.io/therealarthurdent/ikea-firmware-downloader",
       "automerge": true,
-      "addLabels": ["auto-merge"],
+      "addLabels": [
+        "auto-merge"
+      ],
       "automergeType": "branch"
     },
     {
       "description": "Create PRs for major changes to github-actions.",
       "groupName": "github-actions",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["major"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false
     },
     {
       "description": "Pin deconz stable versions.",
       "groupName": "deconz",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["deconzcommunity/deconz"],
-      "matchManagers": ["docker-compose"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "deconzcommunity/deconz"
+      ],
+      "matchManagers": [
+        "docker-compose"
+      ],
       "versioning": "loose",
       "pinDigests": true,
       "rangeStrategy": "pin"
@@ -38,9 +62,15 @@
     {
       "description": "Pin IKEA firmware downloader latest versions.",
       "groupName": "ikea-fw-downloader",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["ghcr.io/therealarthurdent/ikea-firmware-downloader"],
-      "matchManagers": ["docker-compose"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/therealarthurdent/ikea-firmware-downloader"
+      ],
+      "matchManagers": [
+        "docker-compose"
+      ],
       "versioning": "loose",
       "pinDigests": true,
       "rangeStrategy": "pin"

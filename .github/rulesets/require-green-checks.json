@@ -1,0 +1,43 @@
+{
+  "bypass_actors": [
+    {
+      "actor_id": 5,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "pull_request"
+    }
+  ],
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "~DEFAULT_BRANCH"
+      ]
+    }
+  },
+  "enforcement": "active",
+  "name": "require-green-checks",
+  "rules": [
+    {
+      "parameters": {
+        "do_not_enforce_on_create": true,
+        "required_status_checks": [
+          {
+            "context": "Unit tests",
+            "integration_id": 15368
+          },
+          {
+            "context": "Lint Grafana dashboards",
+            "integration_id": 15368
+          },
+          {
+            "context": "spellcheck",
+            "integration_id": 15368
+          }
+        ],
+        "strict_required_status_checks_policy": true
+      },
+      "type": "required_status_checks"
+    }
+  ],
+  "target": "branch"
+}

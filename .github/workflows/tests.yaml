@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  # Feature branches are covered by their PR, so pushes only run on main (no duplicate runs).
+  push:
+    branches:
+      - main
+  # Every PR, without a paths filter: the main ruleset requires this check, and a skipped required check
+  # would block the merge forever.
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write  # publish test reports as check runs
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pytest
+        run: pytest -v tests --junitxml=test-results/pytest.xml
+
+      - name: Publish test report
+        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@v6.6.1
+        with:
+          check_name: Unit test report
+          report_paths: test-results/pytest.xml
+          detailed_summary: true
+          include_passed: true
