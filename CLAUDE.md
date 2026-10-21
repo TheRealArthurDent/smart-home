@@ -17,8 +17,13 @@ infrastructure stack from [raspberry](https://github.com/TheRealArthurDent/raspb
 - raspberry is migrating its own deployment to Ansible (raspberry#238). New deployment logic for this stack belongs
   there too, so don't extend the bash scripts beyond fixes; propose an Ansible change in raspberry instead.
 
-Check the open issues before changing an affected area (e.g. #276, clean-slate restore from the restic backup),
-and reference them in commits.
+Open plans: #1 (clean-slate restore from the restic backup), #2 (migration from ioBroker and Node-RED to Home
+Assistant, with MCP servers as sub-issues), #3 (voice commands, after #2) and #7 (deployment from bash to Ansible).
+Check the open issues before changing an affected area, and reference them in commits.
+
+The repo was recreated on 2026-10-21 with a cleaned history. Issues and PRs from before that live in the private
+`TheRealArthurDent/smart-home-archive`; old commit messages already point there (`smart-home-archive#123`).
+Never push from a clone of the old repo: it would bring back the old history.
 
 ## Layout
 
@@ -71,7 +76,7 @@ run on every PR (no `paths` filter), or `tests/test_rulesets.py` fails.
 
 ## Conventions
 
-- Commit messages: conventional style (`feat:`, `fix:`, `test:`, `chore:`), referencing issues (`Refs #276`).
+- Commit messages: conventional style (`feat:`, `fix:`, `test:`, `chore:`), referencing issues (`Refs #1`).
 - Never commit or push to `main`. Branch off `main` and open a PR into `main`; the user merges.
 - Container images in `docker-compose.yaml` are pinned and updated by Renovate; keep them pinned (deCONZ and
   the firmware downloader by digest).
