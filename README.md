@@ -22,19 +22,9 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/
 ../.venv/bin/ansible-playbook deploy.yaml --limit testbed
 ```
 
-`deploy.sh` is the old bash deployment, kept as a fallback until the playbook has proven itself (#7).
-
 Secrets come from KeePass: [raspberry](https://github.com/TheRealArthurDent/raspberry)'s `secrets` role renders
 `/etc/docker/smart-home/.env` on the Pi. `setup/.env.example` lists its keys. Notes for Claude Code are in
 `CLAUDE.md`.
-
-### local setup
-
-1. Change to folder local-setup
-2. Execute 'sudo bash setup.sh'
-3. Return to root folder
-4. Execute 'sudo bash run.sh'
-5. Be happy
 
 ### iobroker cheat sheet
 ## upgrade

@@ -7,11 +7,10 @@ infrastructure stack from [raspberry](https://github.com/TheRealArthurDent/raspb
 
 ## State of the repo
 
-- **Deployment is moving from bash to Ansible (#7)**: `ansible/deploy.yaml` with the role `smart_home` copies
-  `docker-compose.yaml`, `setup/` and `grafana-provisioning/` to `/etc/docker/smart-home/` (no templated copies),
-  keeps the Mosquitto password file in line with `.env` and runs `docker compose up` as project `smart-home`.
-  The bash scripts (`deploy.sh` → `setup/setup.sh` → `run.sh`) stay as a fallback until the role has proven itself
-  on testbed and raspi; then they get deleted. Don't extend them; put new deployment logic into the role.
+- **Deployment is Ansible (#7)**: `ansible/deploy.yaml` with the role `smart_home` copies `docker-compose.yaml`,
+  `setup/` and `grafana-provisioning/` to `/etc/docker/smart-home/` (no templated copies), keeps the Mosquitto
+  password file in line with `.env` and runs `docker compose up` as project `smart-home`. The former bash scripts
+  (`deploy.sh`, `run.sh`, `setup/setup.sh`) are gone; Molecule's `prepare.yaml` still simulates hosts they set up.
 - **raspberry provides what this stack depends on**: the external Docker networks `siz` (nginx reverse proxy)
   and `outbound` (internet via Pi-hole), the nginx vhosts (`grafana.<host>`, `iobroker.<host>`, …), the
   certificates, the restic backups, and the secrets file `/etc/docker/smart-home/.env` (raspberry's `secrets`
@@ -33,7 +32,6 @@ Never push from a clone of the old repo: it would bring back the old history.
 - `ansible/` – `deploy.yaml`, `inventory/hosts.yaml`, `requirements.yaml` (collections), the role
   `roles/smart_home` (with the `mosquitto_passwd` filter in `filter_plugins/`) and its Molecule scenario
   `molecule/default/`
-- `deploy.sh`, `run.sh`, `setup_and_run.sh`, `setup/setup.sh` – bash deployment (fallback, see above)
 - `setup/` – config copied to `/etc/docker/smart-home/` (mosquitto, telegraf, iobroker first-start script);
   `setup/.env.example` lists the keys of the secrets file, without values
 - `grafana-provisioning/` – Grafana datasources, dashboards (`dashboards/provisioned/*.json`, linted in CI with
@@ -47,17 +45,15 @@ Never push from a clone of the old repo: it would bring back the old history.
 
 | Host | Purpose |
 | --- | --- |
-| `raspi` (192.168.1.2) | **Production** smart home, `deploy.sh`'s default target. Only the user deploys to it; hand them the commands. |
+| `raspi` (192.168.1.2) | **Production** smart home. Only the user deploys to it; hand them the commands. |
 | `testbed` (192.168.1.7) | Test Pi, reachable only from the home network: propose the commands to the user (`--check --diff`, real run, second run with `changed=0`). |
 
 Always pass `--limit <host>` to `ansible-playbook`; `deploy.yaml` refuses to run without it.
 
-`himbeere` and `erdbeere` in `deploy.sh` are former Pis.
-
 A `PreToolUse` hook (`.claude/hooks/guard.py`, tests in `tests/test_guard_hook.py`) blocks the risky actions for
-Claude: `deploy.sh` without `testbed`, `setup_and_run.sh`, ssh/scp/rsync to raspi, pushes to `main`, force pushes,
-PR merges, `git add -f`, committing or printing `.env` files, and edits to the hook and settings themselves.
-It doesn't cover `ansible-playbook --limit raspi` yet (proposed change pending); don't run it anyway.
+Claude: `ansible-playbook` against raspi or without `--limit`, ssh/scp/rsync to raspi, pushes to `main`, force
+pushes, PR merges, `git add -f`, committing or printing `.env` files, and edits to the hook and settings
+themselves. (Its rules for the deleted `deploy.sh` and `setup_and_run.sh` are dead and can go.)
 Don't work around a block; give the user the command or the proposed change instead.
 
 ## Secrets
