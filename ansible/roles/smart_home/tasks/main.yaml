@@ -50,16 +50,21 @@
 
 - name: Ensure config directories exist
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: directory
     owner: root
-    group: root
-    mode: '0755'
+    group: "{{ item.group | default('root') }}"
+    mode: '0750'
   loop:
-    - "{{ smart_home_dir }}/mosquitto"
-    - "{{ smart_home_dir }}/telegraf"
-    - "{{ smart_home_compose_dir }}"
-    - "{{ smart_home_compose_dir }}/setup"
+    # Mounted as a directory: Mosquitto opens passwd as uid 1883 after dropping privileges.
+    - path: "{{ smart_home_dir }}/mosquitto"
+      group: "{{ smart_home_mosquitto_uid }}"
+    # Containers only mount single files from these; dockerd resolves the paths as root.
+    - path: "{{ smart_home_dir }}/telegraf"
+    - path: "{{ smart_home_compose_dir }}"
+    - path: "{{ smart_home_compose_dir }}/setup"
+  loop_control:
+    label: "{{ item.path }}"
 
 - name: Ensure the Mosquitto config is present
   ansible.builtin.copy:
@@ -155,12 +160,20 @@
       become: false
       register: smart_home_repo_files
 
+    # In check mode, a first run hasn't copied them yet; find would warn about every missing one.
+    - name: Stat the synced directories on the host
+      ansible.builtin.stat:
+        path: "{{ smart_home_compose_dir }}/{{ item }}"
+      loop: "{{ smart_home_synced_dirs }}"
+      register: smart_home_synced_stat
+
     - name: Find the files of the synced directories on the host
       ansible.builtin.find:
-        paths: "{{ smart_home_synced_dirs | map('regex_replace', '^', smart_home_compose_dir ~ '/') }}"
+        paths: "{{ smart_home_synced_stat.results | selectattr('stat.exists') | map(attribute='stat.path') }}"
         recurse: true
         hidden: true
       register: smart_home_host_files
+      when: smart_home_synced_stat.results | selectattr('stat.exists') | list | length > 0
 
     # Grafana is the one to restart; an obsolete ioBroker first start script needs nothing.
     - name: Ensure files the repo dropped are absent
@@ -168,7 +181,7 @@
         path: "{{ smart_home_compose_dir }}/{{ item }}"
         state: absent
       loop: >-
-        {{ smart_home_host_files.files | map(attribute='path')
+        {{ smart_home_host_files.files | default([]) | map(attribute='path')
            | map('regex_replace', '^' ~ (smart_home_compose_dir | regex_escape) ~ '/', '')
            | difference(smart_home_repo_files.files | map(attribute='path')
                         | map('regex_replace', '^' ~ (smart_home_repo_dir | realpath | regex_escape) ~ '/', ''))

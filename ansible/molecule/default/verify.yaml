@@ -47,6 +47,36 @@
       loop_control:
         label: "{{ item.item }}"
 
+    - name: Stat the config directories
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: config_dirs
+      loop:
+        - "{{ smart_home_dir }}/mosquitto"
+        - "{{ smart_home_dir }}/telegraf"
+        - "{{ compose_dir }}"
+        - "{{ compose_dir }}/setup"
+
+    # Containers mount single files from telegraf/ and compose/ (dockerd resolves the path as root), so the world
+    # needs nothing there. mosquitto/ is mounted as a directory: Mosquitto opens passwd as uid 1883 after dropping
+    # privileges, so it gets group access.
+    - name: Check the config directories give the world no access
+      vars:
+        expected_gid: "{{ 1883 if item.item.endswith('/mosquitto') else 0 }}"
+      ansible.builtin.assert:
+        that:
+          - item.stat.isdir
+          - item.stat.uid == 0
+          - item.stat.gid == expected_gid | int
+          - item.stat.mode == '0750'
+        fail_msg: >-
+          {{ item.item }} should be 0:{{ expected_gid }} 0750,
+          is {{ item.stat.uid }}:{{ item.stat.gid }} {{ item.stat.mode }}
+        quiet: true
+      loop: "{{ config_dirs.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
     - name: Check owner and mode of the deployed files
       vars:
         stats: "{{ deployed.results | items2dict(key_name='item', value_name='stat') }}"
