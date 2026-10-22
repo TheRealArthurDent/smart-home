@@ -69,6 +69,27 @@
         mode: '0644'
       no_log: true
 
+    # Files the repo dropped since the last deployment (Telegram is gone, #7); copy alone would leave them behind.
+    - name: Create the directories of an earlier deployment
+      ansible.builtin.file:
+        path: "/etc/docker/smart-home/compose/{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop: [grafana-provisioning/alerting, setup/iobroker]
+
+    - name: Plant files the repo no longer has
+      ansible.builtin.copy:
+        content: "stale\n"
+        dest: "/etc/docker/smart-home/compose/{{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - grafana-provisioning/alerting/contactpoints.yaml
+        - setup/iobroker/obsolete.sh
+
     - name: Remember the password file setup.sh wrote
       ansible.builtin.slurp:
         src: /etc/docker/smart-home/mosquitto/passwd

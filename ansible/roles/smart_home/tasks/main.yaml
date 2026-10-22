@@ -141,6 +141,40 @@
     directory_mode: '0755'
   notify: Restart grafana
 
+# copy only adds and updates, so files the repo dropped would stay, and Grafana provisions every file it finds.
+- name: Remove files the repo no longer has
+  vars:
+    smart_home_synced_dirs: [grafana-provisioning, setup/iobroker]
+  block:
+    - name: Find the files of the synced directories in the repo
+      ansible.builtin.find:
+        paths: "{{ smart_home_synced_dirs | map('regex_replace', '^', (smart_home_repo_dir | realpath) ~ '/') }}"
+        recurse: true
+        hidden: true
+      delegate_to: localhost
+      become: false
+      register: smart_home_repo_files
+
+    - name: Find the files of the synced directories on the host
+      ansible.builtin.find:
+        paths: "{{ smart_home_synced_dirs | map('regex_replace', '^', smart_home_compose_dir ~ '/') }}"
+        recurse: true
+        hidden: true
+      register: smart_home_host_files
+
+    # Grafana is the one to restart; an obsolete ioBroker first start script needs nothing.
+    - name: Ensure files the repo dropped are absent
+      ansible.builtin.file:
+        path: "{{ smart_home_compose_dir }}/{{ item }}"
+        state: absent
+      loop: >-
+        {{ smart_home_host_files.files | map(attribute='path')
+           | map('regex_replace', '^' ~ (smart_home_compose_dir | regex_escape) ~ '/', '')
+           | difference(smart_home_repo_files.files | map(attribute='path')
+                        | map('regex_replace', '^' ~ (smart_home_repo_dir | realpath | regex_escape) ~ '/', ''))
+           | sort }}
+      notify: Restart grafana
+
 - name: Deploy containers
   when: smart_home_manage_containers | bool
   block:

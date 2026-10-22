@@ -108,3 +108,21 @@
       loop: "{{ data_dirs.results }}"
       loop_control:
         label: "{{ item.item }}"
+
+    - name: Stat files the repo no longer has (planted in prepare.yaml)
+      ansible.builtin.stat:
+        path: "{{ compose_dir }}/{{ item }}"
+      register: stale_files
+      loop:
+        - grafana-provisioning/alerting/contactpoints.yaml
+        - setup/iobroker/obsolete.sh
+
+    # Grafana provisions every file it finds, so a leftover contact point keeps breaking its start.
+    - name: Check files the repo dropped are removed from the host
+      ansible.builtin.assert:
+        that: not item.stat.exists
+        fail_msg: "{{ item.item }} is gone from the repo but still on the host"
+        quiet: true
+      loop: "{{ stale_files.results }}"
+      loop_control:
+        label: "{{ item.item }}"
