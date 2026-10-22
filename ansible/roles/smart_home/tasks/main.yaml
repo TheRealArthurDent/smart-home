@@ -58,8 +58,6 @@
   loop:
     - "{{ smart_home_dir }}/mosquitto"
     - "{{ smart_home_dir }}/telegraf"
-    # Grafana mounts it for $__file{} secrets in the alerting provisioning.
-    - "{{ smart_home_dir }}/secrets"
     - "{{ smart_home_compose_dir }}"
     - "{{ smart_home_compose_dir }}/setup"
 
@@ -179,5 +177,9 @@
         services: "{{ smart_home_services | difference(smart_home_disabled_services) }}"
         state: present
         pull: policy
+        # Fail instead of reporting changed when a container crash-loops or stays unhealthy. ioBroker's first
+        # start installs packages, hence the generous timeout.
+        wait: true
+        wait_timeout: "{{ smart_home_wait_timeout }}"
       # check mode doesn't write a new compose file, so Compose would compare against the old one or none.
       when: not (ansible_check_mode and smart_home_compose_file is changed)

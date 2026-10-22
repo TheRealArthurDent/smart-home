@@ -88,7 +88,7 @@
           - passwd_file.stat.mode == '0600'
         fail_msg: "{{ smart_home_dir }}/mosquitto/passwd was rewritten or has the wrong owner/mode"
 
-    - name: Stat the secrets directory and the data directories setup.sh created
+    - name: Stat the host directories nothing uses any more
       ansible.builtin.stat:
         path: "{{ item }}"
       register: data_dirs
@@ -98,19 +98,13 @@
         - /opt/mosquitto/data
         - /var/log/mosquitto
 
-    - name: Check the secrets directory Grafana mounts exists
-      ansible.builtin.assert:
-        that:
-          - data_dirs.results[0].stat.isdir
-          - data_dirs.results[0].stat.pw_name == 'root'
-        fail_msg: "{{ smart_home_dir }}/secrets is missing"
-
-    # setup.sh created them, but Grafana and Mosquitto keep their data in volumes, and Mosquitto logs to stderr.
-    - name: Check no host directories are created for data that lives in volumes
+    # setup.sh or the compose file needed them once. Grafana and Mosquitto keep their data in volumes, Mosquitto
+    # logs to stderr, and no provisioning reads secret files since Telegram is gone.
+    - name: Check no unused host directories are created
       ansible.builtin.assert:
         that: not item.stat.exists
         fail_msg: "{{ item.item }} should not be created"
         quiet: true
-      loop: "{{ data_dirs.results[1:] }}"
+      loop: "{{ data_dirs.results }}"
       loop_control:
         label: "{{ item.item }}"

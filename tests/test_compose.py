@@ -44,3 +44,20 @@ def test_mosquitto_keeps_its_data_in_a_named_volume():
     compose = yaml.safe_load((ROOT / "docker-compose.yaml").read_text())
     assert "mosquitto-storage" in compose["volumes"]
     assert "log_dest" not in (ROOT / "setup" / "mosquitto" / "mosquitto.conf").read_text()
+
+
+def test_grafana_provisioning_needs_no_secret_files():
+    """Telegram is gone (#7): nothing reads files from /etc/secrets, so Grafana doesn't mount it either."""
+    provisioning = ROOT / "grafana-provisioning"
+    readers = [p.name for p in provisioning.rglob("*.yaml") if "$__file{" in p.read_text()]
+    assert readers == []
+    assert not any("/etc/secrets" in mount for mount in service("grafana")["volumes"])
+
+
+def test_compose_up_fails_on_containers_that_dont_come_up():
+    """Without wait, `compose up` reports changed while a container crash-loops (Grafana on testbed)."""
+    tasks = yaml.safe_load((ROOT / "ansible" / "roles" / "smart_home" / "tasks" / "main.yaml").read_text())
+    compose_up = next(
+        task for block in tasks for task in block.get("block", []) if task.get("name") == "Ensure the stack is up"
+    )
+    assert compose_up["community.docker.docker_compose_v2"]["wait"] is True

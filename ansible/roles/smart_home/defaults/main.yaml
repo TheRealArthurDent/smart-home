@@ -15,5 +15,7 @@ smart_home_mosquitto_uid: 1883
 smart_home_mosquitto_user: mosquitto
 # Services of docker-compose.yaml that `compose up` leaves out on this host, e.g. deconz without its ConBee stick
 smart_home_disabled_services: []
+# Seconds `compose up` waits for every container to run (and be healthy, where it has a healthcheck)
+smart_home_wait_timeout: 600
 # Compose up and restarts need a running Docker daemon (false in Molecule).
 smart_home_manage_containers: true
