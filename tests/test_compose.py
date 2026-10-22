@@ -20,3 +20,17 @@ def test_telegraf_gets_its_passwords_from_the_env_file():
     assert referenced == {"INFLUXDB_WRITE_PASSWORD", "MOSQUITTO_PASSWD"}
     environment = service("telegraf").get("environment", [])
     assert sorted(environment) == sorted(f"{var}=${{{var}}}" for var in referenced)
+
+
+def test_restart_handlers_skip_a_compose_project_check_mode_has_not_written():
+    """In --check, a first Ansible run doesn't create the compose dir, and Compose fails on a missing project_src.
+    The handlers need the same guard as the "Ensure the stack is up" task (the container part can't run in Molecule)."""
+    role = ROOT / "ansible" / "roles" / "smart_home"
+    guard = "not (ansible_check_mode and smart_home_compose_file is changed)"
+    tasks = yaml.safe_load((role / "tasks" / "main.yaml").read_text())
+    compose_up = next(
+        task for block in tasks for task in block.get("block", []) if task.get("name") == "Ensure the stack is up"
+    )
+    assert compose_up["when"] == guard
+    for handler in yaml.safe_load((role / "handlers" / "main.yaml").read_text()):
+        assert guard in handler["when"], handler["name"]
