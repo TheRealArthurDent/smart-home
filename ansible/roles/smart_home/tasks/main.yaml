@@ -125,14 +125,16 @@
     mode: '0644'
   register: smart_home_compose_file
 
-# ioBroker runs it on its first start only, so a change needs no restart.
+# ioBroker runs it on its first start only, so a change needs no restart. Its startup script chowns the mounted
+# file to the ioBroker user and makes it executable on every start (and fails on a read-only mount), so the role
+# sets the same instead of flipping it back each run.
 - name: Ensure the ioBroker first start script is present
   ansible.builtin.copy:
     src: "{{ smart_home_repo_dir }}/setup/iobroker"
     dest: "{{ smart_home_compose_dir }}/setup/"
-    owner: root
-    group: root
-    mode: '0644'
+    owner: "{{ smart_home_iobroker_uid }}"
+    group: "{{ smart_home_iobroker_uid }}"
+    mode: '0755'
     directory_mode: '0755'
 
 # Grafana doesn't rescan dashboards (updateIntervalSeconds: 0), so a change needs a restart.
