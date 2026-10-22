@@ -103,3 +103,44 @@
         group: root
         mode: '0600'
       no_log: true
+
+    # raspberry's stack role installs the restore helper and its config directories (#1).
+    - name: Create the config directories of the restore helper
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - /etc/restic-restore
+        - /etc/restic-restore/stacks
+
+    # Without a Docker daemon there is no resticprofile container to restore from. The stub logs its arguments for
+    # verify.yaml, needs the stack's item list like the real helper, and keeps the marker semantics: the first run
+    # restores, every later one finds the marker.
+    - name: Install a stub of raspberry's restic-restore
+      ansible.builtin.copy:
+        content: |
+          #!/usr/bin/env python3
+          import json, os, sys
+          args = sys.argv[1:]
+          with open("/var/log/restic-restore-stub.log", "a") as f:
+              f.write(json.dumps(args) + "\n")
+          stack = args[args.index("clean-slate") + 1]
+          if not os.path.isfile(f"/etc/restic-restore/stacks/{stack}.json"):
+              sys.exit(f"ERROR: unknown stack {stack}")
+          marker = f"/var/lib/restic-restore/{stack}.done"
+          if os.path.exists(marker):
+              print(json.dumps({"changed": False, "msg": "already done: stub"}))
+          elif "--dry-run" in args:
+              print(json.dumps({"changed": True, "msg": f"would restore {stack}"}))
+          else:
+              os.makedirs(os.path.dirname(marker), exist_ok=True)
+              with open(marker, "w") as f:
+                  f.write("stub\n")
+              print(json.dumps({"changed": True, "msg": f"restored {stack}"}))
+        dest: /usr/local/bin/restic-restore
+        owner: root
+        group: root
+        mode: '0755'

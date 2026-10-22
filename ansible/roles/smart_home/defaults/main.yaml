@@ -19,3 +19,50 @@ smart_home_disabled_services: []
 smart_home_wait_timeout: 600
 # Compose up and restarts need a running Docker daemon (false in Molecule).
 smart_home_manage_containers: true
+
+# Clean-slate restore before the stack starts on a fresh host (#1). raspberry's stack role installs the helper
+# /usr/local/bin/restic-restore; this role lists the stack's volumes for it and calls it before compose up. The
+# helper restores only when every listed volume is empty and writes /var/lib/restic-restore/smart-home.done, so a
+# host that already has data (raspi, testbed) only gets the marker.
+# -e skip_smart_home_restore=true (a new host with nothing to restore) only writes the marker;
+# -e smart_home_restore_snapshot=<id> restores another snapshot than the latest.
+smart_home_skip_restore: "{{ skip_smart_home_restore | default(false) }}"
+smart_home_restore_snapshot: latest
+smart_home_restore_helper: /usr/local/bin/restic-restore
+# Where Docker keeps the named volumes; the backup covers it
+smart_home_docker_volumes_dir: /var/lib/docker/volumes
+# Named volumes of docker-compose.yaml that hold state not coming from IaC (tests/test_restore_volumes.py):
+#   services: the services mounting the volume; their containers are stopped during a targeted restore, and a
+#             volume whose services are all in smart_home_disabled_services isn't listed (the backup lacks it)
+#   preserve: files inside the volume (globs, relative to it) that raspberry's backup excludes (excludes.j2), so a
+#             restore that mirrors the snapshot keeps them
+# ikea-tradfri-firmware-storage isn't listed: firmware-download fetches the firmware again.
+smart_home_restore_volumes:
+  iobroker-storage:
+    services: [iobroker]
+    preserve: [.npm]
+    note: ioBroker with its adapters, instances and scripts
+  iobroker-states-redis-storage:
+    services: [iobroker-states-redis]
+    preserve: []
+    note: ioBroker's states (current values)
+  iobroker-objects-redis-storage:
+    services: [iobroker-objects-redis]
+    preserve: []
+    note: ioBroker's objects (configuration of adapters and devices)
+  deconz-storage:
+    services: [deconz]
+    preserve: []
+    note: The Zigbee network (keys, paired devices); without it every device must be paired again
+  influxdb-storage:
+    services: [influxdb]
+    preserve: []
+    note: The measurement history
+  grafana-storage:
+    services: [grafana]
+    preserve: []
+    note: Users, preferences and alert state; dashboards and alerting come from grafana-provisioning/
+  mosquitto-storage:
+    services: [mosquitto]
+    preserve: []
+    note: Retained messages and persistent sessions
