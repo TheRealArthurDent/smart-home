@@ -30,6 +30,12 @@ BLOCKED_COMMANDS = [
     "ssh smarthome@raspi -p 1357 'docker ps'",
     "scp install.tar smarthome@raspi:dev/smart-home",
     "rsync -a setup/ smarthome@192.168.1.2:dev/smart-home/setup/",
+    "cd ansible && ansible-playbook deploy.yaml --limit raspi",
+    "ansible-playbook deploy.yaml -l raspi --check",
+    "ansible-playbook deploy.yaml --limit=all",
+    "ansible-playbook deploy.yaml --limit 'testbed,raspi'",
+    "cd ansible && ../.venv/bin/ansible-playbook deploy.yaml",
+    "ansible raspi -m ping",
     # main branch
     "git push origin main",
     "git push origin HEAD:main",
@@ -51,6 +57,10 @@ BLOCKED_COMMANDS = [
 ]
 
 ALLOWED_COMMANDS = [
+    "cd ansible && ansible-playbook deploy.yaml --limit testbed --check --diff",
+    "cd ansible && ../.venv/bin/molecule test",
+    "cd ansible && ../.venv/bin/ansible-lint --strict",
+    "pytest tests/test_limit_guard.py",
     "./deploy.sh testbed 4242 testuser",
     "bash deploy.sh testbed 4242 testuser",
     "ssh -p 4242 testuser@192.168.1.7",

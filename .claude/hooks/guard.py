@@ -45,6 +45,11 @@ if tool == "Bash":
         block("setup_and_run.sh installs the stack on the machine it runs on. Hand the user the command.")
     if re.search(runs(r"(?:ssh|scp|rsync|sftp)"), cmd) and re.search(PROD, cmd):
         block("direct access to raspi (production).")
+    if re.search(runs(r"ansible(?:-playbook)?"), cmd):
+        if not re.search(r"(--limit|-l)[ =]", cmd):
+            block("ansible without --limit. Use --limit testbed.")
+        if re.search(r"(--limit|-l)[ =]['\"]?[^ ]*(" + PROD[1:-1] + r"|\ball\b|\*)", cmd):
+            block("ansible against raspi (production) or all hosts. Hand the user the command instead.")
 
     # 2. main branch: work on a branch, PR into main.
     # Flags are checked per command, so `rm -f x && git push` or a branch named `...-f75dkr` don't count.
