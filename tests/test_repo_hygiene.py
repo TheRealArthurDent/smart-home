@@ -64,3 +64,9 @@ def test_workflows_use_no_repository_secrets():
         if secret != "GITHUB_TOKEN"
     ]
     assert offenders == []
+
+
+def test_the_bash_deployment_is_gone():
+    """ansible/deploy.yaml replaced it (#7); a leftover script could deploy an outdated stack next to the role's."""
+    leftovers = ["deploy.sh", "run.sh", "setup_and_run.sh", "setup/setup.sh"]
+    assert [path for path in leftovers if (ROOT / path).exists()] == []
