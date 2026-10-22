@@ -31,7 +31,7 @@ def test_restart_handlers_skip_a_compose_project_check_mode_has_not_written():
     compose_up = next(
         task for block in tasks for task in block.get("block", []) if task.get("name") == "Ensure the stack is up"
     )
-    assert compose_up["when"] == guard
+    assert guard in compose_up["when"]
     for handler in yaml.safe_load((role / "handlers" / "main.yaml").read_text()):
         assert guard in handler["when"], handler["name"]
 

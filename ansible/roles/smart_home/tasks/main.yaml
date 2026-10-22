@@ -213,6 +213,18 @@
           {{ inventory_hostname }} first.
         quiet: true
 
+    - name: Read the project's containers
+      community.docker.docker_host_info:
+        containers: true
+        containers_all: true
+        containers_filters:
+          label: com.docker.compose.project={{ smart_home_project_name }}
+        verbose_output: true
+      register: smart_home_host_info
+
+    - name: Leave containers stopped by hand alone
+      ansible.builtin.include_tasks: container_states.yaml
+
     # Images are pinned (Renovate), so the default pull policy "missing" pulls exactly when a version changes.
     - name: Ensure the stack is up
       community.docker.docker_compose_v2:
@@ -220,13 +232,18 @@
         project_name: "{{ smart_home_project_name }}"
         env_files:
           - "{{ smart_home_env_file }}"
-        # All services but the disabled ones; Compose leaves a disabled one alone, running or not.
-        services: "{{ smart_home_services | difference(smart_home_disabled_services) }}"
+        # Neither the disabled services nor those stopped by hand; Compose leaves a service it isn't given alone.
+        services: "{{ smart_home_up_services }}"
+        # Otherwise Compose starts a stopped influxdb as telegraf's dependency.
+        dependencies: false
         state: present
         pull: policy
         # Fail instead of reporting changed when a container crash-loops or stays unhealthy. ioBroker's first
         # start installs packages, hence the generous timeout.
         wait: true
         wait_timeout: "{{ smart_home_wait_timeout }}"
-      # check mode doesn't write a new compose file, so Compose would compare against the old one or none.
-      when: not (ansible_check_mode and smart_home_compose_file is changed)
+      when:
+        # check mode doesn't write a new compose file, so Compose would compare against the old one or none.
+        - not (ansible_check_mode and smart_home_compose_file is changed)
+        # Without any services, Compose would bring up all of them.
+        - smart_home_up_services | length > 0
