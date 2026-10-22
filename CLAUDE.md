@@ -18,6 +18,12 @@ infrastructure stack from [raspberry](https://github.com/TheRealArthurDent/raspb
   role renders it from KeePass). Without raspberry's bootstrap on the host, this stack doesn't start.
 - The role reads only `MOSQUITTO_PASSWD` from that `.env`; it has no KeePass access of its own. Telegraf gets its
   passwords as environment variables from Compose, so `telegraf.conf` holds none.
+- **Clean-slate restore (#1)**: before `compose up`, the role lists the volumes in `smart_home_restore_volumes`
+  (defaults) for raspberry's `restic-restore` helper (`/etc/restic-restore/stacks/smart-home.json`), creates them
+  with the Compose labels and runs `restic-restore --runner oneoff clean-slate smart-home`. It restores only when
+  all of them are empty and writes `/var/lib/restic-restore/smart-home.done`; `-e skip_smart_home_restore=true`
+  only writes the marker. A new volume in `docker-compose.yaml` goes into that list or `tests/test_restore_volumes.py`.
+  `smart-home` joins raspberry's `stack_backup_stacks` only after this ran on raspi.
 
 Open plans: #1 (clean-slate restore from the restic backup), #2 (migration from ioBroker and Node-RED to Home
 Assistant, with MCP servers as sub-issues), #3 (voice commands, after #2) and #7 (deployment from bash to Ansible).
