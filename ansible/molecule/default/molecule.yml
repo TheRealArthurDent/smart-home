@@ -1,0 +1,45 @@
+# Container-based test of the smart_home role, without a Docker daemon (containers are the testbed's job).
+# Run from ansible/: molecule test
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ${MOLECULE_PROJECT_DIRECTORY}/requirements.yaml
+
+driver:
+  name: docker
+
+platforms:
+  - name: raspi-trixie
+    image: debian:trixie
+    dockerfile: Dockerfile.j2
+    pre_build_image: false
+    command: sleep infinity
+
+provisioner:
+  name: ansible
+  # Molecule defaults to *.yml; this repo uses .yaml (molecule.yml itself is a fixed name).
+  playbooks:
+    prepare: prepare.yaml
+    converge: converge.yaml
+    verify: verify.yaml
+  env:
+    # ansible-lint doesn't see this; it finds the roles through the roles symlink next to converge.yaml.
+    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
+    # JUnit XML per playbook run (create, converge, idempotence, verify, ...) in <repo>/test-results/molecule
+    ANSIBLE_CALLBACKS_ENABLED: ansible.builtin.junit
+    JUNIT_OUTPUT_DIR: ${MOLECULE_PROJECT_DIRECTORY}/../test-results/molecule
+    JUNIT_TASK_CLASS: "true"
+    JUNIT_HIDE_TASK_ARGUMENTS: "true"
+    # Leak test: log every run at -v with --diff; verify.yaml checks the log for secrets.
+    ANSIBLE_VERBOSITY: "1"
+    ANSIBLE_DIFF_ALWAYS: "true"
+    ANSIBLE_LOG_PATH: ${MOLECULE_EPHEMERAL_DIRECTORY}/ansible.log
+  inventory:
+    host_vars:
+      raspi-trixie:
+        # Connect as the unprivileged deploy user, like on the real Pi.
+        ansible_user: smarthome
+        ansible_become: true
+
+verifier:
+  name: ansible

@@ -20,6 +20,8 @@ First find out where you run: a cloud container (claude.ai/code) or a local sess
 |---|---|---|---|
 | pytest (`tests/`), pre-commit | yes | yes | pytest yes |
 | `dashboard-linter lint --strict` on a dashboard | only if the binary can be downloaded | yes | yes |
+| Molecule (`ansible/molecule/default`) | rarely: needs a Docker daemon, and the image build needs deb.debian.org, which the proxy may refuse | yes | yes |
+| `ansible-lint --strict` | if `ansible/requirements.yaml` installs (Galaxy may be blocked; `pip install ansible==<version>` ships the collections) | yes | yes |
 | `docker compose config` | only with a dummy env file (copy `setup/.env.example`, fill dummy values) | same | no |
 | Deploy to testbed | **no**: the 192.168.1.x LAN is only reachable from the home network | **only after asking**, every time | no |
 | Deploy to raspi | no | **no**: hand the user the commands | no |
@@ -37,10 +39,15 @@ instead of looking for another way to run it.
 4. **Hand the user the rollout**, testbed before raspi, and say what to look for:
 
 ```sh
-./deploy.sh testbed 4242 testuser    # port and user are required, unknown targets default to port 22 / user pi
+cd ansible
+../.venv/bin/ansible-playbook deploy.yaml --limit testbed --check --diff
+../.venv/bin/ansible-playbook deploy.yaml --limit testbed      # then once more: must report changed=0
 ssh -p 4242 testuser@192.168.1.7 'docker ps --format "{{.Names}}\t{{.Status}}"'   # all containers up/healthy
-./deploy.sh                          # raspi, only after the user says so
+../.venv/bin/ansible-playbook deploy.yaml --limit raspi --check --diff   # raspi, only after the user says so
 ```
+
+The bash fallback is `./deploy.sh testbed 4242 testuser` (port and user are required; unknown targets default to
+port 22 / user pi) until #7 deletes it.
 
 ## Things that look wrong but aren't (and traps)
 
@@ -52,11 +59,18 @@ ssh -p 4242 testuser@192.168.1.7 'docker ps --format "{{.Names}}\t{{.Status}}"' 
   `bootstrap.yaml`. Reference it here as `${VAR}`; never write a value into the repo.
 - **A new web UI needs raspberry**: nginx vhost, Pi-hole CNAME and certificate SAN are all in raspberry. The
   container joins the `siz` network here.
-- **The Mosquitto password file is only created once** (`setup/setup.sh` skips it when
-  `/etc/docker/smart-home/mosquitto/passwd` exists). A changed `MOSQUITTO_PASSWD` needs that file removed on the
-  host, which is the user's job.
-- **Telegraf config is rewritten on every deploy** (`[ ! -f ]` on a directory is always true), with passwords
-  substituted by `sed`. A password containing `/` or `&` breaks that substitution.
+- **The Mosquitto password file** is kept by the role while its entry matches `MOSQUITTO_PASSWD` (the
+  `mosquitto_passwd` filter re-checks the hash), and rewritten only when the password changed. `setup/setup.sh`
+  instead creates it once and never updates it.
+- **Telegraf reads its passwords from the environment** (`$INFLUXDB_WRITE_PASSWORD`, `$MOSQUITTO_PASSWD` in
+  `telegraf.conf`, passed by Compose). `setup/setup.sh` still substitutes them with `sed`, which breaks on `/` or `&`.
+- **testbed has no ConBee stick**: `compose up` fails on the missing `/dev/ttyACM0`, so the inventory leaves
+  deconz out there (`smart_home_disabled_services`). An unknown name in that list fails the run.
+- **Memory limits are discarded on the Pi** ("kernel does not support memory limit capabilities"): Raspberry Pi
+  OS boots without the memory cgroup unless `cmdline.txt` enables it, so `mem_limit` in the compose file has no effect.
+- **The first Ansible run moves the Compose project** from `~/dev/smart-home` to `/etc/docker/smart-home/compose`
+  (same project name `smart-home`, same volumes). Containers with bind mounts from the old folder (ioBroker,
+  Grafana) are recreated once; after that, deploy with Ansible only, or the two folders fight.
 - **Grafana doesn't rescan dashboards** (`updateIntervalSeconds: 0`, it caused I/O spikes). Changed dashboard
   JSON takes effect after `docker restart grafana`. `allowUiUpdates: false`: edits in the UI are lost, the JSON
   in `grafana-provisioning/dashboards/provisioned/` is the source of truth.
@@ -68,8 +82,9 @@ ssh -p 4242 testuser@192.168.1.7 'docker ps --format "{{.Names}}\t{{.Status}}"' 
   production.
 - **`deploy.sh` replaces `raspi` with the target in `docker-compose.yaml`** for every target (the check compares
   against the literal string `DEFAULT_TARGET`). Don't rely on the word `raspi` in the compose file.
-- **Container names are fixed** (`container_name:`) and the Compose project is named after the deploy folder
-  `~/dev/smart-home`. Deploying from another folder would start a second project whose names collide.
+- **Container names are fixed** (`container_name:`). `deploy.sh` names the Compose project after its folder
+  `~/dev/smart-home`, the role sets `smart-home` explicitly; any other name would start a second project whose
+  names collide.
 - **Images are pinned** and Renovate updates them; deCONZ and the firmware downloader are pinned by digest.
   Redis uses the `arm64v8/` image, so it won't run on an amd64 CI runner.
 

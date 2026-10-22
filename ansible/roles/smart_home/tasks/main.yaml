@@ -1,0 +1,219 @@
+---
+# Deploys the smart-home stack. Replaces deploy.sh -> setup/setup.sh -> run.sh (#7). Needs raspberry's bootstrap
+# on the host first: its secrets role writes smart_home_env_file, its stack role creates the networks siz and outbound.
+
+- name: Read the services of the compose file
+  ansible.builtin.set_fact:
+    smart_home_services: >-
+      {{ (lookup('ansible.builtin.file', smart_home_repo_dir ~ '/docker-compose.yaml') | from_yaml).services
+         | list }}
+
+# A typo would otherwise start everything, on raspi the service it was meant to leave out elsewhere.
+- name: Ensure the disabled services exist in the compose file
+  ansible.builtin.assert:
+    that: smart_home_disabled_services | difference(smart_home_services) | length == 0
+    fail_msg: >-
+      Unknown services in smart_home_disabled_services:
+      {{ smart_home_disabled_services | difference(smart_home_services) | join(', ') }}
+    quiet: true
+
+- name: Stat the secrets file
+  ansible.builtin.stat:
+    path: "{{ smart_home_env_file }}"
+  register: smart_home_env_stat
+
+- name: Ensure the secrets file exists
+  ansible.builtin.assert:
+    that: smart_home_env_stat.stat.exists
+    fail_msg: "{{ smart_home_env_file }} is missing. Run raspberry's bootstrap.yaml on {{ inventory_hostname }} first."
+    quiet: true
+
+# The only secret the role itself needs; Compose reads the rest from the file.
+- name: Read the Mosquitto password from the secrets file
+  ansible.builtin.slurp:
+    src: "{{ smart_home_env_file }}"
+  register: smart_home_env
+  no_log: true
+
+- name: Remember the Mosquitto password
+  ansible.builtin.set_fact:
+    smart_home_mosquitto_password: >-
+      {{ smart_home_env.content | b64decode
+         | regex_search('^MOSQUITTO_PASSWD=(.*)$', '\1', multiline=True) | default([''], true) | first }}
+  no_log: true
+
+- name: Ensure the Mosquitto password is set
+  ansible.builtin.assert:
+    that: smart_home_mosquitto_password | length > 0
+    fail_msg: "MOSQUITTO_PASSWD is missing in {{ smart_home_env_file }}."
+    quiet: true
+
+- name: Ensure config directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - "{{ smart_home_dir }}/mosquitto"
+    - "{{ smart_home_dir }}/telegraf"
+    - "{{ smart_home_compose_dir }}"
+    - "{{ smart_home_compose_dir }}/setup"
+
+- name: Ensure the Mosquitto config is present
+  ansible.builtin.copy:
+    src: "{{ smart_home_repo_dir }}/setup/mosquitto/mosquitto.conf"
+    dest: "{{ smart_home_dir }}/mosquitto/mosquitto.conf"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart mosquitto
+
+- name: Read the Mosquitto password file
+  ansible.builtin.slurp:
+    src: "{{ smart_home_dir }}/mosquitto/passwd"
+  register: smart_home_passwd
+  failed_when: false
+
+# mosquitto_passwd filter (filter_plugins/): keeps the entry while it matches, so only a changed password rewrites it.
+- name: Ensure the Mosquitto password file matches the password
+  ansible.builtin.copy:
+    content: |
+      {{ smart_home_mosquitto_password | mosquitto_passwd(smart_home_mosquitto_user, smart_home_passwd_content) }}
+    dest: "{{ smart_home_dir }}/mosquitto/passwd"
+    owner: "{{ smart_home_mosquitto_uid }}"
+    group: "{{ smart_home_mosquitto_uid }}"
+    mode: '0600'
+  vars:
+    smart_home_passwd_content: "{{ smart_home_passwd.content | default('') | b64decode }}"
+  no_log: true
+  notify: Restart mosquitto
+
+# No secrets in it any more (Telegraf reads them from its environment), but the copy setup.sh left behind has them
+# substituted, and --diff would print them.
+- name: Ensure the Telegraf config is present
+  ansible.builtin.copy:
+    src: "{{ smart_home_repo_dir }}/setup/telegraf/telegraf.conf"
+    dest: "{{ smart_home_dir }}/telegraf/telegraf.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  diff: false
+  notify: Restart telegraf
+
+- name: Ensure the Telegraf CPU temperature script is present
+  ansible.builtin.copy:
+    src: "{{ smart_home_repo_dir }}/setup/telegraf/cpu_temp.sh"
+    dest: "{{ smart_home_dir }}/telegraf/cpu_temp.sh"
+    owner: root
+    group: root
+    mode: '0555'
+  notify: Restart telegraf
+
+- name: Ensure the compose file is present
+  ansible.builtin.copy:
+    src: "{{ smart_home_repo_dir }}/docker-compose.yaml"
+    dest: "{{ smart_home_compose_dir }}/docker-compose.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+  register: smart_home_compose_file
+
+# ioBroker runs it on its first start only, so a change needs no restart.
+- name: Ensure the ioBroker first start script is present
+  ansible.builtin.copy:
+    src: "{{ smart_home_repo_dir }}/setup/iobroker"
+    dest: "{{ smart_home_compose_dir }}/setup/"
+    owner: root
+    group: root
+    mode: '0644'
+    directory_mode: '0755'
+
+# Grafana doesn't rescan dashboards (updateIntervalSeconds: 0), so a change needs a restart.
+- name: Ensure the Grafana provisioning is present
+  ansible.builtin.copy:
+    src: "{{ smart_home_repo_dir }}/grafana-provisioning"
+    dest: "{{ smart_home_compose_dir }}/"
+    owner: root
+    group: root
+    mode: '0644'
+    directory_mode: '0755'
+  notify: Restart grafana
+
+# copy only adds and updates, so files the repo dropped would stay, and Grafana provisions every file it finds.
+- name: Remove files the repo no longer has
+  vars:
+    smart_home_synced_dirs: [grafana-provisioning, setup/iobroker]
+  block:
+    - name: Find the files of the synced directories in the repo
+      ansible.builtin.find:
+        paths: "{{ smart_home_synced_dirs | map('regex_replace', '^', (smart_home_repo_dir | realpath) ~ '/') }}"
+        recurse: true
+        hidden: true
+      delegate_to: localhost
+      become: false
+      register: smart_home_repo_files
+
+    - name: Find the files of the synced directories on the host
+      ansible.builtin.find:
+        paths: "{{ smart_home_synced_dirs | map('regex_replace', '^', smart_home_compose_dir ~ '/') }}"
+        recurse: true
+        hidden: true
+      register: smart_home_host_files
+
+    # Grafana is the one to restart; an obsolete ioBroker first start script needs nothing.
+    - name: Ensure files the repo dropped are absent
+      ansible.builtin.file:
+        path: "{{ smart_home_compose_dir }}/{{ item }}"
+        state: absent
+      loop: >-
+        {{ smart_home_host_files.files | map(attribute='path')
+           | map('regex_replace', '^' ~ (smart_home_compose_dir | regex_escape) ~ '/', '')
+           | difference(smart_home_repo_files.files | map(attribute='path')
+                        | map('regex_replace', '^' ~ (smart_home_repo_dir | realpath | regex_escape) ~ '/', ''))
+           | sort }}
+      notify: Restart grafana
+
+- name: Deploy containers
+  when: smart_home_manage_containers | bool
+  block:
+    # requests for the community.docker modules, yaml for docker_compose_v2
+    - name: Ensure Python libraries for the Docker modules are installed
+      ansible.builtin.apt:
+        name:
+          - python3-requests
+          - python3-yaml
+        state: present
+
+    - name: Read the external networks
+      community.docker.docker_network_info:
+        name: "{{ item }}"
+      loop: [siz, outbound]
+      register: smart_home_networks
+
+    - name: Ensure the external networks exist
+      ansible.builtin.assert:
+        that: smart_home_networks.results | map(attribute='exists') | min
+        fail_msg: >-
+          The Docker networks siz and outbound are missing. Run raspberry's bootstrap.yaml on
+          {{ inventory_hostname }} first.
+        quiet: true
+
+    # Images are pinned (Renovate), so the default pull policy "missing" pulls exactly when a version changes.
+    - name: Ensure the stack is up
+      community.docker.docker_compose_v2:
+        project_src: "{{ smart_home_compose_dir }}"
+        project_name: "{{ smart_home_project_name }}"
+        env_files:
+          - "{{ smart_home_env_file }}"
+        # All services but the disabled ones; Compose leaves a disabled one alone, running or not.
+        services: "{{ smart_home_services | difference(smart_home_disabled_services) }}"
+        state: present
+        pull: policy
+        # Fail instead of reporting changed when a container crash-loops or stays unhealthy. ioBroker's first
+        # start installs packages, hence the generous timeout.
+        wait: true
+        wait_timeout: "{{ smart_home_wait_timeout }}"
+      # check mode doesn't write a new compose file, so Compose would compare against the old one or none.
+      when: not (ansible_check_mode and smart_home_compose_file is changed)

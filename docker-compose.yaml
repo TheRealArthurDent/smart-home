@@ -138,6 +138,10 @@ services:
       - /etc:/rootfs/etc:ro
     user:
       "telegraf:992"
+    # telegraf.conf references these as $VAR; Telegraf resolves them from its environment.
+    environment:
+      - INFLUXDB_WRITE_PASSWORD=${INFLUXDB_WRITE_PASSWORD}
+      - MOSQUITTO_PASSWD=${MOSQUITTO_PASSWD}
     depends_on:
       - influxdb
     networks:
@@ -155,7 +159,6 @@ services:
     volumes:
       - grafana-storage:/var/lib/grafana
       - ./grafana-provisioning/:/etc/grafana/provisioning
-      - /etc/docker/smart-home/secrets/:/etc/secrets/:ro
     depends_on:
       - influxdb
     environment:
@@ -177,15 +180,14 @@ services:
     hostname: mosquitto
     container_name: mqtt
     image: eclipse-mosquitto:2.0.22
-    #pull_policy: always
     restart: unless-stopped
     ports:
       - "1883:1883"
       # websockets not needed for the time being - "9001:9001"
     volumes:
       - /etc/docker/smart-home/mosquitto:/mosquitto/config:ro
-      - /opt/mosquitto/data:/mosquitto/data
-      - /var/log/mosquitto:/mosquitto/log
+      # Retained messages and sessions. The log goes to stderr (docker logs mqtt): mosquitto.conf sets no log_dest.
+      - mosquitto-storage:/mosquitto/data
     networks:
       - default # needed to expose port 1883
       - smart-home
@@ -198,6 +200,7 @@ volumes:
   grafana-storage:
   deconz-storage:
   ikea-tradfri-firmware-storage:
+  mosquitto-storage:
 networks:
   default:
     driver: bridge

@@ -1,0 +1,128 @@
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    repo_dir: "{{ lookup('ansible.builtin.env', 'MOLECULE_PROJECT_DIRECTORY') }}/.."
+    smart_home_dir: /etc/docker/smart-home
+    compose_dir: "{{ smart_home_dir }}/compose"
+  tasks:
+    - name: Check no secret was printed (-v and --diff, see molecule.yml)
+      vars:
+        # Read inside the assert so the log itself is never printed.
+        log_path: "{{ lookup('ansible.builtin.env', 'ANSIBLE_LOG_PATH') }}"
+        run_log: "{{ lookup('ansible.builtin.file', log_path) }}"
+        leaked: "{{ run_log | regex_findall('LEAKCANARY[\\w-]*') | unique }}"
+      ansible.builtin.assert:
+        that: run_log is not search('LEAKCANARY')
+        fail_msg: >-
+          Secrets leaked into the Ansible output: {{ leaked | join(', ') }}.
+          Find the task printing them and add no_log: true (or diff: false for a file that held secrets).
+        success_msg: No secrets in the Ansible log
+
+    - name: Stat the deployed files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        checksum_algorithm: sha1
+      register: deployed
+      loop:
+        - "{{ compose_dir }}/docker-compose.yaml"
+        - "{{ compose_dir }}/setup/iobroker/userscript_firststart.sh"
+        - "{{ compose_dir }}/grafana-provisioning/datasources/datasources.yaml"
+        - "{{ compose_dir }}/grafana-provisioning/dashboards/provisioned/overview.json"
+        - "{{ smart_home_dir }}/mosquitto/mosquitto.conf"
+        - "{{ smart_home_dir }}/telegraf/telegraf.conf"
+        - "{{ smart_home_dir }}/telegraf/cpu_temp.sh"
+
+    - name: Check the files are copies of the repo's, without substitutions
+      vars:
+        source: "{{ item.item | replace(compose_dir, repo_dir) | replace(smart_home_dir, repo_dir ~ '/setup') }}"
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.checksum == lookup('ansible.builtin.file', source, rstrip=false) | hash('sha1')
+        fail_msg: "{{ item.item }} is missing or differs from {{ source }}"
+        quiet: true
+      loop: "{{ deployed.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Check owner and mode of the deployed files
+      vars:
+        stats: "{{ deployed.results | items2dict(key_name='item', value_name='stat') }}"
+        expected:
+          # Mosquitto reads its config as root, before it drops privileges.
+          mosquitto/mosquitto.conf: [root, '0600']
+          # No secrets any more: Telegraf reads the passwords from its environment.
+          telegraf/telegraf.conf: [root, '0644']
+          telegraf/cpu_temp.sh: [root, '0555']
+      ansible.builtin.assert:
+        that:
+          - stats[smart_home_dir ~ '/' ~ item.key].pw_name == item.value[0]
+          - stats[smart_home_dir ~ '/' ~ item.key].mode == item.value[1]
+        fail_msg: "{{ item.key }} should be {{ item.value[0] }} {{ item.value[1] }}"
+        quiet: true
+      loop: "{{ expected | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Stat the Mosquitto password file
+      ansible.builtin.stat:
+        path: "{{ smart_home_dir }}/mosquitto/passwd"
+        checksum_algorithm: sha1
+      register: passwd_file
+
+    - name: Stat the password file setup.sh wrote (from prepare.yaml)
+      ansible.builtin.stat:
+        path: /root/passwd.prepared
+        checksum_algorithm: sha1
+      register: passwd_prepared
+
+    # The password in .env didn't change, so the entry setup.sh wrote must survive (a new salt every run
+    # would restart Mosquitto on every deployment).
+    - name: Check the password file keeps the matching entry and is readable only by Mosquitto
+      ansible.builtin.assert:
+        that:
+          - passwd_file.stat.checksum == passwd_prepared.stat.checksum
+          - passwd_file.stat.uid == 1883
+          - passwd_file.stat.mode == '0600'
+        fail_msg: "{{ smart_home_dir }}/mosquitto/passwd was rewritten or has the wrong owner/mode"
+
+    - name: Stat the host directories nothing uses any more
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: data_dirs
+      loop:
+        - "{{ smart_home_dir }}/secrets"
+        - /var/lib/smart-home/grafana
+        - /opt/mosquitto/data
+        - /var/log/mosquitto
+
+    # setup.sh or the compose file needed them once. Grafana and Mosquitto keep their data in volumes, Mosquitto
+    # logs to stderr, and no provisioning reads secret files since Telegram is gone.
+    - name: Check no unused host directories are created
+      ansible.builtin.assert:
+        that: not item.stat.exists
+        fail_msg: "{{ item.item }} should not be created"
+        quiet: true
+      loop: "{{ data_dirs.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Stat files the repo no longer has (planted in prepare.yaml)
+      ansible.builtin.stat:
+        path: "{{ compose_dir }}/{{ item }}"
+      register: stale_files
+      loop:
+        - grafana-provisioning/alerting/contactpoints.yaml
+        - setup/iobroker/obsolete.sh
+
+    # Grafana provisions every file it finds, so a leftover contact point keeps breaking its start.
+    - name: Check files the repo dropped are removed from the host
+      ansible.builtin.assert:
+        that: not item.stat.exists
+        fail_msg: "{{ item.item }} is gone from the repo but still on the host"
+        quiet: true
+      loop: "{{ stale_files.results }}"
+      loop_control:
+        label: "{{ item.item }}"

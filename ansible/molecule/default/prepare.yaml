@@ -1,0 +1,105 @@
+# A Pi after raspberry's bootstrap and an earlier deployment with the bash scripts.
+- name: Prepare
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    # Every value containing LEAKCANARY is a secret; verify.yaml fails if one shows up in the Ansible log.
+    mosquitto_password: LEAKCANARY-mosquitto
+  tasks:
+    - name: Create the config directories of raspberry's secrets role and the bash deployment
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - /etc/docker/smart-home
+        - /etc/docker/smart-home/mosquitto
+        - /etc/docker/smart-home/telegraf
+
+    - name: Create the secrets file like raspberry's secrets role does
+      ansible.builtin.copy:
+        content: |
+          IOBROKER_STATES_REDIS_PORT=9000
+          IOBROKER_OBJECTS_REDIS_PORT=9001
+
+          INFLUXDB_ADMIN_PASSWORD=LEAKCANARY-influx-admin
+          INFLUXDB_READ_PASSWORD=LEAKCANARY-influx-read
+          INFLUXDB_WRITE_PASSWORD=LEAKCANARY-influx-write
+
+          GRAFANA_PASSWORD=LEAKCANARY-grafana
+
+          MOSQUITTO_PASSWD={{ mosquitto_password }}
+
+          DECONZ_VNC_PASSWORD=LEAKCANARY-vnc
+          DECONZ_DEVICE_TYPE=ttyACM0
+
+          GITHUB_USER=test-user
+          GITHUB_EMAIL=test@example.com
+        dest: /etc/docker/smart-home/.env
+        owner: root
+        group: root
+        mode: '0600'
+      no_log: true
+
+    # setup.sh created it once with mosquitto_passwd 1.6: SHA512 ($6$), root, 0644 (shell redirect).
+    - name: Create the password file like setup.sh did
+      ansible.builtin.shell: |
+        python3 - > /etc/docker/smart-home/mosquitto/passwd <<'PY'
+        import base64, hashlib
+        salt = b"fixed-salt12"
+        digest = hashlib.sha512(b"{{ mosquitto_password }}" + salt).digest()
+        print("mosquitto:$6$" + base64.b64encode(salt).decode() + "$" + base64.b64encode(digest).decode())
+        PY
+      args:
+        creates: /etc/docker/smart-home/mosquitto/passwd
+      no_log: true
+
+    # setup.sh substituted the passwords into the Telegraf config with sed.
+    - name: Create the Telegraf config like setup.sh did
+      ansible.builtin.copy:
+        content: |
+          [[outputs.influxdb]]
+            password = "LEAKCANARY-influx-write"
+        dest: /etc/docker/smart-home/telegraf/telegraf.conf
+        owner: root
+        group: root
+        mode: '0644'
+      no_log: true
+
+    # Files the repo dropped since the last deployment (Telegram is gone, #7); copy alone would leave them behind.
+    - name: Create the directories of an earlier deployment
+      ansible.builtin.file:
+        path: "/etc/docker/smart-home/compose/{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop: [grafana-provisioning/alerting, setup/iobroker]
+
+    - name: Plant files the repo no longer has
+      ansible.builtin.copy:
+        content: "stale\n"
+        dest: "/etc/docker/smart-home/compose/{{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - grafana-provisioning/alerting/contactpoints.yaml
+        - setup/iobroker/obsolete.sh
+
+    - name: Remember the password file setup.sh wrote
+      ansible.builtin.slurp:
+        src: /etc/docker/smart-home/mosquitto/passwd
+      register: prepared_passwd
+
+    - name: Keep the password file for verify
+      ansible.builtin.copy:
+        content: "{{ prepared_passwd.content | b64decode }}"
+        dest: /root/passwd.prepared
+        owner: root
+        group: root
+        mode: '0600'
+      no_log: true
