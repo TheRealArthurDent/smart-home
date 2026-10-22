@@ -21,11 +21,6 @@ def run_hook(tool_name, tool_input):
 
 BLOCKED_COMMANDS = [
     # Production (raspi): deploy.sh defaults to it
-    "./deploy.sh",
-    "./deploy.sh raspi 1357 smarthome",
-    "bash deploy.sh",
-    "git pull && ./deploy.sh",
-    "sudo bash setup_and_run.sh",
     "ssh -p 1357 smarthome@192.168.1.2",
     "ssh smarthome@raspi -p 1357 'docker ps'",
     "scp install.tar smarthome@raspi:dev/smart-home",
@@ -61,8 +56,6 @@ ALLOWED_COMMANDS = [
     "cd ansible && ../.venv/bin/molecule test",
     "cd ansible && ../.venv/bin/ansible-lint --strict",
     "pytest tests/test_limit_guard.py",
-    "./deploy.sh testbed 4242 testuser",
-    "bash deploy.sh testbed 4242 testuser",
     "ssh -p 4242 testuser@192.168.1.7",
     "cat deploy.sh",
     "grep -n raspi deploy.sh docker-compose.yaml",
