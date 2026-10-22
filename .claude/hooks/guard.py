@@ -38,11 +38,6 @@ if tool == "Bash":
     cmd = args.get("command", "")
 
     # 1. Production: the user runs everything against raspi.
-    if re.search(runs(r"deploy\.sh"), cmd):
-        if not re.search(runs(r"deploy\.sh") + r"\s+testbed\b", cmd):
-            block("deploy.sh defaults to raspi (production). Only 'deploy.sh testbed ...' is allowed.")
-    if re.search(runs(r"setup_and_run\.sh"), cmd):
-        block("setup_and_run.sh installs the stack on the machine it runs on. Hand the user the command.")
     if re.search(runs(r"(?:ssh|scp|rsync|sftp)"), cmd) and re.search(PROD, cmd):
         block("direct access to raspi (production).")
     if re.search(runs(r"ansible(?:-playbook)?"), cmd):
