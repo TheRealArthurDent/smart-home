@@ -48,18 +48,6 @@
     - "{{ smart_home_compose_dir }}"
     - "{{ smart_home_compose_dir }}/setup"
 
-# The mosquitto image chowns /mosquitto (and these mounts) to its user on every start.
-- name: Ensure Mosquitto data and log directories exist
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ smart_home_mosquitto_uid }}"
-    group: "{{ smart_home_mosquitto_uid }}"
-    mode: '0755'
-  loop:
-    - /opt/mosquitto/data
-    - /var/log/mosquitto
-
 - name: Ensure the Mosquitto config is present
   ansible.builtin.copy:
     src: "{{ smart_home_repo_dir }}/setup/mosquitto/mosquitto.conf"

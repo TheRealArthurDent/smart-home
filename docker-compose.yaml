@@ -188,8 +188,8 @@ services:
       # websockets not needed for the time being - "9001:9001"
     volumes:
       - /etc/docker/smart-home/mosquitto:/mosquitto/config:ro
-      - /opt/mosquitto/data:/mosquitto/data
-      - /var/log/mosquitto:/mosquitto/log
+      # Retained messages and sessions. The log goes to stderr (docker logs mqtt): mosquitto.conf sets no log_dest.
+      - mosquitto-storage:/mosquitto/data
     networks:
       - default # needed to expose port 1883
       - smart-home
@@ -202,6 +202,7 @@ volumes:
   grafana-storage:
   deconz-storage:
   ikea-tradfri-firmware-storage:
+  mosquitto-storage:
 networks:
   default:
     driver: bridge

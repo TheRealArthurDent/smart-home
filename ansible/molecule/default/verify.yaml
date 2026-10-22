@@ -88,37 +88,29 @@
           - passwd_file.stat.mode == '0600'
         fail_msg: "{{ smart_home_dir }}/mosquitto/passwd was rewritten or has the wrong owner/mode"
 
-    - name: Stat the data and log directories
+    - name: Stat the secrets directory and the data directories setup.sh created
       ansible.builtin.stat:
         path: "{{ item }}"
       register: data_dirs
       loop:
-        - /opt/mosquitto/data
-        - /var/log/mosquitto
         - "{{ smart_home_dir }}/secrets"
         - /var/lib/smart-home/grafana
-
-    # The mosquitto image chowns /mosquitto to its user 1883 on every start; root here would flip back and forth.
-    - name: Check the directories Mosquitto writes to belong to its user
-      ansible.builtin.assert:
-        that:
-          - item.stat.isdir
-          - item.stat.uid == 1883
-        fail_msg: "{{ item.item }} is missing or not owned by uid 1883"
-        quiet: true
-      loop: "{{ data_dirs.results[:2] }}"
-      loop_control:
-        label: "{{ item.item }}"
+        - /opt/mosquitto/data
+        - /var/log/mosquitto
 
     - name: Check the secrets directory Grafana mounts exists
       ansible.builtin.assert:
         that:
-          - data_dirs.results[2].stat.isdir
-          - data_dirs.results[2].stat.pw_name == 'root'
+          - data_dirs.results[0].stat.isdir
+          - data_dirs.results[0].stat.pw_name == 'root'
         fail_msg: "{{ smart_home_dir }}/secrets is missing"
 
-    # setup.sh created it world-writable (777), but Grafana keeps its data in the grafana-storage volume.
-    - name: Check the unused Grafana data directory is not created
+    # setup.sh created them, but Grafana and Mosquitto keep their data in volumes, and Mosquitto logs to stderr.
+    - name: Check no host directories are created for data that lives in volumes
       ansible.builtin.assert:
-        that: not data_dirs.results[3].stat.exists
-        fail_msg: /var/lib/smart-home/grafana should not be created
+        that: not item.stat.exists
+        fail_msg: "{{ item.item }} should not be created"
+        quiet: true
+      loop: "{{ data_dirs.results[1:] }}"
+      loop_control:
+        label: "{{ item.item }}"

@@ -10,7 +10,7 @@ smart_home_compose_dir: "{{ smart_home_dir }}/compose"
 # The repo checkout the role copies the stack from: the compose file and setup/ are used as they are, without
 # templated copies.
 smart_home_repo_dir: "{{ (role_path | realpath) ~ '/../../..' }}"
-# uid of the mosquitto user in the eclipse-mosquitto image. Its entrypoint chowns /mosquitto to it on every start.
+# uid of the mosquitto user in the eclipse-mosquitto image; it owns the password file.
 smart_home_mosquitto_uid: 1883
 smart_home_mosquitto_user: mosquitto
 # Compose up and restarts need a running Docker daemon (false in Molecule).

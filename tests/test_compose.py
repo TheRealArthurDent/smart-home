@@ -34,3 +34,13 @@ def test_restart_handlers_skip_a_compose_project_check_mode_has_not_written():
     assert compose_up["when"] == guard
     for handler in yaml.safe_load((role / "handlers" / "main.yaml").read_text()):
         assert guard in handler["when"], handler["name"]
+
+
+def test_mosquitto_keeps_its_data_in_a_named_volume():
+    """Only the config comes from the host. The data lives in a volume, which restic backs up (/opt it doesn't), and
+    the log goes to stderr (no log_dest in mosquitto.conf), so there's no host user or directory to manage."""
+    mounts = service("mosquitto")["volumes"]
+    assert mounts == ["/etc/docker/smart-home/mosquitto:/mosquitto/config:ro", "mosquitto-storage:/mosquitto/data"]
+    compose = yaml.safe_load((ROOT / "docker-compose.yaml").read_text())
+    assert "mosquitto-storage" in compose["volumes"]
+    assert "log_dest" not in (ROOT / "setup" / "mosquitto" / "mosquitto.conf").read_text()
