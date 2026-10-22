@@ -12,6 +12,7 @@
   # Like "Ensure the stack is up": in check mode, a first run hasn't written the compose project yet.
   when:
     - smart_home_manage_containers | bool
+    - "'mosquitto' not in smart_home_disabled_services"
     - not (ansible_check_mode and smart_home_compose_file is changed)
 
 - name: Restart telegraf
@@ -26,6 +27,7 @@
   # Like "Ensure the stack is up": in check mode, a first run hasn't written the compose project yet.
   when:
     - smart_home_manage_containers | bool
+    - "'telegraf' not in smart_home_disabled_services"
     - not (ansible_check_mode and smart_home_compose_file is changed)
 
 - name: Restart grafana
@@ -40,4 +42,5 @@
   # Like "Ensure the stack is up": in check mode, a first run hasn't written the compose project yet.
   when:
     - smart_home_manage_containers | bool
+    - "'grafana' not in smart_home_disabled_services"
     - not (ansible_check_mode and smart_home_compose_file is changed)

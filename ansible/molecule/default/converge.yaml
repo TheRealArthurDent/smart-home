@@ -4,5 +4,7 @@
   vars:
     # No Docker daemon runs inside the test container.
     smart_home_manage_containers: false
+    # Like testbed, which has no ConBee stick
+    smart_home_disabled_services: [deconz]
   roles:
     - smart_home

@@ -2,6 +2,21 @@
 # Deploys the smart-home stack. Replaces deploy.sh -> setup/setup.sh -> run.sh (#7). Needs raspberry's bootstrap
 # on the host first: its secrets role writes smart_home_env_file, its stack role creates the networks siz and outbound.
 
+- name: Read the services of the compose file
+  ansible.builtin.set_fact:
+    smart_home_services: >-
+      {{ (lookup('ansible.builtin.file', smart_home_repo_dir ~ '/docker-compose.yaml') | from_yaml).services
+         | list }}
+
+# A typo would otherwise start everything, on raspi the service it was meant to leave out elsewhere.
+- name: Ensure the disabled services exist in the compose file
+  ansible.builtin.assert:
+    that: smart_home_disabled_services | difference(smart_home_services) | length == 0
+    fail_msg: >-
+      Unknown services in smart_home_disabled_services:
+      {{ smart_home_disabled_services | difference(smart_home_services) | join(', ') }}
+    quiet: true
+
 - name: Stat the secrets file
   ansible.builtin.stat:
     path: "{{ smart_home_env_file }}"
@@ -160,6 +175,8 @@
         project_name: "{{ smart_home_project_name }}"
         env_files:
           - "{{ smart_home_env_file }}"
+        # All services but the disabled ones; Compose leaves a disabled one alone, running or not.
+        services: "{{ smart_home_services | difference(smart_home_disabled_services) }}"
         state: present
         pull: policy
       # check mode doesn't write a new compose file, so Compose would compare against the old one or none.

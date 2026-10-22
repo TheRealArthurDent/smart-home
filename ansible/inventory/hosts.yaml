@@ -13,3 +13,5 @@ all:
       ansible_user: testuser
       ansible_ssh_private_key_file: ~/.ssh/id_ed25519
       ansible_become: true
+      # No ConBee stick attached (/dev/ttyACM0), deCONZ wouldn't start
+      smart_home_disabled_services: [deconz]

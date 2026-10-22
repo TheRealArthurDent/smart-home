@@ -64,6 +64,10 @@ port 22 / user pi) until #7 deletes it.
   instead creates it once and never updates it.
 - **Telegraf reads its passwords from the environment** (`$INFLUXDB_WRITE_PASSWORD`, `$MOSQUITTO_PASSWD` in
   `telegraf.conf`, passed by Compose). `setup/setup.sh` still substitutes them with `sed`, which breaks on `/` or `&`.
+- **testbed has no ConBee stick**: `compose up` fails on the missing `/dev/ttyACM0`, so the inventory leaves
+  deconz out there (`smart_home_disabled_services`). An unknown name in that list fails the run.
+- **Memory limits are discarded on the Pi** ("kernel does not support memory limit capabilities"): Raspberry Pi
+  OS boots without the memory cgroup unless `cmdline.txt` enables it, so `mem_limit` in the compose file has no effect.
 - **The first Ansible run moves the Compose project** from `~/dev/smart-home` to `/etc/docker/smart-home/compose`
   (same project name `smart-home`, same volumes). Containers with bind mounts from the old folder (ioBroker,
   Grafana) are recreated once; after that, deploy with Ansible only, or the two folders fight.
