@@ -47,6 +47,18 @@
       loop_control:
         label: "{{ item.item }}"
 
+    # ioBroker's startup script chowns /opt/userscripts to its uid 1000 on every start and makes the first start
+    # script executable, so the role sets the same, or every run after a container start reports changed.
+    - name: Check the ioBroker first start script has the owner and mode ioBroker gives it
+      vars:
+        script: "{{ deployed.results | selectattr('item', 'search', 'userscript_firststart') | first }}"
+      ansible.builtin.assert:
+        that:
+          - script.stat.uid == 1000
+          - script.stat.gid == 1000
+          - script.stat.mode == '0755'
+        fail_msg: "{{ script.item }} is {{ script.stat.uid }}:{{ script.stat.gid }} {{ script.stat.mode }}, expected 1000:1000 0755"
+
     - name: Stat the config directories
       ansible.builtin.stat:
         path: "{{ item }}"

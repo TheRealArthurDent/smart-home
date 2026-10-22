@@ -62,6 +62,10 @@ ssh -p 4242 testuser@192.168.1.7 'docker ps --format "{{.Names}}\t{{.Status}}"' 
   `telegraf.conf`, passed by Compose); the file holds no secrets.
 - **testbed has no ConBee stick**: `compose up` fails on the missing `/dev/ttyACM0`, so the inventory leaves
   deconz out there (`smart_home_disabled_services`). An unknown name in that list fails the run.
+- **A container stopped by hand stays stopped**: the role leaves an exited container out of `compose up` and its
+  restart handler and prints a `[WARNING]`. To bring it back, `docker start <name>`, then deploy again. Containers
+  of the project the role doesn't manage (service gone from the compose file, or disabled) also get a warning and
+  are left alone.
 - **Memory limits are discarded on the Pi** ("kernel does not support memory limit capabilities"): Raspberry Pi
   OS boots without the memory cgroup unless `cmdline.txt` enables it, so `mem_limit` in the compose file has no effect.
 - **Grafana doesn't rescan dashboards** (`updateIntervalSeconds: 0`, it caused I/O spikes). Changed dashboard
