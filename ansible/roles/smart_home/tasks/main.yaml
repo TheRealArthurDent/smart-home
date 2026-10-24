@@ -53,16 +53,21 @@
 
 - name: Ensure config directories exist
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: directory
     owner: root
-    group: root
-    mode: '0755'
+    group: "{{ item.group | default('root') }}"
+    mode: '0750'
   loop:
-    - "{{ smart_home_dir }}/mosquitto"
-    - "{{ smart_home_dir }}/telegraf"
-    - "{{ smart_home_compose_dir }}"
-    - "{{ smart_home_compose_dir }}/setup"
+    # Mounted as a directory: Mosquitto opens passwd as uid 1883 after dropping privileges.
+    - path: "{{ smart_home_dir }}/mosquitto"
+      group: "{{ smart_home_mosquitto_uid }}"
+    # Containers only mount single files from these; dockerd resolves the paths as root.
+    - path: "{{ smart_home_dir }}/telegraf"
+    - path: "{{ smart_home_compose_dir }}"
+    - path: "{{ smart_home_compose_dir }}/setup"
+  loop_control:
+    label: "{{ item.path }}"
 
 - name: Ensure the Mosquitto config is present
   ansible.builtin.copy:
@@ -123,14 +128,16 @@
     mode: '0644'
   register: smart_home_compose_file
 
-# ioBroker runs it on its first start only, so a change needs no restart.
+# ioBroker runs it on its first start only, so a change needs no restart. Its startup script chowns the mounted
+# file to the ioBroker user and makes it executable on every start (and fails on a read-only mount), so the role
+# sets the same instead of flipping it back each run.
 - name: Ensure the ioBroker first start script is present
   ansible.builtin.copy:
     src: "{{ smart_home_repo_dir }}/setup/iobroker"
     dest: "{{ smart_home_compose_dir }}/setup/"
-    owner: root
-    group: root
-    mode: '0644'
+    owner: "{{ smart_home_iobroker_uid }}"
+    group: "{{ smart_home_iobroker_uid }}"
+    mode: '0755'
     directory_mode: '0755'
 
 # Grafana doesn't rescan dashboards (updateIntervalSeconds: 0), so a change needs a restart.
@@ -158,12 +165,20 @@
       become: false
       register: smart_home_repo_files
 
+    # In check mode, a first run hasn't copied them yet; find would warn about every missing one.
+    - name: Stat the synced directories on the host
+      ansible.builtin.stat:
+        path: "{{ smart_home_compose_dir }}/{{ item }}"
+      loop: "{{ smart_home_synced_dirs }}"
+      register: smart_home_synced_stat
+
     - name: Find the files of the synced directories on the host
       ansible.builtin.find:
-        paths: "{{ smart_home_synced_dirs | map('regex_replace', '^', smart_home_compose_dir ~ '/') }}"
+        paths: "{{ smart_home_synced_stat.results | selectattr('stat.exists') | map(attribute='stat.path') }}"
         recurse: true
         hidden: true
       register: smart_home_host_files
+      when: smart_home_synced_stat.results | selectattr('stat.exists') | list | length > 0
 
     # Grafana is the one to restart; an obsolete ioBroker first start script needs nothing.
     - name: Ensure files the repo dropped are absent
@@ -171,7 +186,7 @@
         path: "{{ smart_home_compose_dir }}/{{ item }}"
         state: absent
       loop: >-
-        {{ smart_home_host_files.files | map(attribute='path')
+        {{ smart_home_host_files.files | default([]) | map(attribute='path')
            | map('regex_replace', '^' ~ (smart_home_compose_dir | regex_escape) ~ '/', '')
            | difference(smart_home_repo_files.files | map(attribute='path')
                         | map('regex_replace', '^' ~ (smart_home_repo_dir | realpath | regex_escape) ~ '/', ''))
@@ -210,6 +225,18 @@
 - name: Start containers
   when: smart_home_manage_containers | bool
   block:
+    - name: Read the project's containers
+      community.docker.docker_host_info:
+        containers: true
+        containers_all: true
+        containers_filters:
+          label: com.docker.compose.project={{ smart_home_project_name }}
+        verbose_output: true
+      register: smart_home_host_info
+
+    - name: Leave containers stopped by hand alone
+      ansible.builtin.include_tasks: container_states.yaml
+
     # Images are pinned (Renovate), so the default pull policy "missing" pulls exactly when a version changes.
     - name: Ensure the stack is up
       community.docker.docker_compose_v2:
@@ -217,13 +244,18 @@
         project_name: "{{ smart_home_project_name }}"
         env_files:
           - "{{ smart_home_env_file }}"
-        # All services but the disabled ones; Compose leaves a disabled one alone, running or not.
-        services: "{{ smart_home_services | difference(smart_home_disabled_services) }}"
+        # Neither the disabled services nor those stopped by hand; Compose leaves a service it isn't given alone.
+        services: "{{ smart_home_up_services }}"
+        # Otherwise Compose starts a stopped influxdb as telegraf's dependency.
+        dependencies: false
         state: present
         pull: policy
         # Fail instead of reporting changed when a container crash-loops or stays unhealthy. ioBroker's first
         # start installs packages, hence the generous timeout.
         wait: true
         wait_timeout: "{{ smart_home_wait_timeout }}"
-      # check mode doesn't write a new compose file, so Compose would compare against the old one or none.
-      when: not (ansible_check_mode and smart_home_compose_file is changed)
+      when:
+        # check mode doesn't write a new compose file, so Compose would compare against the old one or none.
+        - not (ansible_check_mode and smart_home_compose_file is changed)
+        # Without any services, Compose would bring up all of them.
+        - smart_home_up_services | length > 0

@@ -1,0 +1,41 @@
+---
+# Decides which services "Ensure the stack is up" and the restart handlers touch, from the project's containers in
+# smart_home_host_info (docker_host_info with containers_all and verbose_output).
+#
+# An exited container was stopped by hand: "restart: unless-stopped" restarts it after any other exit and after a
+# reboot. It stays stopped, with a warning. A container of the project whose service the role doesn't manage (gone
+# from the compose file, or disabled for the host) gets a warning too; the role leaves it alone.
+- name: Sort the project's containers
+  vars:
+    smart_home_managed: "{{ smart_home_services | reject('in', smart_home_disabled_services) | list }}"
+    smart_home_containers: >-
+      {{ smart_home_host_info.containers | default([]) | compose_containers(smart_home_project_name) }}
+  ansible.builtin.set_fact:
+    smart_home_stopped_containers: >-
+      {{ smart_home_containers | selectattr('service', 'in', smart_home_managed)
+         | selectattr('state', 'equalto', 'exited') | list }}
+    smart_home_unmanaged_containers: >-
+      {{ smart_home_containers | rejectattr('service', 'in', smart_home_managed) | list }}
+
+- name: Leave the stopped services alone
+  ansible.builtin.set_fact:
+    smart_home_up_services: >-
+      {{ smart_home_services | reject('in', smart_home_disabled_services)
+         | reject('in', smart_home_stopped_containers | map(attribute='service')) | list }}
+
+- name: Warn about containers stopped by hand
+  smart_home_warn:
+    msg: >-
+      Left stopped, as someone stopped them by hand:
+      {{ smart_home_stopped_containers | map(attribute='name') | join(', ') }}.
+      Start them with `docker start <name>`, then deploy again.
+  when: smart_home_stopped_containers | length > 0
+
+- name: Warn about containers the role doesn't manage
+  smart_home_warn:
+    msg: >-
+      Containers in project {{ smart_home_project_name }} that are not managed by this role (service removed from
+      the compose file or disabled for {{ inventory_hostname }}), left as they are:
+      {{ smart_home_unmanaged_containers | map(attribute='name') | join(', ') }}.
+      Remove them with `docker rm -f <name>` if they aren't needed anymore.
+  when: smart_home_unmanaged_containers | length > 0
