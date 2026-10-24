@@ -168,3 +168,47 @@
       loop: "{{ stale_files.results }}"
       loop_control:
         label: "{{ item.item }}"
+
+    - name: Read the restore items of the stack
+      ansible.builtin.slurp:
+        src: /etc/restic-restore/stacks/smart-home.json
+      register: restore_items_file
+
+    - name: Stat the restore items of the stack
+      ansible.builtin.stat:
+        path: /etc/restic-restore/stacks/smart-home.json
+      register: restore_items_stat
+
+    # deconz is disabled in converge.yaml (like on testbed), so its volume isn't in the backup to restore from.
+    - name: Check the restore helper gets the stack's volumes with their containers
+      vars:
+        items: "{{ (restore_items_file.content | b64decode | from_json)['items'] }}"
+        volumes: /var/lib/docker/volumes
+      ansible.builtin.assert:
+        that:
+          - restore_items_stat.stat.pw_name == 'root'
+          - restore_items_stat.stat.mode == '0644'
+          - items | list | sort == ['grafana-storage', 'influxdb-storage', 'iobroker-objects-redis-storage',
+                                     'iobroker-states-redis-storage', 'iobroker-storage', 'mosquitto-storage']
+          - items['iobroker-storage'].paths == [volumes ~ '/smart-home_iobroker-storage/_data']
+          - items['iobroker-storage'].containers == ['iobroker']
+          - items['iobroker-storage'].preserve == ['.npm']
+          - items['mosquitto-storage'].paths == [volumes ~ '/smart-home_mosquitto-storage/_data']
+          - items['mosquitto-storage'].containers == ['mqtt']
+          - items['influxdb-storage'].preserve == []
+        fail_msg: "/etc/restic-restore/stacks/smart-home.json is wrong: {{ items | to_json }}"
+
+    - name: Read the calls of the restore helper stub
+      ansible.builtin.slurp:
+        src: /var/log/restic-restore-stub.log
+      register: restore_calls
+
+    # converge and the idempotence run; the stub's marker makes the second one a no-op.
+    - name: Check the role ran the clean-slate restore of the stack from the latest snapshot
+      vars:
+        calls: "{{ restore_calls.content | b64decode | trim | split('\n') | map('from_json') | list }}"
+      ansible.builtin.assert:
+        that:
+          - calls | length >= 1
+          - calls | unique == [['--runner', 'oneoff', 'clean-slate', 'smart-home', '--snapshot', 'latest']]
+        fail_msg: "Unexpected calls of restic-restore: {{ calls | to_json }}"

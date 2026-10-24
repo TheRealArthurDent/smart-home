@@ -1,0 +1,105 @@
+---
+# Clean-slate restore (#1): on a fresh host, the stack's volumes come back from the latest resticprofile snapshot
+# before the containers start. raspberry's stack role installs the helper (a host service shared by all stacks,
+# raspberry#287); this stack lists its volumes in /etc/restic-restore/stacks/ and calls it. A marker makes every
+# later run a no-op, and a host that already has data (raspi, testbed) only gets the marker.
+
+- name: Stat the restore helper
+  ansible.builtin.stat:
+    path: "{{ smart_home_restore_helper }}"
+  register: smart_home_restore_helper_stat
+
+- name: Ensure the restore helper is installed
+  ansible.builtin.assert:
+    that: smart_home_restore_helper_stat.stat.exists
+    fail_msg: >-
+      {{ smart_home_restore_helper }} is missing. Run raspberry's bootstrap.yaml on {{ inventory_hostname }} first.
+    quiet: true
+
+- name: Start with no volumes to restore
+  ansible.builtin.set_fact:
+    smart_home_restore_items: {}
+
+# A volume whose services are all disabled on this host never gets data, so the backup has nothing to restore.
+- name: Collect the volumes to restore
+  ansible.builtin.set_fact:
+    smart_home_restore_items: >-
+      {{ smart_home_restore_items | combine({item.key: {
+           'paths': [smart_home_docker_volumes_dir ~ '/' ~ smart_home_project_name ~ '_' ~ item.key ~ '/_data'],
+           'containers': item.value.services | map('extract', smart_home_compose_services)
+                         | map(attribute='container_name') | list,
+           'preserve': item.value.preserve,
+           'note': item.value.note}}) }}
+  loop: >-
+    {{ smart_home_restore_volumes | dict2items
+       | rejectattr('value.services', 'ansible.builtin.subset', smart_home_disabled_services) }}
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Ensure the volumes are listed for the restore helper
+  ansible.builtin.copy:
+    content: "{{ {'items': smart_home_restore_items} | to_nice_json }}\n"
+    dest: /etc/restic-restore/stacks/{{ smart_home_project_name }}.json
+    owner: root
+    group: root
+    mode: '0644'
+  register: smart_home_restore_items_file
+
+# Docker doesn't register a restored _data directory by itself. With the labels Compose sets, compose up adopts
+# the volume instead of warning that it was created outside the project (raspberry#296). An existing volume is
+# left alone.
+- name: Ensure the volumes to restore exist with the labels of the compose project
+  community.docker.docker_volume:
+    name: "{{ smart_home_project_name }}_{{ item }}"
+    labels:
+      com.docker.compose.project: "{{ smart_home_project_name }}"
+      com.docker.compose.volume: "{{ item }}"
+    state: present
+  loop: "{{ smart_home_restore_items | list }}"
+  when: smart_home_manage_containers | bool
+
+# In check mode the item list isn't written: where it is due for an update, the dry run would use the old one or
+# none (raspberry's stack role does the same).
+- name: Check whether the dry run can use the deployed item list
+  ansible.builtin.set_fact:
+    smart_home_restore_dry_run_possible: "{{ not (ansible_check_mode and smart_home_restore_items_file is changed) }}"
+
+- name: Ensure the volumes are restored on a fresh host
+  ansible.builtin.command:
+    argv: >-
+      {{ [smart_home_restore_helper, '--runner', 'oneoff', 'clean-slate', smart_home_project_name,
+          '--snapshot', smart_home_restore_snapshot]
+         + (['--skip'] if smart_home_skip_restore | bool else [])
+         + (['--dry-run'] if ansible_check_mode else []) }}
+  register: smart_home_restore
+  changed_when: smart_home_restore.rc == 0 and (smart_home_restore.stdout | from_json).changed
+  # Fails in the next task, with the next step for the user
+  failed_when: false
+  # Read-only with --dry-run, so it also reports in check mode what a real run would do
+  check_mode: false
+  when: smart_home_restore_dry_run_possible | bool
+
+- name: Ensure the restore succeeded
+  ansible.builtin.fail:
+    msg: "{{ smart_home_restore.stderr }}\n{{ smart_home_restore_hints[smart_home_restore.rc] | default('') }}"
+  vars:
+    smart_home_restore_hints:
+      10: >-
+        Check that the backup host accepts this host's restic SSH key: run raspberry's
+        sudo /etc/docker/infrastructure/init-restic.sh on the host, then run the playbook again.
+      11: >-
+        If this is a new host with nothing to restore, run the playbook again with -e skip_smart_home_restore=true.
+  when: smart_home_restore is not skipped and smart_home_restore.rc != 0
+
+- name: Report the restore
+  ansible.builtin.debug:
+    msg: "{{ (smart_home_restore.stdout | from_json).msg }}"
+  when: smart_home_restore is not skipped
+
+- name: Report the restore in check mode before the item list is up to date
+  ansible.builtin.debug:
+    msg: >-
+      The item list isn't deployed yet, so no dry run: a real run restores
+      {{ smart_home_restore_items | list | join(', ') }} from snapshot {{ smart_home_restore_snapshot }} unless the
+      marker exists, the host has data already or skip_smart_home_restore is set.
+  when: smart_home_restore is skipped

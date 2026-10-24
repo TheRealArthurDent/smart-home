@@ -4,9 +4,12 @@
 
 - name: Read the services of the compose file
   ansible.builtin.set_fact:
-    smart_home_services: >-
-      {{ (lookup('ansible.builtin.file', smart_home_repo_dir ~ '/docker-compose.yaml') | from_yaml).services
-         | list }}
+    smart_home_compose_services: >-
+      {{ (lookup('ansible.builtin.file', smart_home_repo_dir ~ '/docker-compose.yaml') | from_yaml).services }}
+
+- name: List the services of the compose file
+  ansible.builtin.set_fact:
+    smart_home_services: "{{ smart_home_compose_services | list }}"
 
 # A typo would otherwise start everything, on raspi the service it was meant to leave out elsewhere.
 - name: Ensure the disabled services exist in the compose file
@@ -190,7 +193,7 @@
            | sort }}
       notify: Restart grafana
 
-- name: Deploy containers
+- name: Check the Docker host
   when: smart_home_manage_containers | bool
   block:
     # requests for the community.docker modules, yaml for docker_compose_v2
@@ -215,6 +218,13 @@
           {{ inventory_hostname }} first.
         quiet: true
 
+# Before compose up: on a fresh host, the containers must find their data restored, not initialize empty volumes.
+- name: Restore the volumes on a fresh host
+  ansible.builtin.import_tasks: restore.yaml
+
+- name: Start containers
+  when: smart_home_manage_containers | bool
+  block:
     - name: Read the project's containers
       community.docker.docker_host_info:
         containers: true
