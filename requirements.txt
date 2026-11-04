@@ -5,7 +5,7 @@ ansible-lint==26.10.1
 
 # Tests
 molecule==26.10.0
-molecule-plugins[docker]==26.10.12
+molecule-plugins[docker]==26.11.0
 pytest==9.1.1
 pyyaml==6.0.3
 
