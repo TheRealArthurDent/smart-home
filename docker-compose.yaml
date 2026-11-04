@@ -20,7 +20,7 @@ services:
   iobroker-states-redis:
     hostname: iobroker-states-redis
     container_name: iobroker-states-redis
-    image: arm64v8/redis:8.10.2-alpine
+    image: arm64v8/redis:8.10.3-alpine
     restart: unless-stopped
     command: redis-server --save 300 1 --loglevel warning --port ${IOBROKER_STATES_REDIS_PORT}
     volumes:
@@ -32,7 +32,7 @@ services:
   iobroker-objects-redis:
     hostname: iobroker-objects-redis
     container_name: iobroker-objects-redis
-    image: arm64v8/redis:8.10.2-alpine
+    image: arm64v8/redis:8.10.3-alpine
     restart: unless-stopped
     command: redis-server --save 300 1 --loglevel warning --port ${IOBROKER_OBJECTS_REDIS_PORT}
     volumes:
