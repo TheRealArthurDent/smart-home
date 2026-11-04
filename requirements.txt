@@ -6,7 +6,7 @@ ansible-lint==26.10.1
 # Tests
 molecule==26.10.0
 molecule-plugins[docker]==26.10.12
-pytest==9.1.1
+pytest==9.2.0
 pyyaml==6.0.3
 
 # Git hooks (gitleaks, no commits to main); activate once per clone: .venv/bin/pre-commit install
