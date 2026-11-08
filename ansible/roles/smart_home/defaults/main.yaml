@@ -1,5 +1,5 @@
 ---
-# Config of the smart-home stack lives below this directory. raspberry's secrets role writes the .env here.
+# Config of the smart-home stack lives below this directory. infrastructure's secrets role writes the .env here.
 smart_home_dir: /etc/docker/smart-home
 smart_home_env_file: "{{ smart_home_dir }}/.env"
 # deploy.sh ran Compose in ~/dev/smart-home, so the running containers belong to the project "smart-home".
@@ -22,7 +22,7 @@ smart_home_wait_timeout: 600
 # Compose up and restarts need a running Docker daemon (false in Molecule).
 smart_home_manage_containers: true
 
-# Clean-slate restore before the stack starts on a fresh host (#1). raspberry's stack role installs the helper
+# Clean-slate restore before the stack starts on a fresh host (#1). infrastructure's stack role installs the helper
 # /usr/local/bin/restic-restore; this role lists the stack's volumes for it and calls it before compose up. The
 # helper restores only when every listed volume is empty and writes /var/lib/restic-restore/smart-home.done, so a
 # host that already has data (raspi, testbed) only gets the marker.
@@ -36,7 +36,7 @@ smart_home_docker_volumes_dir: /var/lib/docker/volumes
 # Named volumes of docker-compose.yaml that hold state not coming from IaC (tests/test_restore_volumes.py):
 #   services: the services mounting the volume; their containers are stopped during a targeted restore, and a
 #             volume whose services are all in smart_home_disabled_services isn't listed (the backup lacks it)
-#   preserve: files inside the volume (globs, relative to it) that raspberry's backup excludes (excludes.j2), so a
+#   preserve: files inside the volume (globs, relative to it) that infrastructure's backup excludes (excludes.j2), so a
 #             restore that mirrors the snapshot keeps them
 # ikea-tradfri-firmware-storage isn't listed: firmware-download fetches the firmware again.
 smart_home_restore_volumes:

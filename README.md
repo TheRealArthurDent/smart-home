@@ -13,7 +13,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/
 
 ### Deployment
 
-[raspberry](https://github.com/TheRealArthurDent/raspberry)'s `bootstrap.yaml` must have run on the Pi first
+[infrastructure](https://github.com/TheRealArthurDent/infrastructure)'s `bootstrap.yaml` must have run on the Pi first
 (networks, nginx, secrets). Then, from `ansible/`:
 
 ```sh
@@ -22,8 +22,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/
 ../.venv/bin/ansible-playbook deploy.yaml --limit testbed
 ```
 
-Secrets come from KeePass: [raspberry](https://github.com/TheRealArthurDent/raspberry)'s `secrets` role renders
-`/etc/docker/smart-home/.env` on the Pi. `setup/.env.example` lists its keys. Notes for Claude Code are in
+Secrets come from KeePass: [infrastructure](https://github.com/TheRealArthurDent/infrastructure)'s `secrets` role
+renders `/etc/docker/smart-home/.env` on the Pi. `setup/.env.example` lists its keys. Notes for Claude Code are in
 `CLAUDE.md`.
 
 ### iobroker cheat sheet

@@ -1,4 +1,4 @@
-"""The smart_home role lists the volumes raspberry's restic-restore brings back on a fresh host (#1).
+"""The smart_home role lists the volumes infrastructure's restic-restore brings back on a fresh host (#1).
 
 smart_home_restore_volumes in the role's defaults holds the state that doesn't come from IaC. Every named volume
 of docker-compose.yaml is either listed there or left out on purpose, and each listed volume names the services
@@ -50,7 +50,7 @@ def test_each_volume_names_the_services_that_mount_it():
 
 
 def test_each_volume_says_what_it_keeps_from_a_restore():
-    """preserve lists the files inside the volume that raspberry's backup excludes (excludes.j2 there)."""
+    """preserve lists the files inside the volume that infrastructure's backup excludes (excludes.j2 there)."""
     for volume, item in restore_volumes().items():
         assert isinstance(item["preserve"], list), volume
         assert all(not pattern.startswith("/") for pattern in item["preserve"]), volume
@@ -58,5 +58,5 @@ def test_each_volume_says_what_it_keeps_from_a_restore():
 
 
 def test_iobroker_keeps_its_npm_cache():
-    """raspberry's excludes.j2 leaves out smart-home_iobroker-storage/_data/.npm."""
+    """infrastructure's excludes.j2 leaves out smart-home_iobroker-storage/_data/.npm."""
     assert ".npm" in restore_volumes()["iobroker-storage"]["preserve"]

@@ -1,4 +1,4 @@
-# Deploys the smart-home stack, replacing deploy.sh (#7). raspberry's bootstrap.yaml must have run on the host.
+# Deploys the smart-home stack, replacing deploy.sh (#7). infrastructure's bootstrap.yaml must have run on the host.
 # ansible-playbook deploy.yaml --limit testbed --check --diff
 - name: Require --limit
   hosts: localhost

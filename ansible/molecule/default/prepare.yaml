@@ -1,4 +1,4 @@
-# A Pi after raspberry's bootstrap and an earlier deployment with the bash scripts.
+# A Pi after infrastructure's bootstrap and an earlier deployment with the bash scripts.
 - name: Prepare
   hosts: all
   become: true
@@ -7,7 +7,7 @@
     # Every value containing LEAKCANARY is a secret; verify.yaml fails if one shows up in the Ansible log.
     mosquitto_password: LEAKCANARY-mosquitto
   tasks:
-    - name: Create the config directories of raspberry's secrets role and the bash deployment
+    - name: Create the config directories of infrastructure's secrets role and the bash deployment
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
@@ -19,7 +19,7 @@
         - /etc/docker/smart-home/mosquitto
         - /etc/docker/smart-home/telegraf
 
-    - name: Create the secrets file like raspberry's secrets role does
+    - name: Create the secrets file like infrastructure's secrets role does
       ansible.builtin.copy:
         content: |
           IOBROKER_STATES_REDIS_PORT=9000
@@ -104,7 +104,7 @@
         mode: '0600'
       no_log: true
 
-    # raspberry's stack role installs the restore helper and its config directories (#1).
+    # infrastructure's stack role installs the restore helper and its config directories (#1).
     - name: Create the config directories of the restore helper
       ansible.builtin.file:
         path: "{{ item }}"
@@ -119,7 +119,7 @@
     # Without a Docker daemon there is no resticprofile container to restore from. The stub logs its arguments for
     # verify.yaml, needs the stack's item list like the real helper, and keeps the marker semantics: the first run
     # restores, every later one finds the marker.
-    - name: Install a stub of raspberry's restic-restore
+    - name: Install a stub of infrastructure's restic-restore
       ansible.builtin.copy:
         content: |
           #!/usr/bin/env python3
