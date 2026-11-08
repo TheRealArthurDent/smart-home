@@ -1,5 +1,5 @@
 ---
-# Deploys the smart-home stack. Replaces deploy.sh -> setup/setup.sh -> run.sh (#7). Needs raspberry's bootstrap
+# Deploys the smart-home stack. Replaces deploy.sh -> setup/setup.sh -> run.sh (#7). Needs infrastructure's bootstrap
 # on the host first: its secrets role writes smart_home_env_file, its stack role creates the networks siz and outbound.
 
 - name: Read the services of the compose file
@@ -28,7 +28,8 @@
 - name: Ensure the secrets file exists
   ansible.builtin.assert:
     that: smart_home_env_stat.stat.exists
-    fail_msg: "{{ smart_home_env_file }} is missing. Run raspberry's bootstrap.yaml on {{ inventory_hostname }} first."
+    fail_msg: >-
+      {{ smart_home_env_file }} is missing. Run infrastructure's bootstrap.yaml on {{ inventory_hostname }} first.
     quiet: true
 
 # The only secret the role itself needs; Compose reads the rest from the file.
@@ -214,7 +215,7 @@
       ansible.builtin.assert:
         that: smart_home_networks.results | map(attribute='exists') | min
         fail_msg: >-
-          The Docker networks siz and outbound are missing. Run raspberry's bootstrap.yaml on
+          The Docker networks siz and outbound are missing. Run infrastructure's bootstrap.yaml on
           {{ inventory_hostname }} first.
         quiet: true
 

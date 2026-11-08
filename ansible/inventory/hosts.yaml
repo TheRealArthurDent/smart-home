@@ -1,4 +1,4 @@
-# Same hosts as raspberry's inventory; raspberry's bootstrap.yaml must have run on a host first.
+# Same hosts as infrastructure's inventory; infrastructure's bootstrap.yaml must have run on a host first.
 all:
   hosts:
     raspi:

@@ -13,6 +13,6 @@ test-results/
 # Pre-commit
 .pre-commit-config.local.yaml
 
-# Secrets: .env files are rendered on the host by raspberry's secrets role, never committed
+# Secrets: .env files are rendered on the host by infrastructure's secrets role, never committed
 .env
 *.env

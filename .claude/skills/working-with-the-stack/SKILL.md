@@ -8,7 +8,7 @@ description: Use when a task in this repo changes or rolls out the smart-home Do
 ## Overview
 
 This stack runs the real smart home (Zigbee, MQTT, ioBroker automations, history in InfluxDB) on a Pi that only
-machines in the home network can reach. It sits on top of raspberry's infrastructure stack: the networks `siz`
+machines in the home network can reach. It sits on top of infrastructure's infrastructure stack: the networks `siz`
 and `outbound`, the nginx vhosts, certificates, backups and `/etc/docker/smart-home/.env` all come from there.
 Know before you start what you can verify yourself, what only CI can, and what only the user can run.
 
@@ -48,12 +48,12 @@ ssh -p 4242 testuser@192.168.1.7 'docker ps --format "{{.Names}}\t{{.Status}}"' 
 
 ## Things that look wrong but aren't (and traps)
 
-- **raspberry first.** The role stops when `/etc/docker/smart-home/.env` or the external networks `siz` and
-  `outbound` are missing. On a fresh Pi, the user runs raspberry's `bootstrap.yaml` before `deploy.yaml`.
-- **A new secret needs three places**: the key in `setup/.env.example`, the line in raspberry's
-  `ansible/roles/secrets/tasks/main.yaml` (with `no_log: true`), and its KeePass lookup in raspberry's
+- **infrastructure first.** The role stops when `/etc/docker/smart-home/.env` or the external networks `siz` and
+  `outbound` are missing. On a fresh Pi, the user runs infrastructure's `bootstrap.yaml` before `deploy.yaml`.
+- **A new secret needs three places**: the key in `setup/.env.example`, the line in infrastructure's
+  `ansible/roles/secrets/tasks/main.yaml` (with `no_log: true`), and its KeePass lookup in infrastructure's
   `bootstrap.yaml`. Reference it here as `${VAR}`; never write a value into the repo.
-- **A new web UI needs raspberry**: nginx vhost, Pi-hole CNAME and certificate SAN are all in raspberry. The
+- **A new web UI needs infrastructure**: nginx vhost, Pi-hole CNAME and certificate SAN are all in infrastructure. The
   container joins the `siz` network here.
 - **The Mosquitto password file** is kept by the role while its entry matches `MOSQUITTO_PASSWD` (the
   `mosquitto_passwd` filter re-checks the hash), and rewritten only when the password changed. It belongs to

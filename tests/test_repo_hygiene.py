@@ -14,7 +14,7 @@ def git(*args):
 
 
 def test_env_example_holds_no_values():
-    """setup/.env.example documents the keys; the values come from KeePass via raspberry's secrets role."""
+    """setup/.env.example documents the keys; the values come from KeePass via infrastructure's secrets role."""
     lines = (ROOT / "setup" / ".env.example").read_text().splitlines()
     entries = [line for line in lines if line.strip() and not line.lstrip().startswith("#")]
     assert entries, "setup/.env.example lists no keys"

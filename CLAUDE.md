@@ -3,7 +3,7 @@
 Docker Compose stack for the smart home itself: ioBroker (with two Redis instances for states and objects),
 deCONZ (Zigbee) plus the IKEA firmware downloader, InfluxDB, Telegraf, Grafana (provisioned dashboards and
 alerting) and Mosquitto (MQTT). It runs on the same Raspberry Pi (Debian/Raspberry Pi OS trixie, arm64) as the
-infrastructure stack from [raspberry](https://github.com/TheRealArthurDent/raspberry).
+infrastructure stack from [infrastructure](https://github.com/TheRealArthurDent/infrastructure).
 
 ## State of the repo
 
@@ -11,18 +11,18 @@ infrastructure stack from [raspberry](https://github.com/TheRealArthurDent/raspb
   `setup/` and `grafana-provisioning/` to `/etc/docker/smart-home/` (no templated copies), keeps the Mosquitto
   password file in line with `.env` and runs `docker compose up` as project `smart-home`. The former bash scripts
   (`deploy.sh`, `run.sh`, `setup/setup.sh`) are gone; Molecule's `prepare.yaml` still simulates hosts they set up.
-- **raspberry provides what this stack depends on**: the external Docker networks `siz` (nginx reverse proxy)
+- **infrastructure provides what this stack depends on**: the external Docker networks `siz` (nginx reverse proxy)
   and `outbound` (internet via Pi-hole), the nginx vhosts (`grafana.<host>`, `iobroker.<host>`, …), the
-  certificates, the restic backups, and the secrets file `/etc/docker/smart-home/.env` (raspberry's `secrets`
-  role renders it from KeePass). Without raspberry's bootstrap on the host, this stack doesn't start.
+  certificates, the restic backups, and the secrets file `/etc/docker/smart-home/.env` (infrastructure's `secrets`
+  role renders it from KeePass). Without infrastructure's bootstrap on the host, this stack doesn't start.
 - The role reads only `MOSQUITTO_PASSWD` from that `.env`; it has no KeePass access of its own. Telegraf gets its
   passwords as environment variables from Compose, so `telegraf.conf` holds none.
 - **Clean-slate restore (#1)**: before `compose up`, the role lists the volumes in `smart_home_restore_volumes`
-  (defaults) for raspberry's `restic-restore` helper (`/etc/restic-restore/stacks/smart-home.json`), creates them
+  (defaults) for infrastructure's `restic-restore` helper (`/etc/restic-restore/stacks/smart-home.json`), creates them
   with the Compose labels and runs `restic-restore --runner oneoff clean-slate smart-home`. It restores only when
   all of them are empty and writes `/var/lib/restic-restore/smart-home.done`; `-e skip_smart_home_restore=true`
   only writes the marker. A new volume in `docker-compose.yaml` goes into that list or `tests/test_restore_volumes.py`.
-  `smart-home` joins raspberry's `stack_backup_stacks` only after this ran on raspi.
+  `smart-home` joins infrastructure's `stack_backup_stacks` only after this ran on raspi.
 
 Open plans: #1 (clean-slate restore from the restic backup), #2 (migration from ioBroker and Node-RED to Home
 Assistant, with MCP servers as sub-issues), #3 (voice commands, after #2) and #7 (deployment from bash to Ansible).
@@ -65,11 +65,11 @@ Don't work around a block; give the user the command or the proposed change inst
 ## Secrets
 
 The stack's passwords (InfluxDB, Grafana, Mosquitto, deCONZ VNC, Redis ports) live in KeePass and reach the Pi as
-`/etc/docker/smart-home/.env` through raspberry's `secrets` role. Compose passes them to the containers; the
+`/etc/docker/smart-home/.env` through infrastructure's `secrets` role. Compose passes them to the containers; the
 `smart_home` role derives the Mosquitto password file from `MOSQUITTO_PASSWD` (tasks handling it need
 `no_log: true`; Molecule's leak test fails on any `LEAKCANARY` value in the log). Never commit a `.env` file, never read or print one, and
 never put secret values into config files in this repo; reference `${VAR}` from the env file instead. A new key
-goes into `setup/.env.example` here and into raspberry's `secrets` role and KeePass lookups.
+goes into `setup/.env.example` here and into infrastructure's `secrets` role and KeePass lookups.
 
 ## Commands
 
@@ -84,7 +84,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/
 .venv/bin/pre-commit run --all-files                    # whitespace, YAML, gitleaks, renovate config, actionlint
 ```
 
-When writing or changing the Ansible role, follow raspberry's `ansible-role` skill
+When writing or changing the Ansible role, follow infrastructure's `ansible-role` skill
 (`.claude/skills/ansible-role/SKILL.md` there): FQCN, `no_log`, idempotence, a `verify.yaml` check per change.
 
 CI runs on every PR: unit tests (`tests.yaml`), Ansible lint and Molecule (`ansible.yaml`), Grafana dashboard lint, codespell, and reviewdog (misspell,
