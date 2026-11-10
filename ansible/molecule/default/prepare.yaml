@@ -5,7 +5,8 @@
   gather_facts: false
   vars:
     # Every value containing LEAKCANARY is a secret; verify.yaml fails if one shows up in the Ansible log.
-    mosquitto_password: LEAKCANARY-mosquitto
+    # Characters Compose interpolates or cuts off; the .env holds it escaped, as infrastructure writes it
+    mosquitto_password: 'LEAKCANARY-mosquitto $x #y'
   tasks:
     - name: Create the config directories of infrastructure's secrets role and the bash deployment
       ansible.builtin.file:
@@ -31,7 +32,7 @@
 
           GRAFANA_PASSWORD=LEAKCANARY-grafana
 
-          MOSQUITTO_PASSWD={{ mosquitto_password }}
+          MOSQUITTO_PASSWD="{{ mosquitto_password | replace('$', '\\$') }}"
 
           DECONZ_VNC_PASSWORD=LEAKCANARY-vnc
           DECONZ_DEVICE_TYPE=ttyACM0

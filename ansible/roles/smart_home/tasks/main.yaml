@@ -32,7 +32,8 @@
       {{ smart_home_env_file }} is missing. Run infrastructure's bootstrap.yaml on {{ inventory_hostname }} first.
     quiet: true
 
-# The only secret the role itself needs; Compose reads the rest from the file.
+# The only secret the role itself needs; Compose reads the rest from the file. infrastructure writes the value quoted
+# for Compose, so compose_env_value (filter_plugins/compose.py) reads it the same way.
 - name: Read the Mosquitto password from the secrets file
   ansible.builtin.slurp:
     src: "{{ smart_home_env_file }}"
@@ -43,7 +44,8 @@
   ansible.builtin.set_fact:
     smart_home_mosquitto_password: >-
       {{ smart_home_env.content | b64decode
-         | regex_search('^MOSQUITTO_PASSWD=(.*)$', '\1', multiline=True) | default([''], true) | first }}
+         | regex_search('^MOSQUITTO_PASSWD=(.*)$', '\1', multiline=True) | default([''], true) | first
+         | compose_env_value }}
   no_log: true
 
 - name: Ensure the Mosquitto password is set
