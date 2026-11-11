@@ -74,6 +74,15 @@
       "versioning": "loose",
       "pinDigests": true,
       "rangeStrategy": "pin"
+    },
+    {
+      "description": "ansible-lint, molecule and molecule-plugins are usually released together; update them in one PR.",
+      "groupName": "ansible-devtools",
+      "matchPackageNames": [
+        "ansible-lint",
+        "molecule",
+        "molecule-plugins"
+      ]
     }
   ]
 }
