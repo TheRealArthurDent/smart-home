@@ -39,11 +39,11 @@
   register: smart_home_env
   no_log: true
 
+# Read as Compose reads it (filter_plugins/dotenv.py): Telegraf gets the same value from Compose and must match the
+# hash. infrastructure quotes the values, so a password may hold $, quotes, # or blanks.
 - name: Remember the Mosquitto password
   ansible.builtin.set_fact:
-    smart_home_mosquitto_password: >-
-      {{ smart_home_env.content | b64decode
-         | regex_search('^MOSQUITTO_PASSWD=(.*)$', '\1', multiline=True) | default([''], true) | first }}
+    smart_home_mosquitto_password: "{{ smart_home_env.content | b64decode | dotenv_value('MOSQUITTO_PASSWD') }}"
   no_log: true
 
 - name: Ensure the Mosquitto password is set

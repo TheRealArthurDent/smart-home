@@ -70,6 +70,9 @@ The stack's passwords (InfluxDB, Grafana, Mosquitto, deCONZ VNC, Redis ports) li
 `no_log: true`; Molecule's leak test fails on any `LEAKCANARY` value in the log). Never commit a `.env` file, never read or print one, and
 never put secret values into config files in this repo; reference `${VAR}` from the env file instead. A new key
 goes into `setup/.env.example` here and into infrastructure's `secrets` role and KeePass lookups.
+Passwords may hold `$`, quotes, `\`, `#` and blanks: infrastructure writes every value double-quoted for Compose
+(`dotenv_quote`), and the role reads a value only through its `dotenv_value` filter, which reads it exactly as Compose
+does (`tests/test_dotenv_filter.py` checks it against `docker compose config`), never with a plain regex.
 
 ## Commands
 

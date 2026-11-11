@@ -5,7 +5,11 @@
   gather_facts: false
   vars:
     # Every value containing LEAKCANARY is a secret; verify.yaml fails if one shows up in the Ansible log.
-    mosquitto_password: LEAKCANARY-mosquitto
+    # Awkward on purpose ($ for Compose, {{ }} for Jinja, quotes, backslash, #). The .env below holds it as
+    # infrastructure's secrets role writes it (JSON's string quoting escapes \ and " like its dotenv_quote filter, $
+    # becomes $$). The role must read it back exactly, or the entry setup.sh wrote no longer matches and gets rewritten
+    # (verify.yaml). !unsafe makes it data, as a KeePass lookup returns it, not a template.
+    mosquitto_password: !unsafe 'LEAKCANARY-mosquitto tes$abc$bla{xyz}blub ${HOME} {{ x }} {% if y %} \ '' " #c äö '
   tasks:
     - name: Create the config directories of infrastructure's secrets role and the bash deployment
       ansible.builtin.file:
@@ -31,7 +35,7 @@
 
           GRAFANA_PASSWORD=LEAKCANARY-grafana
 
-          MOSQUITTO_PASSWD={{ mosquitto_password }}
+          MOSQUITTO_PASSWD={{ mosquitto_password | to_json(ensure_ascii=False) | replace('$', '$$') }}
 
           DECONZ_VNC_PASSWORD=LEAKCANARY-vnc
           DECONZ_DEVICE_TYPE=ttyACM0
@@ -50,7 +54,7 @@
         python3 - > /etc/docker/smart-home/mosquitto/passwd <<'PY'
         import base64, hashlib
         salt = b"fixed-salt12"
-        digest = hashlib.sha512(b"{{ mosquitto_password }}" + salt).digest()
+        digest = hashlib.sha512({{ mosquitto_password | to_json }}.encode() + salt).digest()
         print("mosquitto:$6$" + base64.b64encode(salt).decode() + "$" + base64.b64encode(digest).decode())
         PY
       args:
