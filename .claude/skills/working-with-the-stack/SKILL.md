@@ -1,6 +1,6 @@
 ---
 name: working-with-the-stack
-description: Use when a task in this repo changes or rolls out the smart-home Docker stack (docker-compose.yaml, setup/, ansible/, Grafana provisioning, Mosquitto, Telegraf, ioBroker, deCONZ, InfluxDB), deploys to testbed or raspi, or when deciding what can be checked from a cloud container and what the user has to run themselves.
+description: Use when a task in this repo changes or rolls out the smart-home Docker stack (docker-compose.yaml, setup/, ansible/, Grafana provisioning, Mosquitto, Telegraf, ioBroker, deCONZ, InfluxDB), deploys to testbench or raspi, or when deciding what can be checked from a cloud container and what the user has to run themselves.
 ---
 
 # Working with the smart-home stack
@@ -23,7 +23,7 @@ First find out where you run: a cloud container (claude.ai/code) or a local sess
 | Molecule (`ansible/molecule/default`) | rarely: needs a Docker daemon, and the image build needs deb.debian.org, which the proxy may refuse | yes | yes |
 | `ansible-lint --strict` | if `ansible/requirements.yaml` installs (Galaxy may be blocked; `pip install ansible==<version>` ships the collections) | yes | yes |
 | `docker compose config` | only with a dummy env file (copy `setup/.env.example`, fill dummy values) | same | no |
-| Deploy to testbed | **no**: the 192.168.1.x LAN is only reachable from the home network | **only after asking**, every time | no |
+| Deploy to testbench | **no**: the 192.168.1.x LAN is only reachable from the home network | **only after asking**, every time | no |
 | Deploy to raspi | no | **no**: hand the user the commands | no |
 
 In a cloud container, don't probe the LAN to find this out again. `.claude/hooks/guard.py` blocks
@@ -36,12 +36,12 @@ instead of looking for another way to run it.
    open issue. Answer in the user's language.
 2. **Branch off `main`, PR into `main`**, never push to `main`. Commit style `fix:`/`feat:` + `Refs #<n>`.
 3. **Test first** where pytest can express it, then let CI run and drive it green.
-4. **Hand the user the rollout**, testbed before raspi, and say what to look for:
+4. **Hand the user the rollout**, testbench before raspi, and say what to look for:
 
 ```sh
 cd ansible
-../.venv/bin/ansible-playbook deploy.yaml --limit testbed --check --diff
-../.venv/bin/ansible-playbook deploy.yaml --limit testbed      # then once more: must report changed=0
+../.venv/bin/ansible-playbook deploy.yaml --limit testbench --check --diff
+../.venv/bin/ansible-playbook deploy.yaml --limit testbench      # then once more: must report changed=0
 ssh -p 4242 testuser@192.168.1.7 'docker ps --format "{{.Names}}\t{{.Status}}"'   # all containers up/healthy
 ../.venv/bin/ansible-playbook deploy.yaml --limit raspi --check --diff   # raspi, only after the user says so
 ```
@@ -60,7 +60,7 @@ ssh -p 4242 testuser@192.168.1.7 'docker ps --format "{{.Names}}\t{{.Status}}"' 
   uid 1883 (Mosquitto inside the container); the host has no such user, which check mode warns about.
 - **Telegraf reads its passwords from the environment** (`$INFLUXDB_WRITE_PASSWORD`, `$MOSQUITTO_PASSWD` in
   `telegraf.conf`, passed by Compose); the file holds no secrets.
-- **testbed has no ConBee stick**: `compose up` fails on the missing `/dev/ttyACM0`, so the inventory leaves
+- **testbench has no ConBee stick**: `compose up` fails on the missing `/dev/ttyACM0`, so the inventory leaves
   deconz out there (`smart_home_disabled_services`). An unknown name in that list fails the run.
 - **A container stopped by hand stays stopped**: the role leaves an exited container out of `compose up` and its
   restart handler and prints a `[WARNING]`. To bring it back, `docker start <name>`, then deploy again. Containers
@@ -75,7 +75,7 @@ ssh -p 4242 testuser@192.168.1.7 'docker ps --format "{{.Names}}\t{{.Status}}"' 
   (template in `grafana-provisioning/alerting/00_delete-rules.yaml`).
 - **Dashboard lint exclusions** are in `grafana-provisioning/dashboards/provisioned/.lint`; add an entry with a
   reason instead of weakening the CI step.
-- **Dashboard links point to `grafana.raspi`**; on testbed they lead to production.
+- **Dashboard links point to `grafana.raspi`**; on testbench they lead to production.
 - **Container names are fixed** (`container_name:`), and the role sets the Compose project name `smart-home` (the
   name the bash deployment's folder gave it). Any other name would start a second project whose names collide.
 - **Images are pinned** and Renovate updates them; deCONZ and the firmware downloader are pinned by digest.
@@ -84,4 +84,4 @@ ssh -p 4242 testuser@192.168.1.7 'docker ps --format "{{.Names}}\t{{.Status}}"' 
 ## Reporting back
 
 End with: what changed (files, PR link), what you ran and its result, what CI showed on the head commit, and the
-rollout commands the user still has to run, testbed before raspi.
+rollout commands the user still has to run, testbench before raspi.

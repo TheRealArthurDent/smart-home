@@ -28,7 +28,7 @@ BLOCKED_COMMANDS = [
     "cd ansible && ansible-playbook deploy.yaml --limit raspi",
     "ansible-playbook deploy.yaml -l raspi --check",
     "ansible-playbook deploy.yaml --limit=all",
-    "ansible-playbook deploy.yaml --limit 'testbed,raspi'",
+    "ansible-playbook deploy.yaml --limit 'testbench,raspi'",
     "cd ansible && ../.venv/bin/ansible-playbook deploy.yaml",
     "ansible raspi -m ping",
     # main branch
@@ -52,7 +52,7 @@ BLOCKED_COMMANDS = [
 ]
 
 ALLOWED_COMMANDS = [
-    "cd ansible && ansible-playbook deploy.yaml --limit testbed --check --diff",
+    "cd ansible && ansible-playbook deploy.yaml --limit testbench --check --diff",
     "cd ansible && ../.venv/bin/molecule test",
     "cd ansible && ../.venv/bin/ansible-lint --strict",
     "pytest tests/test_limit_guard.py",

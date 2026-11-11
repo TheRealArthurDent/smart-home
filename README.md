@@ -18,8 +18,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/
 
 ```sh
 ../.venv/bin/ansible-galaxy collection install -r requirements.yaml
-../.venv/bin/ansible-playbook deploy.yaml --limit testbed --check --diff
-../.venv/bin/ansible-playbook deploy.yaml --limit testbed
+../.venv/bin/ansible-playbook deploy.yaml --limit testbench --check --diff
+../.venv/bin/ansible-playbook deploy.yaml --limit testbench
 ```
 
 Secrets come from KeePass: [infrastructure](https://github.com/TheRealArthurDent/infrastructure)'s `secrets` role

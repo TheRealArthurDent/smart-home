@@ -52,7 +52,7 @@ Never push from a clone of the old repo: it would bring back the old history.
 | Host | Purpose |
 | --- | --- |
 | `raspi` (192.168.1.2) | **Production** smart home. Only the user deploys to it; hand them the commands. |
-| `testbed` (192.168.1.7) | Test Pi, reachable only from the home network: propose the commands to the user (`--check --diff`, real run, second run with `changed=0`). |
+| `testbench` (192.168.1.7) | Test Pi, reachable only from the home network: propose the commands to the user (`--check --diff`, real run, second run with `changed=0`). |
 
 Always pass `--limit <host>` to `ansible-playbook`; `deploy.yaml` refuses to run without it.
 
