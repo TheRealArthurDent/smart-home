@@ -84,11 +84,18 @@
     msg: "{{ smart_home_restore.stderr }}\n{{ smart_home_restore_hints[smart_home_restore.rc] | default('') }}"
   vars:
     smart_home_restore_hints:
+      # restic-restore's exit codes and the fixes, as in infrastructure's resticprofile role (infrastructure#36)
       10: >-
-        Check that the backup host accepts this host's restic SSH key: run infrastructure's
-        sudo /etc/docker/infrastructure/init-restic.sh on the host, then run the playbook again.
+        Check that the backup host accepts this host's restic SSH key: its public key must be in
+        backup_target_clients in infrastructure's host_vars/dungeon.yaml. Run infrastructure's bootstrap.yaml
+        --limit dungeon, then this playbook again.
       11: >-
         If this is a new host with nothing to restore, run the playbook again with -e skip_smart_home_restore=true.
+      12: >-
+        ssh in the resticprofile container doesn't trust the backup host's key: it isn't in
+        /etc/docker/infrastructure/resticprofile/.ssh/known_hosts, or dungeon was reinstalled. Put dungeon's key into
+        resticprofile_backup_host_keys (infrastructure's group_vars/all/backup.yaml), run infrastructure's
+        bootstrap.yaml --limit <this host> --tags stack, then this playbook again.
   when: smart_home_restore is not skipped and smart_home_restore.rc != 0
 
 - name: Report the restore

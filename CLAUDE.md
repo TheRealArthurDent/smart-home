@@ -101,7 +101,8 @@ run on every PR (no `paths` filter), or `tests/test_rulesets.py` fails.
 - Container images in `docker-compose.yaml` are pinned and updated by Renovate; keep them pinned (deCONZ and
   the firmware downloader by digest).
 - Work test-driven, unless something speaks against it (then say why): write the test first and watch it fail
-  for the right reason. Dashboards and alerting are checked by the linters in CI, not by pytest.
+  for the right reason. Dashboards and alerting are checked by the linters in CI, not by pytest. Documentation
+  (READMEs, `doc/`, CLAUDE.md, skills) gets no tests.
 - YAML files use the `.yaml` extension, not `.yml`, unless a tool requires a fixed name.
 - Everything in the repo is written in English (code, comments, docs, commit messages), even when the user
   chats in German.
