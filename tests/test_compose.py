@@ -55,7 +55,7 @@ def test_grafana_provisioning_needs_no_secret_files():
 
 
 def test_compose_up_fails_on_containers_that_dont_come_up():
-    """Without wait, `compose up` reports changed while a container crash-loops (Grafana on testbed)."""
+    """Without wait, `compose up` reports changed while a container crash-loops (Grafana on testbench)."""
     tasks = yaml.safe_load((ROOT / "ansible" / "roles" / "smart_home" / "tasks" / "main.yaml").read_text())
     compose_up = next(
         task for block in tasks for task in block.get("block", []) if task.get("name") == "Ensure the stack is up"

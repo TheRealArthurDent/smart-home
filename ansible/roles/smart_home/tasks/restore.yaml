@@ -2,7 +2,7 @@
 # Clean-slate restore (#1): on a fresh host, the stack's volumes come back from the latest resticprofile snapshot
 # before the containers start. infrastructure's stack role installs the helper (a host service shared by all stacks,
 # raspberry#287); this stack lists its volumes in /etc/restic-restore/stacks/ and calls it. A marker makes every
-# later run a no-op, and a host that already has data (raspi, testbed) only gets the marker.
+# later run a no-op, and a host that already has data (raspi, testbench) only gets the marker.
 
 - name: Stat the restore helper
   ansible.builtin.stat:

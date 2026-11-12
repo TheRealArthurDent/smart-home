@@ -25,7 +25,7 @@ smart_home_manage_containers: true
 # Clean-slate restore before the stack starts on a fresh host (#1). infrastructure's stack role installs the helper
 # /usr/local/bin/restic-restore; this role lists the stack's volumes for it and calls it before compose up. The
 # helper restores only when every listed volume is empty and writes /var/lib/restic-restore/smart-home.done, so a
-# host that already has data (raspi, testbed) only gets the marker.
+# host that already has data (raspi, testbench) only gets the marker.
 # -e skip_smart_home_restore=true (a new host with nothing to restore) only writes the marker;
 # -e smart_home_restore_snapshot=<id> restores another snapshot than the latest.
 smart_home_skip_restore: "{{ skip_smart_home_restore | default(false) }}"

@@ -179,7 +179,7 @@
         path: /etc/restic-restore/stacks/smart-home.json
       register: restore_items_stat
 
-    # deconz is disabled in converge.yaml (like on testbed), so its volume isn't in the backup to restore from.
+    # deconz is disabled in converge.yaml (like on testbench), so its volume isn't in the backup to restore from.
     - name: Check the restore helper gets the stack's volumes with their containers
       vars:
         items: "{{ (restore_items_file.content | b64decode | from_json)['items'] }}"

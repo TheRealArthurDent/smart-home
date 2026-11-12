@@ -34,7 +34,7 @@ KeePass; `setup/.env.example` lists its keys). Notes for Claude Code are in `CLA
 | Host | IP | SSH port | User |
 | --- | --- | --- | --- |
 | `raspi` | 192.168.1.2 | 1357 | `smarthome` (production) |
-| `testbed` | 192.168.1.7 | 4242 | `testuser` (no ConBee stick, so deCONZ stays off) |
+| `testbench` | 192.168.1.7 | 4242 | `testuser` (no ConBee stick, so deCONZ stays off) |
 
 ## Development
 
@@ -72,7 +72,7 @@ What the role does on every run: it keeps the Mosquitto password file in line wi
 `.env`, copies the config (and removes files the repo dropped), restores the volumes on a fresh host (see
 [raspi is gone](#raspi-is-gone-new-ssd-reinstall)) and runs `docker compose up`. A container stopped by hand stays
 stopped and only produces a warning. Services listed in `smart_home_disabled_services` (`inventory/hosts.yaml`) are
-left out, e.g. `deconz` on testbed.
+left out, e.g. `deconz` on testbench.
 
 ## Disaster recovery
 

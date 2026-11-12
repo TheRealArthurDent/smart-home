@@ -1,5 +1,5 @@
 # Deploys the smart-home stack, replacing deploy.sh (#7). infrastructure's bootstrap.yaml must have run on the host.
-# ansible-playbook deploy.yaml --limit testbed --check --diff
+# ansible-playbook deploy.yaml --limit testbench --check --diff
 - name: Require --limit
   hosts: localhost
   gather_facts: false

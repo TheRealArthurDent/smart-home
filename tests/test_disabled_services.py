@@ -1,4 +1,4 @@
-"""Hosts without some hardware (testbed has no ConBee stick for deCONZ) leave services out of `compose up` (#7)."""
+"""Hosts without some hardware (testbench has no ConBee stick for deCONZ) leave services out of `compose up` (#7)."""
 
 import subprocess
 from pathlib import Path
@@ -33,9 +33,9 @@ def run_role(tmp_path, disabled):
     )
 
 
-def test_testbed_leaves_out_deconz():
+def test_testbench_leaves_out_deconz():
     hosts = yaml.safe_load((ANSIBLE_DIR / "inventory" / "hosts.yaml").read_text())["all"]["hosts"]
-    assert hosts["testbed"]["smart_home_disabled_services"] == ["deconz"]
+    assert hosts["testbench"]["smart_home_disabled_services"] == ["deconz"]
     assert "smart_home_disabled_services" not in hosts["raspi"]
 
 
