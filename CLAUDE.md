@@ -43,9 +43,11 @@ Never push from a clone of the old repo: it would bring back the old history.
 - `grafana-provisioning/` – Grafana datasources, dashboards (`dashboards/provisioned/*.json`, linted in CI with
   `dashboard-linter`, exclusions in `.lint`) and alerting (rules, contact points, templates)
 - `doc/` – notes on the measurement concept
-- `tests/` – pytest tests (Claude hook, rulesets, repo hygiene, `--limit` guard, Mosquitto filter, compose)
+- `tests/` – pytest tests (Claude hook, rulesets, repo settings, repo hygiene, `--limit` guard, Mosquitto filter,
+  compose)
 - `.claude/` – Claude Code settings, the guard hook (`hooks/guard.py`) and skills
-- `.github/rulesets/` + `scripts/rulesets.sh` – rulesets for `main`, applied by the user (`rulesets.sh apply`)
+- `.github/rulesets/` (rulesets for `main`) + `.github/repo-settings.json` (auto merge, branch cleanup, secret
+  scanning) – GitHub settings, applied by the user with `scripts/github-settings.sh apply`
 
 ## Hosts
 
