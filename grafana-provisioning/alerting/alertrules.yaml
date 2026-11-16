@@ -83,8 +83,8 @@ groups:
               maxDataPoints: 43200
               refId: B
               type: classic_conditions
-        dashboardUid: disc-space
-        panelId: 2
+        dashboardUid: system
+        panelId: 17
         noDataState: NoData
         execErrState: Alerting
         for: 15m
