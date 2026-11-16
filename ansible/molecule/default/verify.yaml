@@ -29,7 +29,7 @@
         - "{{ compose_dir }}/docker-compose.yaml"
         - "{{ compose_dir }}/setup/iobroker/userscript_firststart.sh"
         - "{{ compose_dir }}/grafana-provisioning/datasources/datasources.yaml"
-        - "{{ compose_dir }}/grafana-provisioning/dashboards/provisioned/overview.json"
+        - "{{ compose_dir }}/grafana-provisioning/dashboards/provisioned/system.json"
         - "{{ smart_home_dir }}/mosquitto/mosquitto.conf"
         - "{{ smart_home_dir }}/telegraf/telegraf.conf"
         - "{{ smart_home_dir }}/telegraf/cpu_temp.sh"

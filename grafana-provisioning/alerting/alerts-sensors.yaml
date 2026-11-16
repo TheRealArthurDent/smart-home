@@ -122,14 +122,14 @@ groups:
               maxDataPoints: 1
               refId: C
               type: threshold
-        dashboardUid: battery-levels
-        panelId: 11
+        dashboardUid: device-status
+        panelId: 18
         noDataState: NoData
         execErrState: Error
         for: 1h
         annotations:
-          __dashboardUid__: battery-levels
-          __panelId__: "11"
+          __dashboardUid__: device-status
+          __panelId__: "18"
           summary: 🌡️ The temperature sensor "Livingroom" is unreachable.
         labels: { }
         isPaused: false
@@ -240,14 +240,14 @@ groups:
               maxDataPoints: 1
               refId: C
               type: threshold
-        dashboardUid: battery-levels
-        panelId: 11
+        dashboardUid: device-status
+        panelId: 18
         noDataState: NoData
         execErrState: Error
         for: 1h
         annotations:
-          __dashboardUid__: battery-levels
-          __panelId__: "11"
+          __dashboardUid__: device-status
+          __panelId__: "18"
           summary: 🌡️ The temperature sensor "Bedroom" is unreachable.
         labels: { }
         isPaused: false
@@ -358,14 +358,14 @@ groups:
               maxDataPoints: 1
               refId: C
               type: threshold
-        dashboardUid: battery-levels
-        panelId: 11
+        dashboardUid: device-status
+        panelId: 18
         noDataState: NoData
         execErrState: Error
         for: 1h
         annotations:
-          __dashboardUid__: battery-levels
-          __panelId__: "11"
+          __dashboardUid__: device-status
+          __panelId__: "18"
           summary: 🌡️ The temperature sensor "office" is unreachable.
         labels: { }
         isPaused: false
@@ -476,14 +476,14 @@ groups:
               maxDataPoints: 1
               refId: C
               type: threshold
-        dashboardUid: battery-levels
-        panelId: 11
+        dashboardUid: device-status
+        panelId: 18
         noDataState: NoData
         execErrState: Error
         for: 1h
         annotations:
-          __dashboardUid__: battery-levels
-          __panelId__: "11"
+          __dashboardUid__: device-status
+          __panelId__: "18"
           summary: 🌡️ The temperature sensor "Terrace" is unreachable.
         labels: { }
         isPaused: false
@@ -594,14 +594,14 @@ groups:
               maxDataPoints: 1
               refId: C
               type: threshold
-        dashboardUid: battery-levels
-        panelId: 11
+        dashboardUid: device-status
+        panelId: 18
         noDataState: NoData
         execErrState: Error
         for: 1h
         annotations:
-          __dashboardUid__: battery-levels
-          __panelId__: "11"
+          __dashboardUid__: device-status
+          __panelId__: "18"
           summary: 🌡️ The temperature sensor "garden" is unreachable.
         labels: { }
         isPaused: false
@@ -713,14 +713,14 @@ groups:
               maxDataPoints: 1
               refId: C
               type: threshold
-        dashboardUid: battery-levels
-        panelId: 11
+        dashboardUid: device-status
+        panelId: 18
         noDataState: NoData
         execErrState: Error
         for: 1h
         annotations:
-          __dashboardUid__: battery-levels
-          __panelId__: "11"
+          __dashboardUid__: device-status
+          __panelId__: "18"
           summary: ☀️ The light sensor "Livingroom" is unreachable.
         labels: { }
         isPaused: false
@@ -831,14 +831,14 @@ groups:
               maxDataPoints: 1
               refId: C
               type: threshold
-        dashboardUid: battery-levels
-        panelId: 11
+        dashboardUid: device-status
+        panelId: 18
         noDataState: NoData
         execErrState: Error
         for: 1h
         annotations:
-          __dashboardUid__: battery-levels
-          __panelId__: "11"
+          __dashboardUid__: device-status
+          __panelId__: "18"
           summary: ☀️ The light sensor "Office" is unreachable.
         labels: { }
         isPaused: false
