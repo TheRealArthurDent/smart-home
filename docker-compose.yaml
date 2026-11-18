@@ -179,7 +179,7 @@ services:
   mosquitto:
     hostname: mosquitto
     container_name: mqtt
-    image: eclipse-mosquitto:2.0.22
+    image: eclipse-mosquitto:2.0.23
     restart: unless-stopped
     ports:
       - "1883:1883"
