@@ -1,48 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "pre-commit": {
-    "enabled": true
-  },
+  "extends": [
+    "github>TheRealArthurDent/renovate:homelab"
+  ],
   "packageRules": [
-    {
-      "description": "Auto merge all minor and patch updates to github-actions. Do it without a PR to reduce noise.",
-      "groupName": "github-actions",
-      "matchManagers": [
-        "github-actions"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch",
-        "pin",
-        "digest"
-      ],
-      "automerge": true,
-      "addLabels": [
-        "auto-merge"
-      ],
-      "automergeType": "branch"
-    },
-    {
-      "description": "Auto merge ikea-firmware-downloader",
-      "groupName": "ikea-firmware-downloader",
-      "matchPackageNames": "ghcr.io/therealarthurdent/ikea-firmware-downloader",
-      "automerge": true,
-      "addLabels": [
-        "auto-merge"
-      ],
-      "automergeType": "branch"
-    },
-    {
-      "description": "Create PRs for major changes to github-actions.",
-      "groupName": "github-actions",
-      "matchManagers": [
-        "github-actions"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "automerge": false
-    },
     {
       "description": "Pin deconz stable versions.",
       "groupName": "deconz",
@@ -60,8 +21,8 @@
       "rangeStrategy": "pin"
     },
     {
-      "description": "Pin IKEA firmware downloader latest versions.",
-      "groupName": "ikea-fw-downloader",
+      "description": "IKEA firmware downloader: own image on its latest tag, pinned by digest. Merged by GitHub auto-merge once the required checks pass, without waiting for a release age.",
+      "groupName": "ikea-firmware-downloader",
       "matchDatasources": [
         "docker"
       ],
@@ -73,7 +34,14 @@
       ],
       "versioning": "loose",
       "pinDigests": true,
-      "rangeStrategy": "pin"
+      "rangeStrategy": "pin",
+      "minimumReleaseAge": null,
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "addLabels": [
+        "auto-merge"
+      ]
     },
     {
       "description": "ansible-lint, molecule and molecule-plugins are usually released together; update them in one PR.",
