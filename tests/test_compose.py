@@ -61,3 +61,14 @@ def test_compose_up_fails_on_containers_that_dont_come_up():
         task for block in tasks for task in block.get("block", []) if task.get("name") == "Ensure the stack is up"
     )
     assert compose_up["community.docker.docker_compose_v2"]["wait"] is True
+
+
+def test_no_container_mounts_the_docker_socket():
+    """Telegraf's docker input is off, so it doesn't need the Docker socket; a container that ever does reads the API
+    through infrastructure's socket proxy."""
+    services = yaml.safe_load((ROOT / "docker-compose.yaml").read_text())["services"]
+    mounting = [name for name, spec in services.items()
+                if any(str(volume).startswith("/var/run/docker.sock") for volume in spec.get("volumes", []))]
+    assert mounting == []
+    config = (ROOT / "setup" / "telegraf" / "telegraf.conf").read_text()
+    assert not re.search(r"^\s*\[\[inputs\.docker\]\]", config, re.MULTILINE)
