@@ -64,8 +64,8 @@ def test_compose_up_fails_on_containers_that_dont_come_up():
 
 
 def test_no_container_mounts_the_docker_socket():
-    """Access to the Docker socket is root on the host, read-only mount or not. Telegraf's docker input is off, so it
-    doesn't need it; a container that ever does reads the API through infrastructure's socket proxy."""
+    """Telegraf's docker input is off, so it doesn't need the Docker socket; a container that ever does reads the API
+    through infrastructure's socket proxy."""
     services = yaml.safe_load((ROOT / "docker-compose.yaml").read_text())["services"]
     mounting = [name for name, spec in services.items()
                 if any(str(volume).startswith("/var/run/docker.sock") for volume in spec.get("volumes", []))]
