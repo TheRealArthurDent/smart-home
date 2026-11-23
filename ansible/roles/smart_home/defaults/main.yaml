@@ -22,6 +22,18 @@ smart_home_wait_timeout: 600
 # Compose up and restarts need a running Docker daemon (false in Molecule).
 smart_home_manage_containers: true
 
+# Home Assistant's HTTP settings, written to .storage/http in its volume before its first start and never again
+# (Home Assistant owns the file from then on). Since 2026.x it imports http: from YAML only once, as a trial that an
+# admin must confirm in the UI within 5 minutes. Version 1 of the store holds the bare settings; Home Assistant
+# migrates it to its current format and fills in the defaults. nginx reaches it from the network siz.
+smart_home_homeassistant_http_store:
+  version: 1
+  minor_version: 1
+  key: http
+  data:
+    use_x_forwarded_for: true
+    trusted_proxies: [172.30.2.0/24]
+
 # Clean-slate restore before the stack starts on a fresh host (#1). infrastructure's stack role installs the helper
 # /usr/local/bin/restic-restore; this role lists the stack's volumes for it and calls it before compose up. The
 # helper restores only when every listed volume is empty and writes /var/lib/restic-restore/smart-home.done, so a

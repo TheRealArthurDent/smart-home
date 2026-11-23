@@ -15,8 +15,6 @@ homeassistant:
   # One file per topic (presence, shutters, ...), each with its automations, scripts and helpers
   packages: !include_dir_named packages
 
-# nginx (infrastructure's reverse_proxy) terminates TLS and reaches Home Assistant through the network siz.
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - 172.30.2.0/24
+# No http: here. Home Assistant keeps it in .storage/http and imports YAML only once, as a trial an admin must
+# confirm in the UI. The smart_home role seeds that store with the reverse proxy settings instead
+# (smart_home_homeassistant_http_store).
