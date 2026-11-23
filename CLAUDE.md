@@ -10,8 +10,9 @@ same Raspberry Pi (Debian/Raspberry Pi OS trixie, arm64) as the infrastructure s
 
 - **Deployment is Ansible (#7)**: `ansible/deploy.yaml` with the role `smart_home` copies `docker-compose.yaml`,
   `setup/`, `grafana-provisioning/` and `homeassistant/` to `/etc/docker/smart-home/` (no templated copies), keeps
-  the Mosquitto password file in line with `.env` and runs `docker compose up` as project `smart-home`. The former bash scripts
-  (`deploy.sh`, `run.sh`, `setup/setup.sh`) are gone; Molecule's `prepare.yaml` still simulates hosts they set up.
+  the Mosquitto password file in line with `.env` and runs `docker compose up` as project `smart-home`. The former
+  bash scripts (`deploy.sh`, `run.sh`, `setup/setup.sh`) are gone; Molecule's `prepare.yaml` still simulates hosts
+  they set up.
 - **infrastructure provides what this stack depends on**: the external Docker networks `siz` (nginx reverse proxy)
   and `outbound` (internet via Pi-hole), the nginx vhosts (`grafana.<host>`, `iobroker.<host>`, …), the
   certificates, the restic backups, and the secrets file `/etc/docker/smart-home/.env` (infrastructure's `secrets`

@@ -33,7 +33,8 @@ The stack depends on [infrastructure](https://github.com/TheRealArthurDent/infra
 must have run on the host first: it provides Docker, the networks `siz` and `outbound`, nginx with the vhosts
 (`https://grafana.raspi`, `https://iobroker.raspi`, `https://deconz.raspi`, `https://homeassistant.raspi`, ...), the
 certificate, the restic backups with the restore helper `restic-restore`, and the secrets file
-`/etc/docker/smart-home/.env` (rendered from KeePass; `setup/.env.example` lists its keys). Notes for Claude Code are in `CLAUDE.md`.
+`/etc/docker/smart-home/.env` (rendered from KeePass; `setup/.env.example` lists its keys). Notes for Claude Code
+are in `CLAUDE.md`.
 
 | Host | IP | SSH port | User |
 | --- | --- | --- | --- |

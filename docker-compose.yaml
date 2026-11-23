@@ -60,7 +60,7 @@ services:
     dns:
       - 172.30.1.153
     healthcheck:
-      test: [ "CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8123/manifest.json" ]
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8123/manifest.json"]
       start_period: 5m
     mem_limit: 1G
   # deConz
