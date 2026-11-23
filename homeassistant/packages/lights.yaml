@@ -1,0 +1,210 @@
+# Lights, replacing Node-RED's "Illumination" and "Direct Button actions" (#2).
+# deCONZ buttons fire deconz_event with the unique_id the Node-RED flows used. Event codes: 1002 = "on" pressed,
+# 2002 = "off" pressed (x001 held, x003 released after holding).
+
+automation:
+  - id: deko_an
+    alias: Decoration lights on in the evening while someone is home
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: input_boolean.abend
+        to: "on"
+      - trigger: state
+        entity_id: binary_sensor.jemand_zuhause
+        to: "on"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.abend
+        state: "on"
+      - condition: state
+        entity_id: binary_sensor.jemand_zuhause
+        state: "on"
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id:
+            - light.wohnzimmer_dekolights
+            - light.wohnzimmer_weihnachtssterne
+
+  - id: deko_aus
+    alias: Decoration lights off when the evening ends or everyone has left
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: input_boolean.abend
+        to: "off"
+      - trigger: state
+        entity_id: binary_sensor.jemand_zuhause
+        to: "off"
+    actions:
+      - action: light.turn_off
+        target:
+          entity_id:
+            - light.wohnzimmer_dekolights
+            - light.wohnzimmer_weihnachtssterne
+
+  - id: deko_taster
+    alias: Decoration lights button
+    mode: queued
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "5c:c7:c1:ff:fe:83:4b:a0-01-fc80"
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.event.data.event in (1002, 2002) }}"
+    actions:
+      - action: "light.turn_{{ 'on' if trigger.event.data.event == 1002 else 'off' }}"
+        target:
+          entity_id:
+            - light.wohnzimmer_dekolights
+            - light.wohnzimmer_weihnachtssterne
+
+  - id: deko_schalter
+    alias: Decoration lights switch toggles
+    mode: queued
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "84:ba:20:ff:fe:d4:12:52-01-1000"
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.event.data.event in (1002, 2002) }}"
+    actions:
+      # Both follow the first, so they never end up out of step
+      - action: "light.turn_{{ 'off' if is_state('light.wohnzimmer_dekolights', 'on') else 'on' }}"
+        target:
+          entity_id:
+            - light.wohnzimmer_dekolights
+            - light.wohnzimmer_weihnachtssterne
+
+  - id: weihnachtssterne_morgens
+    alias: Christmas stars on winter mornings
+    mode: single
+    triggers:
+      - trigger: time
+        at: "07:00:00"
+      - trigger: time
+        at: "09:00:00"
+    conditions:
+      - condition: template
+        value_template: "{{ now().month in (12, 1) }}"
+    actions:
+      - action: "light.turn_{{ 'on' if now().hour < 9 else 'off' }}"
+        target:
+          entity_id: light.wohnzimmer_weihnachtssterne
+
+  - id: weihnachtssterne_nachmittags
+    alias: Christmas stars on winter afternoons while someone is home
+    mode: single
+    triggers:
+      - trigger: time
+        at: "15:00:00"
+    conditions:
+      - condition: template
+        value_template: "{{ now().month in (11, 12, 1) }}"
+      - condition: state
+        entity_id: binary_sensor.jemand_zuhause
+        state: "on"
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.wohnzimmer_weihnachtssterne
+
+  - id: abstellkammer_licht
+    alias: Storeroom light follows the motion sensor
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.abstellkammer_bewegung_abstellkammer
+        to: "on"
+        id: motion
+      - trigger: state
+        entity_id: binary_sensor.abstellkammer_bewegung_abstellkammer
+        to: "off"
+        for:
+          seconds: 30
+        id: still
+      # In case a motion event got lost, like Node-RED's hourly check
+      - trigger: time_pattern
+        minutes: 0
+        id: hourly
+    actions:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: motion
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.abstellkammer_light_storeroom_output_0
+        default:
+          - condition: state
+            entity_id: binary_sensor.abstellkammer_bewegung_abstellkammer
+            state: "off"
+          - action: switch.turn_off
+            target:
+              entity_id: switch.abstellkammer_light_storeroom_output_0
+
+  - id: schlafzimmer_wandschalter
+    alias: Bedroom wall switch switches the wake-up light
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.schlafzimmer_light_bedroom_eingang_0
+        to:
+          - "on"
+          - "off"
+    actions:
+      - if:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'on' }}"
+        then:
+          - action: light.turn_on
+            target:
+              entity_id: light.schlafzimmer_aufwachlicht
+            data:
+              brightness: 255
+        else:
+          - action: light.turn_off
+            target:
+              entity_id: light.schlafzimmer_aufwachlicht
+          # Switching off by hand ends a running wake-up dimming
+          - action: timer.cancel
+            target:
+              entity_id: timer.aufwachlicht
+
+  - id: homeoffice_schalter
+    alias: Home office switch
+    mode: queued
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "94:34:69:ff:fe:3d:c9:a6-01-1000"
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.event.data.event in (1002, 2002) }}"
+    actions:
+      - action: "switch.turn_{{ 'on' if trigger.event.data.event == 1002 else 'off' }}"
+        target:
+          entity_id: switch.buro_on_off_homeoffice
+
+  - id: eckschreibtisch_schalter
+    alias: Corner desk light switch
+    mode: queued
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "dc:8e:95:ff:fe:2e:1d:3b-01-1000"
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.event.data.event in (1002, 2002) }}"
+    actions:
+      - action: "light.turn_{{ 'on' if trigger.event.data.event == 1002 else 'off' }}"
+        target:
+          entity_id: light.buro_eckschreibtisch

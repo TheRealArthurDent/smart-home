@@ -260,3 +260,75 @@ def test_evening_ends_at_midnight():
     end = automation("presence", "abend_endet")
     assert end["triggers"] == [{"trigger": "time", "at": "00:00:00"}]
     assert end["actions"] == [{"action": "input_boolean.turn_off", "target": {"entity_id": "input_boolean.abend"}}]
+
+
+DECO_LIGHTS = ["light.wohnzimmer_dekolights", "light.wohnzimmer_weihnachtssterne"]
+
+
+def targets(actions):
+    """Every entity the actions (and their choose/if branches) act on."""
+    found = []
+    for action in actions:
+        entity = action.get("target", {}).get("entity_id")
+        found += entity if isinstance(entity, list) else [entity] if entity else []
+        for option in action.get("choose", []):
+            found += targets(option["sequence"])
+        found += targets(action.get("default", [])) + targets(action.get("then", [])) + targets(action.get("else", []))
+    return found
+
+
+def test_deco_lights_follow_evening_and_presence():
+    on = automation("lights", "deko_an")
+    assert {(t["entity_id"], t["to"]) for t in on["triggers"]} == {
+        ("input_boolean.abend", "on"), ("binary_sensor.jemand_zuhause", "on")}
+    assert {(c["entity_id"], c["state"]) for c in on["conditions"]} == {
+        ("input_boolean.abend", "on"), ("binary_sensor.jemand_zuhause", "on")}
+    assert targets(on["actions"]) == DECO_LIGHTS
+    off = automation("lights", "deko_aus")
+    assert {(t["entity_id"], t["to"]) for t in off["triggers"]} == {
+        ("input_boolean.abend", "off"), ("binary_sensor.jemand_zuhause", "off")}
+    assert targets(off["actions"]) == DECO_LIGHTS
+
+
+def test_buttons_are_matched_by_the_unique_id_node_red_used():
+    """deCONZ buttons fire deconz_event with the same unique_id as in the Node-RED flows."""
+    expected = {
+        "deko_taster": ("5c:c7:c1:ff:fe:83:4b:a0-01-fc80", DECO_LIGHTS),
+        "deko_schalter": ("84:ba:20:ff:fe:d4:12:52-01-1000", DECO_LIGHTS),
+        "homeoffice_schalter": ("94:34:69:ff:fe:3d:c9:a6-01-1000", ["switch.buro_on_off_homeoffice"]),
+        "eckschreibtisch_schalter": ("dc:8e:95:ff:fe:2e:1d:3b-01-1000", ["light.buro_eckschreibtisch"]),
+    }
+    for automation_id, (unique_id, entities) in expected.items():
+        button = automation("lights", automation_id)
+        assert button["triggers"] == [
+            {"trigger": "event", "event_type": "deconz_event", "event_data": {"unique_id": unique_id}}], automation_id
+        assert sorted(set(targets(button["actions"]))) == sorted(entities), automation_id
+
+
+def test_storeroom_light_follows_the_motion_sensor_with_30_seconds_delay():
+    storeroom = automation("lights", "abstellkammer_licht")
+    triggers = {t["id"]: t for t in storeroom["triggers"]}
+    assert triggers["motion"]["to"] == "on"
+    assert triggers["still"]["to"] == "off"
+    assert triggers["still"]["for"] == {"seconds": 30}
+    # Node-RED also checked hourly, in case an event got lost
+    assert triggers["hourly"]["trigger"] == "time_pattern"
+    assert set(targets(storeroom["actions"])) == {"switch.abstellkammer_light_storeroom_output_0"}
+
+
+def test_bedroom_wall_switch_switches_the_wake_up_light_and_stops_its_dimming():
+    bedroom = automation("lights", "schlafzimmer_wandschalter")
+    assert bedroom["triggers"][0]["entity_id"] == "binary_sensor.schlafzimmer_light_bedroom_eingang_0"
+    assert set(targets(bedroom["actions"])) == {"light.schlafzimmer_aufwachlicht", "timer.aufwachlicht"}
+
+
+def test_christmas_stars_in_winter():
+    """December and January mornings 7 to 9; November to January from 15:00 while someone is home."""
+    morning = automation("lights", "weihnachtssterne_morgens")
+    assert sorted(t["at"] for t in morning["triggers"]) == ["07:00:00", "09:00:00"]
+    assert "(12, 1)" in str(morning["conditions"])
+    afternoon = automation("lights", "weihnachtssterne_nachmittags")
+    assert afternoon["triggers"] == [{"trigger": "time", "at": "15:00:00"}]
+    assert "(11, 12, 1)" in str(afternoon["conditions"])
+    assert "binary_sensor.jemand_zuhause" in str(afternoon["conditions"])
+    assert targets(morning["actions"]) == targets(afternoon["actions"]) == ["light.wohnzimmer_weihnachtssterne"]
