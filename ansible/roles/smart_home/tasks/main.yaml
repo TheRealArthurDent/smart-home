@@ -237,6 +237,27 @@
 - name: Restore the volumes on a fresh host
   ansible.builtin.import_tasks: restore.yaml
 
+# After the restore, which needs the volume empty, and before Home Assistant first starts. force: false leaves a
+# store Home Assistant already wrote (restored, or changed in its UI) alone.
+- name: Ensure Home Assistant's store directory exists
+  ansible.builtin.file:
+    path: "{{ smart_home_docker_volumes_dir }}/{{ smart_home_project_name }}_homeassistant-config/_data/.storage"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: "'homeassistant' not in smart_home_disabled_services"
+
+- name: Ensure Home Assistant starts with the proxy settings
+  ansible.builtin.copy:
+    content: "{{ smart_home_homeassistant_http_store | to_nice_json }}\n"
+    dest: "{{ smart_home_docker_volumes_dir }}/{{ smart_home_project_name }}_homeassistant-config/_data/.storage/http"
+    owner: root
+    group: root
+    mode: '0600'
+    force: false
+  when: "'homeassistant' not in smart_home_disabled_services"
+
 - name: Start containers
   when: smart_home_manage_containers | bool
   block:

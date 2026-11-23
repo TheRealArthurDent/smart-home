@@ -70,10 +70,36 @@ def test_has_a_healthcheck_and_a_memory_limit():
     assert service["mem_limit"]
 
 
-def test_trusts_forwarded_addresses_only_from_the_proxy_network():
-    http = configuration()["http"]
-    assert http["use_x_forwarded_for"] is True
-    assert http["trusted_proxies"] == [SIZ_SUBNET]
+def role_tasks():
+    return yaml.safe_load((ROOT / "ansible" / "roles" / "smart_home" / "tasks" / "main.yaml").read_text())
+
+
+def role_defaults():
+    return yaml.safe_load((ROOT / "ansible" / "roles" / "smart_home" / "defaults" / "main.yaml").read_text())
+
+
+def test_http_is_not_configured_in_yaml():
+    """Since 2026.x Home Assistant imports http: from YAML once, as a trial an admin must confirm in the UI within
+    5 minutes, then reverts and ignores the YAML for good (homeassistant/components/http/config.py)."""
+    assert "http" not in configuration()
+
+
+def test_the_role_seeds_the_http_store_with_the_proxy_settings():
+    """Version 1 of the store holds the bare settings; Home Assistant migrates it and fills in the defaults."""
+    seed = role_defaults()["smart_home_homeassistant_http_store"]
+    assert seed["version"] == 1
+    assert seed["key"] == "http"
+    assert seed["data"] == {"use_x_forwarded_for": True, "trusted_proxies": [SIZ_SUBNET]}
+
+
+def test_the_seed_never_overwrites_the_store_and_lands_after_the_restore():
+    """Home Assistant owns the file once it ran (UI changes, its own migrations); a restore must find the volume
+    empty, so the seed comes after it and before compose up."""
+    names = [task.get("name") for task in role_tasks()]
+    seed = next(task for task in role_tasks() if task.get("name") == "Ensure Home Assistant starts with the proxy settings")
+    assert seed["ansible.builtin.copy"]["force"] is False
+    assert names.index("Restore the volumes on a fresh host") < names.index(seed["name"]) < names.index(
+        "Start containers")
 
 
 def test_automations_scripts_and_helpers_come_from_the_packages():

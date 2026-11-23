@@ -173,6 +173,30 @@
       loop_control:
         label: "{{ item.item }}"
 
+    - name: Stat Home Assistant's HTTP store
+      ansible.builtin.stat:
+        path: /var/lib/docker/volumes/smart-home_homeassistant-config/_data/.storage/http
+      register: ha_http_store_stat
+
+    - name: Read Home Assistant's HTTP store
+      ansible.builtin.slurp:
+        src: /var/lib/docker/volumes/smart-home_homeassistant-config/_data/.storage/http
+      register: ha_http_store
+
+    # Home Assistant imports http: from YAML only as a trial an admin must confirm; the role seeds its store instead.
+    - name: Check Home Assistant's HTTP store trusts the proxy network
+      vars:
+        store: "{{ ha_http_store.content | b64decode | from_json }}"
+      ansible.builtin.assert:
+        that:
+          - ha_http_store_stat.stat.pw_name == 'root'
+          - ha_http_store_stat.stat.mode == '0600'
+          - store.key == 'http'
+          - store.version == 1
+          - store.data.use_x_forwarded_for
+          - store.data.trusted_proxies == ['172.30.2.0/24']
+        fail_msg: "Home Assistant's HTTP store is wrong: {{ store | to_json }}"
+
     - name: Read the restore items of the stack
       ansible.builtin.slurp:
         src: /etc/restic-restore/stacks/smart-home.json
