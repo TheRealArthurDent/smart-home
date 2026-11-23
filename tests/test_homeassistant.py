@@ -51,7 +51,8 @@ def test_runs_in_the_networks_of_the_stack_not_the_host():
     assert "privileged" not in service
     assert sorted(service["networks"]) == ["outbound", "siz", "smart-home"]
     assert service["dns"] == [OUTBOUND_PIHOLE]
-    assert "ports" not in service
+    # Only Sonos' event callbacks; the UI goes through nginx
+    assert service["ports"] == ["1400:1400"]
 
 
 def test_ui_state_lives_in_a_volume_and_the_repo_config_is_read_only():
@@ -126,3 +127,27 @@ def test_home_assistant_has_its_own_mosquitto_user():
     env_example = (ROOT / "setup" / ".env.example").read_text()
     for user in users:
         assert f"\n{user['env']}=" in env_example
+
+
+def package(name):
+    return yaml.load((CONFIG_DIR / "packages" / f"{name}.yaml").read_text(), Loader=HomeAssistantLoader)
+
+
+def test_sonos_speakers_are_configured_by_address():
+    """SSDP discovery doesn't cross the bridge network, so the speakers are listed, and they send their events to the
+    host's address on port 1400, which Compose forwards to the container."""
+    sonos = package("sonos")["sonos"]["media_player"]
+    assert sonos["advertise_addr"] == ("!env_var", "SONOS_ADVERTISE_ADDR")
+    assert len(sonos["hosts"]) >= 1
+    assert all(re.fullmatch(r"192\.168\.1\.\d{1,3}", host) for host in sonos["hosts"])
+
+
+def test_the_host_address_reaches_home_assistant_from_a_file_the_role_writes():
+    """The address differs per host (raspi, testbench); the role writes it next to the compose file, so a manual
+    docker compose up on the Pi gets it too."""
+    assert homeassistant()["env_file"] == ["homeassistant.env"]
+    assert role_defaults()["smart_home_host_address"] == "{{ ansible_host }}"
+    task = next(task for task in role_tasks() if task.get("name") == "Ensure Home Assistant knows the host address")
+    copy = task["ansible.builtin.copy"]
+    assert copy["dest"] == "{{ smart_home_compose_dir }}/homeassistant.env"
+    assert copy["content"] == "SONOS_ADVERTISE_ADDR={{ smart_home_host_address }}\n"

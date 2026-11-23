@@ -177,6 +177,16 @@
     directory_mode: '0755'
   notify: Restart homeassistant
 
+# Not secret; next to the compose file, so a manual docker compose up gets it too. Compose recreates the container
+# when it changes.
+- name: Ensure Home Assistant knows the host address
+  ansible.builtin.copy:
+    content: "SONOS_ADVERTISE_ADDR={{ smart_home_host_address }}\n"
+    dest: "{{ smart_home_compose_dir }}/homeassistant.env"
+    owner: root
+    group: root
+    mode: '0644'
+
 # copy only adds and updates, so files the repo dropped would stay, and Grafana provisions every file it finds.
 - name: Remove files the repo no longer has
   vars:

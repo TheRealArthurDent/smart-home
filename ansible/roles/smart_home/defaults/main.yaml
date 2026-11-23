@@ -90,3 +90,6 @@ smart_home_restore_volumes:
     services: [mosquitto]
     preserve: []
     note: Retained messages and persistent sessions
+
+# The host's LAN address, where the Sonos speakers send their events to Home Assistant (port 1400)
+smart_home_host_address: "{{ ansible_host }}"

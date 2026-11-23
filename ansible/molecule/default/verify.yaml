@@ -32,6 +32,7 @@
         - "{{ compose_dir }}/grafana-provisioning/dashboards/provisioned/system.json"
         - "{{ compose_dir }}/homeassistant/configuration.yaml"
         - "{{ compose_dir }}/homeassistant/packages/README.md"
+        - "{{ compose_dir }}/homeassistant/packages/sonos.yaml"
         - "{{ smart_home_dir }}/mosquitto/mosquitto.conf"
         - "{{ smart_home_dir }}/telegraf/telegraf.conf"
         - "{{ smart_home_dir }}/telegraf/cpu_temp.sh"
@@ -196,6 +197,19 @@
           - store.data.use_x_forwarded_for
           - store.data.trusted_proxies == ['172.30.2.0/24']
         fail_msg: "Home Assistant's HTTP store is wrong: {{ store | to_json }}"
+
+    - name: Read Home Assistant's host address file
+      ansible.builtin.slurp:
+        src: "{{ compose_dir }}/homeassistant.env"
+      register: ha_host_env
+
+    # The Sonos speakers send their events to this address; molecule's ansible_host is the container's name.
+    - name: Check Home Assistant gets the host address
+      vars:
+        expected: "SONOS_ADVERTISE_ADDR={{ ansible_host }}\n"
+      ansible.builtin.assert:
+        that: ha_host_env.content | b64decode == expected
+        fail_msg: "homeassistant.env is wrong: {{ ha_host_env.content | b64decode }}"
 
     - name: Read the restore items of the stack
       ansible.builtin.slurp:
