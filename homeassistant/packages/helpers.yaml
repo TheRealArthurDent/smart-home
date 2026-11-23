@@ -1,0 +1,216 @@
+# Helpers replacing the 0_userdata values of ioBroker and the states Node-RED kept in node-red.0 (#2).
+# No initial: anywhere: Home Assistant restores a helper's last state, so what is set in the app survives restarts
+# and deployments. The start values are set once, by the automation at the end.
+
+input_boolean:
+  wecker_werktag:
+    name: Wecker Werktag
+    icon: mdi:alarm
+  wecker_wochenende:
+    name: Wecker Wochenende und Feiertag
+    icon: mdi:alarm
+  wecken_aussetzen:
+    name: Wecken aussetzen
+    icon: mdi:alarm-off
+  gaeste:
+    name: Gäste da
+    icon: mdi:account-multiple
+  abend:
+    name: Abend
+    icon: mdi:weather-sunset
+  rollladen_buero_sperre:
+    name: Rollladen Büro nicht automatisch fahren
+    icon: mdi:window-shutter-alert
+  rollladen_kueche_sperre:
+    name: Rollladen Küche nicht automatisch fahren
+    icon: mdi:window-shutter-alert
+  rollladen_schlafzimmer_sperre:
+    name: Rollladen Schlafzimmer nicht automatisch fahren
+    icon: mdi:window-shutter-alert
+  rollladen_garten_sperre:
+    name: Rollladen Garten nicht automatisch fahren
+    icon: mdi:window-shutter-alert
+  rollladen_terrasse_sperre:
+    name: Rollladen Terrasse nicht automatisch fahren
+    icon: mdi:window-shutter-alert
+  helfer_startwerte_gesetzt:
+    name: Startwerte der Helfer gesetzt
+    icon: mdi:check-circle-outline
+
+input_datetime:
+  weckzeit_werktag:
+    name: Weckzeit Werktag
+    has_date: false
+    has_time: true
+  weckzeit_wochenende:
+    name: Weckzeit Wochenende und Feiertag
+    has_date: false
+    has_time: true
+  nachtruhe:
+    name: Nachtruhe ab
+    has_date: false
+    has_time: true
+
+input_number:
+  dauer_schuhheizung:
+    name: Dauer Schuhheizung
+    min: 0
+    max: 24
+    step: 0.5
+    unit_of_measurement: h
+    icon: mdi:shoe-formal
+  rollladen_helligkeit:
+    name: Hitzeschutz Helligkeit (mit Temperatur)
+    min: 0
+    max: 100000
+    step: 1000
+    mode: box
+    unit_of_measurement: lx
+  rollladen_helligkeit_max:
+    name: Hitzeschutz Helligkeit (allein)
+    min: 0
+    max: 100000
+    step: 1000
+    mode: box
+    unit_of_measurement: lx
+  rollladen_temperatur:
+    name: Hitzeschutz Temperatur (mit Helligkeit)
+    min: 0
+    max: 40
+    step: 0.5
+    unit_of_measurement: °C
+  rollladen_temperatur_max:
+    name: Hitzeschutz Temperatur (allein)
+    min: 0
+    max: 40
+    step: 0.5
+    unit_of_measurement: °C
+  rollladen_buero_soll:
+    name: Rollladen Büro Sollposition
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    icon: mdi:window-shutter-settings
+  rollladen_kueche_soll:
+    name: Rollladen Küche Sollposition
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    icon: mdi:window-shutter-settings
+  rollladen_schlafzimmer_soll:
+    name: Rollladen Schlafzimmer Sollposition
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    icon: mdi:window-shutter-settings
+  rollladen_garten_soll:
+    name: Rollladen Garten Sollposition
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    icon: mdi:window-shutter-settings
+  rollladen_terrasse_soll:
+    name: Rollladen Terrasse Sollposition
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    icon: mdi:window-shutter-settings
+
+timer:
+  aufwachlicht:
+    name: Aufwachlicht dimmen
+    restore: true
+
+automation:
+  - id: helfer_startwerte
+    alias: Helfer mit den Startwerten aus ioBroker füllen
+    description: Läuft nur beim ersten Start; danach gilt, was in der App eingestellt ist.
+    mode: single
+    triggers:
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: state
+        entity_id: input_boolean.helfer_startwerte_gesetzt
+        state: "off"
+    actions:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.wecker_werktag
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.wecker_wochenende
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.weckzeit_werktag
+        data:
+          time: "07:20:00"
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.weckzeit_wochenende
+        data:
+          time: "10:00:00"
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.nachtruhe
+        data:
+          time: "22:00:00"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.dauer_schuhheizung
+        data:
+          value: 8
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_helligkeit
+        data:
+          value: 30000
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_helligkeit_max
+        data:
+          value: 35000
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_temperatur
+        data:
+          value: 23
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_temperatur_max
+        data:
+          value: 26
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_buero_soll
+        data:
+          value: 100
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_kueche_soll
+        data:
+          value: 100
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_schlafzimmer_soll
+        data:
+          value: 100
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_garten_soll
+        data:
+          value: 100
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_terrasse_soll
+        data:
+          value: 100
+      # Last, so a failed run is retried on the next start
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.helfer_startwerte_gesetzt

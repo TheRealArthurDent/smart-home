@@ -151,3 +151,76 @@ def test_the_host_address_reaches_home_assistant_from_a_file_the_role_writes():
     copy = task["ansible.builtin.copy"]
     assert copy["dest"] == "{{ smart_home_compose_dir }}/homeassistant.env"
     assert copy["content"] == "SONOS_ADVERTISE_ADDR={{ smart_home_host_address }}\n"
+
+
+# The values the Node-RED flows read from ioBroker's 0_userdata on 2026-11-23 (#2)
+HELPER_START_VALUES = {
+    "input_boolean.wecker_werktag": "on",
+    "input_boolean.wecker_wochenende": "on",
+    "input_datetime.weckzeit_werktag": "07:20:00",
+    "input_datetime.weckzeit_wochenende": "10:00:00",
+    "input_datetime.nachtruhe": "22:00:00",
+    "input_number.dauer_schuhheizung": 8,
+    "input_number.rollladen_helligkeit": 30000,
+    "input_number.rollladen_helligkeit_max": 35000,
+    "input_number.rollladen_temperatur": 23,
+    "input_number.rollladen_temperatur_max": 26,
+}
+SHUTTERS = ["buero", "kueche", "schlafzimmer", "garten", "terrasse"]
+
+
+def helper_ids(helpers):
+    return {
+        f"{domain}.{object_id}"
+        for domain, entities in helpers.items()
+        if domain in {"input_boolean", "input_datetime", "input_number", "timer"}
+        for object_id in entities
+    }
+
+
+def test_helpers_replace_the_states_of_iobroker_and_node_red():
+    ids = helper_ids(package("helpers"))
+    assert set(HELPER_START_VALUES) <= ids
+    assert {"input_boolean.gaeste", "input_boolean.abend", "input_boolean.wecken_aussetzen",
+            "timer.aufwachlicht"} <= ids
+    for shutter in SHUTTERS:
+        assert {f"input_number.rollladen_{shutter}_soll", f"input_boolean.rollladen_{shutter}_sperre"} <= ids
+
+
+def test_helpers_keep_what_is_set_in_the_app():
+    """With initial: Home Assistant would reset a helper to it on every restart, undoing what was set in the app.
+    Without it, the helper restores its last state."""
+    helpers = package("helpers")
+    for domain in ("input_boolean", "input_datetime", "input_number"):
+        for object_id, config in helpers[domain].items():
+            assert "initial" not in (config or {}), f"{domain}.{object_id}"
+
+
+def start_value_automation():
+    automations = package("helpers")["automation"]
+    automation = next(a for a in automations if a["id"] == "helfer_startwerte")
+    return automation
+
+
+def test_helpers_start_once_with_the_values_from_iobroker():
+    """A fresh Home Assistant starts its helpers at their minimum; the start values are set once, on the first start,
+    and a flag that survives restarts keeps them from overwriting later changes."""
+    automation = start_value_automation()
+    assert automation["triggers"] == [{"trigger": "homeassistant", "event": "start"}]
+    assert automation["conditions"] == [
+        {"condition": "state", "entity_id": "input_boolean.helfer_startwerte_gesetzt", "state": "off"}
+    ]
+    values = {}
+    for action in automation["actions"]:
+        domain, service = action["action"].split(".")
+        entity = action["target"]["entity_id"]
+        if service == "set_value":
+            values[entity] = action["data"]["value"]
+        elif service == "set_datetime":
+            values[entity] = action["data"]["time"]
+        elif service == "turn_on":
+            values[entity] = "on"
+    flag = values.pop("input_boolean.helfer_startwerte_gesetzt")
+    assert flag == "on"
+    assert automation["actions"][-1]["target"]["entity_id"] == "input_boolean.helfer_startwerte_gesetzt"
+    assert values == HELPER_START_VALUES | {f"input_number.rollladen_{s}_soll": 100 for s in SHUTTERS}
