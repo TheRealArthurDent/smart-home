@@ -4,117 +4,117 @@
 
 input_boolean:
   wecker_werktag:
-    name: Wecker Werktag
+    name: Wake-up alarm on workdays
     icon: mdi:alarm
   wecker_wochenende:
-    name: Wecker Wochenende und Feiertag
+    name: Wake-up alarm on weekends and holidays
     icon: mdi:alarm
   wecken_aussetzen:
-    name: Wecken aussetzen
+    name: Skip the next wake-up
     icon: mdi:alarm-off
   gaeste:
-    name: Gäste da
+    name: Guests present
     icon: mdi:account-multiple
   abend:
-    name: Abend
+    name: Evening
     icon: mdi:weather-sunset
   rollladen_buero_sperre:
-    name: Rollladen Büro nicht automatisch fahren
+    name: Shutter office, no automatic moves
     icon: mdi:window-shutter-alert
   rollladen_kueche_sperre:
-    name: Rollladen Küche nicht automatisch fahren
+    name: Shutter kitchen, no automatic moves
     icon: mdi:window-shutter-alert
   rollladen_schlafzimmer_sperre:
-    name: Rollladen Schlafzimmer nicht automatisch fahren
+    name: Shutter bedroom, no automatic moves
     icon: mdi:window-shutter-alert
   rollladen_garten_sperre:
-    name: Rollladen Garten nicht automatisch fahren
+    name: Shutter garden, no automatic moves
     icon: mdi:window-shutter-alert
   rollladen_terrasse_sperre:
-    name: Rollladen Terrasse nicht automatisch fahren
+    name: Shutter terrace, no automatic moves
     icon: mdi:window-shutter-alert
   helfer_startwerte_gesetzt:
-    name: Startwerte der Helfer gesetzt
+    name: Helper start values set
     icon: mdi:check-circle-outline
 
 input_datetime:
   weckzeit_werktag:
-    name: Weckzeit Werktag
+    name: Wake-up time on workdays
     has_date: false
     has_time: true
   weckzeit_wochenende:
-    name: Weckzeit Wochenende und Feiertag
+    name: Wake-up time on weekends and holidays
     has_date: false
     has_time: true
   nachtruhe:
-    name: Nachtruhe ab
+    name: Night rest from
     has_date: false
     has_time: true
 
 input_number:
   dauer_schuhheizung:
-    name: Dauer Schuhheizung
+    name: Shoe heating duration
     min: 0
     max: 24
     step: 0.5
     unit_of_measurement: h
     icon: mdi:shoe-formal
   rollladen_helligkeit:
-    name: Hitzeschutz Helligkeit (mit Temperatur)
+    name: Heat protection brightness (with temperature)
     min: 0
     max: 100000
     step: 1000
     mode: box
     unit_of_measurement: lx
   rollladen_helligkeit_max:
-    name: Hitzeschutz Helligkeit (allein)
+    name: Heat protection brightness (alone)
     min: 0
     max: 100000
     step: 1000
     mode: box
     unit_of_measurement: lx
   rollladen_temperatur:
-    name: Hitzeschutz Temperatur (mit Helligkeit)
+    name: Heat protection temperature (with brightness)
     min: 0
     max: 40
     step: 0.5
     unit_of_measurement: °C
   rollladen_temperatur_max:
-    name: Hitzeschutz Temperatur (allein)
+    name: Heat protection temperature (alone)
     min: 0
     max: 40
     step: 0.5
     unit_of_measurement: °C
   rollladen_buero_soll:
-    name: Rollladen Büro Sollposition
+    name: Shutter office, desired position
     min: 0
     max: 100
     step: 1
     unit_of_measurement: "%"
     icon: mdi:window-shutter-settings
   rollladen_kueche_soll:
-    name: Rollladen Küche Sollposition
+    name: Shutter kitchen, desired position
     min: 0
     max: 100
     step: 1
     unit_of_measurement: "%"
     icon: mdi:window-shutter-settings
   rollladen_schlafzimmer_soll:
-    name: Rollladen Schlafzimmer Sollposition
+    name: Shutter bedroom, desired position
     min: 0
     max: 100
     step: 1
     unit_of_measurement: "%"
     icon: mdi:window-shutter-settings
   rollladen_garten_soll:
-    name: Rollladen Garten Sollposition
+    name: Shutter garden, desired position
     min: 0
     max: 100
     step: 1
     unit_of_measurement: "%"
     icon: mdi:window-shutter-settings
   rollladen_terrasse_soll:
-    name: Rollladen Terrasse Sollposition
+    name: Shutter terrace, desired position
     min: 0
     max: 100
     step: 1
@@ -123,13 +123,13 @@ input_number:
 
 timer:
   aufwachlicht:
-    name: Aufwachlicht dimmen
+    name: Wake-up light dimming
     restore: true
 
 automation:
   - id: helfer_startwerte
-    alias: Helfer mit den Startwerten aus ioBroker füllen
-    description: Läuft nur beim ersten Start; danach gilt, was in der App eingestellt ist.
+    alias: Fill the helpers with the start values from ioBroker
+    description: Runs on the first start only; after that, what is set in the app applies.
     mode: single
     triggers:
       - trigger: homeassistant
