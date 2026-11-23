@@ -224,3 +224,39 @@ def test_helpers_start_once_with_the_values_from_iobroker():
     assert flag == "on"
     assert automation["actions"][-1]["target"]["entity_id"] == "input_boolean.helfer_startwerte_gesetzt"
     assert values == HELPER_START_VALUES | {f"input_number.rollladen_{s}_soll": 100 for s in SHUTTERS}
+
+
+def test_someone_is_home_while_a_person_is_in_the_home_zone():
+    """Arrival counts at once, leaving after five minutes, like the Node-RED flow. Which phone belongs to whom is set in
+    the app (Settings > People), so no device names or addresses end up in this repo."""
+    presence = package("presence")
+    sensor = next(s for t in presence["template"] for s in t.get("binary_sensor", [])
+                  if s.get("default_entity_id") == "binary_sensor.jemand_zuhause")
+    assert "zone.home" in sensor["state"]
+    assert sensor["delay_off"] == {"minutes": 5}
+    assert sensor["device_class"] == "presence"
+    text = (CONFIG_DIR / "packages" / "presence.yaml").read_text()
+    assert "device_tracker." not in text
+    assert not re.search(r"([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}", text)
+
+
+def automation(package_name, automation_id):
+    return next(a for a in package(package_name)["automation"] if a["id"] == automation_id)
+
+
+def test_evening_starts_before_sunset_in_winter_and_before_dusk_in_summer():
+    """Node-RED's evening: 15 minutes before sunset in winter (standard time), 19 minutes before civil dusk in summer
+    (daylight saving time)."""
+    start = automation("presence", "abend_beginnt")
+    triggers = {t["id"]: t for t in start["triggers"]}
+    assert triggers["winter"] == {"trigger": "sun", "event": "sunset", "offset": "-00:15:00", "id": "winter"}
+    assert "next_dusk" in triggers["summer"]["value_template"]
+    assert "minutes=19" in triggers["summer"]["value_template"]
+    assert start["actions"][-1]["action"] == "input_boolean.turn_on"
+    assert start["actions"][-1]["target"]["entity_id"] == "input_boolean.abend"
+
+
+def test_evening_ends_at_midnight():
+    end = automation("presence", "abend_endet")
+    assert end["triggers"] == [{"trigger": "time", "at": "00:00:00"}]
+    assert end["actions"] == [{"action": "input_boolean.turn_off", "target": {"entity_id": "input_boolean.abend"}}]
