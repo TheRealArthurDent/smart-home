@@ -152,10 +152,21 @@
     directory_mode: '0755'
   notify: Restart grafana
 
+# Home Assistant reads its YAML on start only, so a change needs a restart.
+- name: Ensure the Home Assistant configuration is present
+  ansible.builtin.copy:
+    src: "{{ smart_home_repo_dir }}/homeassistant"
+    dest: "{{ smart_home_compose_dir }}/"
+    owner: root
+    group: root
+    mode: '0644'
+    directory_mode: '0755'
+  notify: Restart homeassistant
+
 # copy only adds and updates, so files the repo dropped would stay, and Grafana provisions every file it finds.
 - name: Remove files the repo no longer has
   vars:
-    smart_home_synced_dirs: [grafana-provisioning, setup/iobroker]
+    smart_home_synced_dirs: [grafana-provisioning, setup/iobroker, homeassistant]
   block:
     - name: Find the files of the synced directories in the repo
       ansible.builtin.find:
@@ -181,7 +192,8 @@
       register: smart_home_host_files
       when: smart_home_synced_stat.results | selectattr('stat.exists') | list | length > 0
 
-    # Grafana is the one to restart; an obsolete ioBroker first start script needs nothing.
+    # Grafana and Home Assistant are the ones to restart; an obsolete ioBroker first start script needs nothing.
+    # Each restart handler skips a service that isn't up.
     - name: Ensure files the repo dropped are absent
       ansible.builtin.file:
         path: "{{ smart_home_compose_dir }}/{{ item }}"
@@ -192,7 +204,9 @@
            | difference(smart_home_repo_files.files | map(attribute='path')
                         | map('regex_replace', '^' ~ (smart_home_repo_dir | realpath | regex_escape) ~ '/', ''))
            | sort }}
-      notify: Restart grafana
+      notify:
+        - Restart grafana
+        - Restart homeassistant
 
 - name: Check the Docker host
   when: smart_home_manage_containers | bool

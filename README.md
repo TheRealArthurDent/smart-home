@@ -21,15 +21,19 @@ Contents:
 ## Overview
 
 `docker-compose.yaml` runs ioBroker (with two Redis instances for states and objects), deCONZ (Zigbee, ConBee stick)
-with the IKEA firmware downloader, InfluxDB, Telegraf, Grafana and Mosquitto on `raspi`. The Ansible role
-`smart_home` (`ansible/`) copies the compose file, `setup/` and `grafana-provisioning/` to `/etc/docker/smart-home/`
-and runs `docker compose up` as project `smart-home`.
+with the IKEA firmware downloader, InfluxDB, Telegraf, Grafana, Mosquitto and Home Assistant on `raspi`. The Ansible
+role `smart_home` (`ansible/`) copies the compose file, `setup/`, `grafana-provisioning/` and `homeassistant/` to
+`/etc/docker/smart-home/` and runs `docker compose up` as project `smart-home`.
+
+Home Assistant runs next to ioBroker until the last automation has moved (#2). Its integrations are set up in its
+UI and live in the volume `homeassistant-config`; `homeassistant/configuration.yaml` and the packages in
+`homeassistant/packages/` (automations, scripts, helpers) come from this repo and are mounted read-only.
 
 The stack depends on [infrastructure](https://github.com/TheRealArthurDent/infrastructure), whose `bootstrap.yaml`
 must have run on the host first: it provides Docker, the networks `siz` and `outbound`, nginx with the vhosts
-(`https://grafana.raspi`, `https://iobroker.raspi`, `https://deconz.raspi`, ...), the certificate, the restic
-backups with the restore helper `restic-restore`, and the secrets file `/etc/docker/smart-home/.env` (rendered from
-KeePass; `setup/.env.example` lists its keys). Notes for Claude Code are in `CLAUDE.md`.
+(`https://grafana.raspi`, `https://iobroker.raspi`, `https://deconz.raspi`, `https://homeassistant.raspi`, ...), the
+certificate, the restic backups with the restore helper `restic-restore`, and the secrets file
+`/etc/docker/smart-home/.env` (rendered from KeePass; `setup/.env.example` lists its keys). Notes for Claude Code are in `CLAUDE.md`.
 
 | Host | IP | SSH port | User |
 | --- | --- | --- | --- |
@@ -82,6 +86,7 @@ from this repo and secrets from KeePass, so only the named volumes need a restor
 
 | Volume | Holds |
 | --- | --- |
+| `homeassistant-config` | Home Assistant's integrations, devices, users and history (its YAML comes from `homeassistant/`) |
 | `iobroker-storage` | ioBroker with its adapters, instances and scripts |
 | `iobroker-states-redis-storage` | ioBroker's states (current values) |
 | `iobroker-objects-redis-storage` | ioBroker's objects (configuration of adapters and devices) |
@@ -191,10 +196,11 @@ On the Pi, every container should be `Up` (and `healthy` where it has a healthch
 docker ps --filter label=com.docker.compose.project=smart-home --format 'table {{.Names}}\t{{.Status}}'
 docker logs --tail 50 iobroker
 docker logs --tail 50 deconz
+docker logs --tail 50 homeassistant
 ```
 
 Then open `https://iobroker.raspi`, `https://grafana.raspi` (recent values in the dashboards) and
-`https://deconz.raspi` (Zigbee devices reachable).
+`https://deconz.raspi` (Zigbee devices reachable) and `https://homeassistant.raspi`.
 
 ## ioBroker cheat sheet
 

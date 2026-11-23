@@ -30,6 +30,8 @@
         - "{{ compose_dir }}/setup/iobroker/userscript_firststart.sh"
         - "{{ compose_dir }}/grafana-provisioning/datasources/datasources.yaml"
         - "{{ compose_dir }}/grafana-provisioning/dashboards/provisioned/system.json"
+        - "{{ compose_dir }}/homeassistant/configuration.yaml"
+        - "{{ compose_dir }}/homeassistant/packages/README.md"
         - "{{ smart_home_dir }}/mosquitto/mosquitto.conf"
         - "{{ smart_home_dir }}/telegraf/telegraf.conf"
         - "{{ smart_home_dir }}/telegraf/cpu_temp.sh"
@@ -158,6 +160,8 @@
       loop:
         - grafana-provisioning/alerting/contactpoints.yaml
         - setup/iobroker/obsolete.sh
+        # Home Assistant would load a leftover package as if it were still in the repo
+        - homeassistant/packages/obsolete.yaml
 
     # Grafana provisions every file it finds, so a leftover contact point keeps breaking its start.
     - name: Check files the repo dropped are removed from the host
@@ -188,8 +192,10 @@
         that:
           - restore_items_stat.stat.pw_name == 'root'
           - restore_items_stat.stat.mode == '0644'
-          - items | list | sort == ['grafana-storage', 'influxdb-storage', 'iobroker-objects-redis-storage',
-                                     'iobroker-states-redis-storage', 'iobroker-storage', 'mosquitto-storage']
+          - items | list | sort == ['grafana-storage', 'homeassistant-config', 'influxdb-storage',
+                                     'iobroker-objects-redis-storage', 'iobroker-states-redis-storage',
+                                     'iobroker-storage', 'mosquitto-storage']
+          - items['homeassistant-config'].containers == ['homeassistant']
           - items['iobroker-storage'].paths == [volumes ~ '/smart-home_iobroker-storage/_data']
           - items['iobroker-storage'].containers == ['iobroker']
           - items['iobroker-storage'].preserve == ['.npm']

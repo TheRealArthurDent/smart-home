@@ -81,7 +81,7 @@
         owner: root
         group: root
         mode: '0755'
-      loop: [grafana-provisioning/alerting, setup/iobroker]
+      loop: [grafana-provisioning/alerting, setup/iobroker, homeassistant/packages]
 
     - name: Plant files the repo no longer has
       ansible.builtin.copy:
@@ -93,6 +93,7 @@
       loop:
         - grafana-provisioning/alerting/contactpoints.yaml
         - setup/iobroker/obsolete.sh
+        - homeassistant/packages/obsolete.yaml
 
     - name: Remember the password file setup.sh wrote
       ansible.builtin.slurp:
