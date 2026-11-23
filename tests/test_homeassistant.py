@@ -36,9 +36,11 @@ def configuration():
     return yaml.load((CONFIG_DIR / "configuration.yaml").read_text(), Loader=HomeAssistantLoader)
 
 
-def test_image_is_pinned_to_a_release():
-    """Renovate bumps the exact release; a moving tag (stable, latest) would update it unreviewed."""
-    assert re.fullmatch(r"ghcr\.io/home-assistant/home-assistant:\d{4}\.\d{1,2}\.\d+", homeassistant()["image"])
+def test_image_is_pinned_to_a_release_from_docker_hub():
+    """Renovate bumps the exact release; a moving tag (stable, latest) would update it unreviewed. Docker Hub, not
+    ghcr.io: only Docker Hub gives Renovate a release timestamp, so the shared preset's minimumReleaseAge holds the
+    update back and its patch auto-merge applies."""
+    assert re.fullmatch(r"homeassistant/home-assistant:\d{4}\.\d{1,2}\.\d+", homeassistant()["image"])
 
 
 def test_runs_in_the_networks_of_the_stack_not_the_host():

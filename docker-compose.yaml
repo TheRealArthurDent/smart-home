@@ -45,7 +45,7 @@ services:
   homeassistant:
     hostname: homeassistant
     container_name: homeassistant
-    image: ghcr.io/home-assistant/home-assistant:2026.11.2
+    image: homeassistant/home-assistant:2026.11.2
     restart: unless-stopped
     volumes:
       - homeassistant-config:/config
