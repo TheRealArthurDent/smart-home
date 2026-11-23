@@ -2,15 +2,17 @@
 
 Docker Compose stack for the smart home itself: ioBroker (with two Redis instances for states and objects),
 deCONZ (Zigbee) plus the IKEA firmware downloader, InfluxDB, Telegraf, Grafana (provisioned dashboards and
-alerting) and Mosquitto (MQTT). It runs on the same Raspberry Pi (Debian/Raspberry Pi OS trixie, arm64) as the
-infrastructure stack from [infrastructure](https://github.com/TheRealArthurDent/infrastructure).
+alerting), Mosquitto (MQTT) and Home Assistant (next to ioBroker until the migration #2 is done). It runs on the
+same Raspberry Pi (Debian/Raspberry Pi OS trixie, arm64) as the infrastructure stack from
+[infrastructure](https://github.com/TheRealArthurDent/infrastructure).
 
 ## State of the repo
 
 - **Deployment is Ansible (#7)**: `ansible/deploy.yaml` with the role `smart_home` copies `docker-compose.yaml`,
-  `setup/` and `grafana-provisioning/` to `/etc/docker/smart-home/` (no templated copies), keeps the Mosquitto
-  password file in line with `.env` and runs `docker compose up` as project `smart-home`. The former bash scripts
-  (`deploy.sh`, `run.sh`, `setup/setup.sh`) are gone; Molecule's `prepare.yaml` still simulates hosts they set up.
+  `setup/`, `grafana-provisioning/` and `homeassistant/` to `/etc/docker/smart-home/` (no templated copies), keeps
+  the Mosquitto password file in line with `.env` and runs `docker compose up` as project `smart-home`. The former
+  bash scripts (`deploy.sh`, `run.sh`, `setup/setup.sh`) are gone; Molecule's `prepare.yaml` still simulates hosts
+  they set up.
 - **infrastructure provides what this stack depends on**: the external Docker networks `siz` (nginx reverse proxy)
   and `outbound` (internet via Pi-hole), the nginx vhosts (`grafana.<host>`, `iobroker.<host>`, …), the
   certificates, the restic backups, and the secrets file `/etc/docker/smart-home/.env` (infrastructure's `secrets`
@@ -40,6 +42,8 @@ Never push from a clone of the old repo: it would bring back the old history.
   `molecule/default/`
 - `setup/` – config copied to `/etc/docker/smart-home/` (mosquitto, telegraf, iobroker first-start script);
   `setup/.env.example` lists the keys of the secrets file, without values
+- `homeassistant/` – Home Assistant's `configuration.yaml` and `packages/` (one file per topic with its automations,
+  scripts and helpers), mounted read-only; integrations are set up in the UI and live in the volume
 - `grafana-provisioning/` – Grafana datasources, dashboards (`dashboards/provisioned/*.json`, linted in CI with
   `dashboard-linter`, exclusions in `.lint`) and alerting (rules, contact points, templates)
 - `doc/` – notes on the measurement concept

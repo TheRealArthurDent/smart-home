@@ -1,0 +1,22 @@
+# Home Assistant, running next to ioBroker until the last automation has moved (#2).
+# Mounted read-only: integrations are set up in the UI and live in the volume (.storage); automations, scripts,
+# helpers and templates are written as packages in packages/ and rolled out by the smart_home role.
+# Location and coordinates are set during onboarding and stay out of this repo.
+
+default_config:
+
+homeassistant:
+  name: Home
+  time_zone: Europe/Berlin
+  country: DE
+  unit_system: metric
+  temperature_unit: C
+  currency: EUR
+  # One file per topic (presence, shutters, ...), each with its automations, scripts and helpers
+  packages: !include_dir_named packages
+
+# nginx (infrastructure's reverse_proxy) terminates TLS and reaches Home Assistant through the network siz.
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.30.2.0/24

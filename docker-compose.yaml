@@ -41,6 +41,28 @@ services:
       - smart-home
     healthcheck:
       test: [ "CMD", "redis-cli", "-p", "${IOBROKER_OBJECTS_REDIS_PORT}", "--raw", "incr", "ping" ]
+  # Home Assistant, next to ioBroker until the last automation has moved (#2)
+  homeassistant:
+    hostname: homeassistant
+    container_name: homeassistant
+    image: homeassistant/home-assistant:2026.11.2
+    restart: unless-stopped
+    volumes:
+      - homeassistant-config:/config
+      - ./homeassistant/configuration.yaml:/config/configuration.yaml:ro
+      - ./homeassistant/packages:/config/packages:ro
+    environment:
+      - TZ=Europe/Berlin
+    networks:
+      - siz # accessibility by nginx
+      - smart-home # deconz, mqtt
+      - outbound # LAN devices (Shelly, FRITZ!Box, Sonos) and internet
+    dns:
+      - 172.30.1.153
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8123/manifest.json"]
+      start_period: 5m
+    mem_limit: 1G
   # deConz
   deconz:
     hostname: deconz
@@ -174,6 +196,7 @@ services:
       - default # needed to expose port 1883
       - smart-home
 volumes:
+  homeassistant-config:
   iobroker-storage:
   iobroker-states-redis-storage:
   iobroker-objects-redis-storage:

@@ -40,6 +40,10 @@ smart_home_docker_volumes_dir: /var/lib/docker/volumes
 #             restore that mirrors the snapshot keeps them
 # ikea-tradfri-firmware-storage isn't listed: firmware-download fetches the firmware again.
 smart_home_restore_volumes:
+  homeassistant-config:
+    services: [homeassistant]
+    preserve: []
+    note: Home Assistant's integrations, devices, users and history; its YAML comes from homeassistant/
   iobroker-storage:
     services: [iobroker]
     preserve: [.npm]
