@@ -53,6 +53,11 @@ services:
       - ./homeassistant/packages:/config/packages:ro
     environment:
       - TZ=Europe/Berlin
+    # SONOS_ADVERTISE_ADDR, the host's address; written by the smart_home role
+    env_file:
+      - homeassistant.env
+    ports:
+      - "1400:1400" # Sonos event callbacks
     networks:
       - siz # accessibility by nginx
       - smart-home # deconz, mqtt
