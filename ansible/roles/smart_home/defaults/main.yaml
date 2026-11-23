@@ -12,7 +12,13 @@ smart_home_compose_dir: "{{ smart_home_dir }}/compose"
 smart_home_repo_dir: "{{ (role_path | realpath) ~ '/../../..' }}"
 # uid of the mosquitto user in the eclipse-mosquitto image; it owns the password file.
 smart_home_mosquitto_uid: 1883
-smart_home_mosquitto_user: mosquitto
+# The users of the Mosquitto password file and the keys of the secrets file holding their passwords. mosquitto is
+# ioBroker's, Telegraf's and the devices' user; Home Assistant has its own (#2), so ioBroker's can go with ioBroker.
+smart_home_mosquitto_users:
+  - name: mosquitto
+    env: MOSQUITTO_PASSWD
+  - name: homeassistant
+    env: MOSQUITTO_HOMEASSISTANT_PASSWD
 # The ioBroker image's SETUID/SETGID default; docker-compose.yaml doesn't override them.
 smart_home_iobroker_uid: 1000
 # Services of docker-compose.yaml that `compose up` leaves out on this host, e.g. deconz without its ConBee stick
