@@ -116,3 +116,13 @@ def test_configuration_holds_no_private_data():
     core = configuration()["homeassistant"]
     for key in ("latitude", "longitude", "elevation"):
         assert key not in core
+
+
+def test_home_assistant_has_its_own_mosquitto_user():
+    """Its own user, so ioBroker's can go with ioBroker; infrastructure renders the password into the .env."""
+    users = role_defaults()["smart_home_mosquitto_users"]
+    assert {"name": "homeassistant", "env": "MOSQUITTO_HOMEASSISTANT_PASSWD"} in users
+    assert {"name": "mosquitto", "env": "MOSQUITTO_PASSWD"} in users
+    env_example = (ROOT / "setup" / ".env.example").read_text()
+    for user in users:
+        assert f"\n{user['env']}=" in env_example

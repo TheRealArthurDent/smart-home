@@ -17,7 +17,8 @@ same Raspberry Pi (Debian/Raspberry Pi OS trixie, arm64) as the infrastructure s
   and `outbound` (internet via Pi-hole), the nginx vhosts (`grafana.<host>`, `iobroker.<host>`, …), the
   certificates, the restic backups, and the secrets file `/etc/docker/smart-home/.env` (infrastructure's `secrets`
   role renders it from KeePass). Without infrastructure's bootstrap on the host, this stack doesn't start.
-- The role reads only `MOSQUITTO_PASSWD` from that `.env`; it has no KeePass access of its own. Telegraf gets its
+- The role reads only the Mosquitto passwords (`smart_home_mosquitto_users`: `MOSQUITTO_PASSWD` and
+  `MOSQUITTO_HOMEASSISTANT_PASSWD`) from that `.env`; it has no KeePass access of its own. Telegraf gets its
   passwords as environment variables from Compose, so `telegraf.conf` holds none.
 - **Clean-slate restore (#1)**: before `compose up`, the role lists the volumes in `smart_home_restore_volumes`
   (defaults) for infrastructure's `restic-restore` helper (`/etc/restic-restore/stacks/smart-home.json`), creates them
@@ -72,7 +73,7 @@ Don't work around a block; give the user the command or the proposed change inst
 
 The stack's passwords (InfluxDB, Grafana, Mosquitto, deCONZ VNC, Redis ports) live in KeePass and reach the Pi as
 `/etc/docker/smart-home/.env` through infrastructure's `secrets` role. Compose passes them to the containers; the
-`smart_home` role derives the Mosquitto password file from `MOSQUITTO_PASSWD` (tasks handling it need
+`smart_home` role derives the Mosquitto password file from them, one line per user (tasks handling it need
 `no_log: true`; Molecule's leak test fails on any `LEAKCANARY` value in the log). Never commit a `.env` file, never read or print one, and
 never put secret values into config files in this repo; reference `${VAR}` from the env file instead. A new key
 goes into `setup/.env.example` here and into infrastructure's `secrets` role and KeePass lookups.

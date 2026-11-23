@@ -73,8 +73,8 @@ run ends with `changed=0`:
 ../.venv/bin/ansible-playbook deploy.yaml --limit raspi
 ```
 
-What the role does on every run: it keeps the Mosquitto password file in line with `MOSQUITTO_PASSWD` from the
-`.env`, copies the config (and removes files the repo dropped), restores the volumes on a fresh host (see
+What the role does on every run: it keeps the Mosquitto password file in line with `MOSQUITTO_PASSWD` (user
+`mosquitto`) and `MOSQUITTO_HOMEASSISTANT_PASSWD` (user `homeassistant`) from the `.env`, copies the config (and removes files the repo dropped), restores the volumes on a fresh host (see
 [raspi is gone](#raspi-is-gone-new-ssd-reinstall)) and runs `docker compose up`. A container stopped by hand stays
 stopped and only produces a warning. Services listed in `smart_home_disabled_services` (`inventory/hosts.yaml`) are
 left out, e.g. `deconz` on testbench.

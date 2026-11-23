@@ -10,6 +10,7 @@
     # becomes $$). The role must read it back exactly, or the entry setup.sh wrote no longer matches and gets rewritten
     # (verify.yaml). !unsafe makes it data, as a KeePass lookup returns it, not a template.
     mosquitto_password: !unsafe 'LEAKCANARY-mosquitto tes$abc$bla{xyz}blub ${HOME} {{ x }} {% if y %} \ '' " #c äö '
+    mosquitto_homeassistant_password: !unsafe 'LEAKCANARY-mqtt-ha $x ${y} {{ z }} "q" #c'
   tasks:
     - name: Create the config directories of infrastructure's secrets role and the bash deployment
       ansible.builtin.file:
@@ -36,6 +37,8 @@
           GRAFANA_PASSWORD=LEAKCANARY-grafana
 
           MOSQUITTO_PASSWD={{ mosquitto_password | to_json(ensure_ascii=False) | replace('$', '$$') }}
+          MOSQUITTO_HOMEASSISTANT_PASSWD={{ mosquitto_homeassistant_password | to_json(ensure_ascii=False)
+                                            | replace('$', '$$') }}
 
           DECONZ_VNC_PASSWORD=LEAKCANARY-vnc
           DECONZ_DEVICE_TYPE=ttyACM0
@@ -54,8 +57,10 @@
         python3 - > /etc/docker/smart-home/mosquitto/passwd <<'PY'
         import base64, hashlib
         salt = b"fixed-salt12"
-        digest = hashlib.sha512({{ mosquitto_password | to_json }}.encode() + salt).digest()
-        print("mosquitto:$6$" + base64.b64encode(salt).decode() + "$" + base64.b64encode(digest).decode())
+        for user, password in (("mosquitto", {{ mosquitto_password | to_json }}),
+                               ("homeassistant", {{ mosquitto_homeassistant_password | to_json }})):
+            digest = hashlib.sha512(password.encode() + salt).digest()
+            print(user + ":$6$" + base64.b64encode(salt).decode() + "$" + base64.b64encode(digest).decode())
         PY
       args:
         creates: /etc/docker/smart-home/mosquitto/passwd

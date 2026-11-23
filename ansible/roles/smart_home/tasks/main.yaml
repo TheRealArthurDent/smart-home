@@ -32,8 +32,8 @@
       {{ smart_home_env_file }} is missing. Run infrastructure's bootstrap.yaml on {{ inventory_hostname }} first.
     quiet: true
 
-# The only secret the role itself needs; Compose reads the rest from the file.
-- name: Read the Mosquitto password from the secrets file
+# The only secrets the role itself needs; Compose reads the rest from the file.
+- name: Read the Mosquitto passwords from the secrets file
   ansible.builtin.slurp:
     src: "{{ smart_home_env_file }}"
   register: smart_home_env
@@ -41,15 +41,27 @@
 
 # Read as Compose reads it (filter_plugins/dotenv.py): Telegraf gets the same value from Compose and must match the
 # hash. infrastructure quotes the values, so a password may hold $, quotes, # or blanks.
-- name: Remember the Mosquitto password
+- name: Remember the Mosquitto passwords
   ansible.builtin.set_fact:
-    smart_home_mosquitto_password: "{{ smart_home_env.content | b64decode | dotenv_value('MOSQUITTO_PASSWD') }}"
+    smart_home_mosquitto_passwords: >-
+      {{ smart_home_mosquitto_passwords | default({})
+         | combine({item.name: smart_home_env.content | b64decode | dotenv_value(item.env)}) }}
+  loop: "{{ smart_home_mosquitto_users }}"
+  loop_control:
+    label: "{{ item.name }}"
   no_log: true
 
-- name: Ensure the Mosquitto password is set
+# Names the keys, never the values. A missing key means infrastructure's bootstrap hasn't rendered it yet.
+- name: Ensure the Mosquitto passwords are set
+  vars:
+    smart_home_mosquitto_missing: >-
+      {{ smart_home_mosquitto_passwords | dict2items | rejectattr('value') | map(attribute='key') | list }}
   ansible.builtin.assert:
-    that: smart_home_mosquitto_password | length > 0
-    fail_msg: "MOSQUITTO_PASSWD is missing in {{ smart_home_env_file }}."
+    that: smart_home_mosquitto_missing | length == 0
+    fail_msg: >-
+      {{ smart_home_mosquitto_users | selectattr('name', 'in', smart_home_mosquitto_missing)
+         | map(attribute='env') | join(', ') }} missing in {{ smart_home_env_file }}. Run infrastructure's
+      bootstrap.yaml on {{ inventory_hostname }} first.
     quiet: true
 
 - name: Ensure config directories exist
@@ -86,10 +98,12 @@
   failed_when: false
 
 # mosquitto_passwd filter (filter_plugins/): keeps the entry while it matches, so only a changed password rewrites it.
-- name: Ensure the Mosquitto password file matches the password
+- name: Ensure the Mosquitto password file matches the passwords
   ansible.builtin.copy:
     content: |
-      {{ smart_home_mosquitto_password | mosquitto_passwd(smart_home_mosquitto_user, smart_home_passwd_content) }}
+      {% for user in smart_home_mosquitto_users %}
+      {{ smart_home_mosquitto_passwords[user.name] | mosquitto_passwd(user.name, smart_home_passwd_content) }}
+      {% endfor %}
     dest: "{{ smart_home_dir }}/mosquitto/passwd"
     owner: "{{ smart_home_mosquitto_uid }}"
     group: "{{ smart_home_mosquitto_uid }}"
