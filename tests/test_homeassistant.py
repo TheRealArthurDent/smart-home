@@ -61,6 +61,7 @@ def test_ui_state_lives_in_a_volume_and_the_repo_config_is_read_only():
         "homeassistant-config:/config",
         "./homeassistant/configuration.yaml:/config/configuration.yaml:ro",
         "./homeassistant/packages:/config/packages:ro",
+        "./homeassistant/dashboards:/config/dashboards:ro",
     ]
     assert "homeassistant-config" in compose()["volumes"]
 
@@ -376,3 +377,18 @@ def test_ci_checks_the_configuration_with_the_sandbox_files():
     script = "\n".join(step.get("run", "") for step in workflow["jobs"]["config"]["steps"])
     for file in SANDBOX.values():
         assert file in script
+
+
+def test_the_presence_dashboard_comes_from_the_repo():
+    """A YAML dashboard, read-only like the packages. It lists people and their trackers from the states, so no names
+    or device ids end up in this repo."""
+    dashboard = configuration()["lovelace"]["dashboards"]["dashboard-presence"]
+    assert dashboard["mode"] == "yaml"
+    assert dashboard["filename"] == "dashboards/presence.yaml"
+    text = (CONFIG_DIR / "dashboards" / "presence.yaml").read_text()
+    views = yaml.safe_load(text)["views"]
+    assert views
+    assert "binary_sensor.jemand_zuhause" in text and "zone.home" in text
+    assert "states.person" in text and "states.device_tracker" in text
+    assert "device_tracker." not in text.replace("states.device_tracker", "")
+    assert "person." not in text.replace("states.person", "")

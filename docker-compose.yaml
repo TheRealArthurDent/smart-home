@@ -51,6 +51,7 @@ services:
       - homeassistant-config:/config
       - ./homeassistant/configuration.yaml:/config/configuration.yaml:ro
       - ./homeassistant/packages:/config/packages:ro
+      - ./homeassistant/dashboards:/config/dashboards:ro
     environment:
       - TZ=Europe/Berlin
     # SONOS_ADVERTISE_ADDR, the host's address; written by the smart_home role
