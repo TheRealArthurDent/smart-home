@@ -4,7 +4,8 @@
 #
 # Each twin has the entity id of the real device and keeps its state in a helper (virtual_<object id>), so an
 # automation switching it changes a state that can be read back, and that survives a restart. Sensors are switched
-# by hand through their helper. Buttons have no state: the script virtual_button_press fires their deconz_event.
+# by hand through their helper, a shutter through its position helper, a plug's plugging in through its
+# plugged_in helper. Buttons have no state: the script virtual_button_press fires their deconz_event.
 # tests/test_homeassistant.py fails when a package uses a device without a twin here.
 
 input_boolean:
@@ -20,6 +21,11 @@ input_boolean:
     name: Storeroom light (virtual)
   virtual_buro_on_off_homeoffice:
     name: Home office (virtual)
+  virtual_bad_on_off_schuhheizung:
+    name: Shoe heating (virtual)
+  virtual_bad_on_off_schuhheizung_plugged_in:
+    name: Shoe heating plugged in (virtual)
+    icon: mdi:power-plug
   virtual_abstellkammer_bewegung_abstellkammer:
     name: Storeroom motion (virtual)
     icon: mdi:gesture-tap
@@ -28,6 +34,13 @@ input_boolean:
     icon: mdi:gesture-tap
 
 input_number:
+  virtual_schlafzimmer_shutter_bedroom_position:
+    name: Shutter bedroom position (virtual)
+    min: 0
+    max: 100
+    step: 1
+    mode: slider
+    unit_of_measurement: "%"
   virtual_wohnzimmer_dekolights_brightness:
     name: Decoration lights brightness (virtual)
     min: 1
@@ -168,6 +181,45 @@ template:
           - action: input_boolean.turn_off
             target:
               entity_id: input_boolean.virtual_buro_on_off_homeoffice
+      - name: Shoe heating
+        unique_id: virtual_bad_on_off_schuhheizung
+        default_entity_id: switch.bad_on_off_schuhheizung
+        # Unavailable while unplugged, like the real plug
+        availability: "{{ is_state('input_boolean.virtual_bad_on_off_schuhheizung_plugged_in', 'on') }}"
+        state: "{{ is_state('input_boolean.virtual_bad_on_off_schuhheizung', 'on') }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_bad_on_off_schuhheizung
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.virtual_bad_on_off_schuhheizung
+  - cover:
+      - name: Shutter bedroom
+        unique_id: virtual_schlafzimmer_shutter_bedroom
+        default_entity_id: cover.schlafzimmer_shutter_bedroom
+        device_class: shutter
+        # Moves at once; 100 is open, as with the Shellies
+        position: "{{ states('input_number.virtual_schlafzimmer_shutter_bedroom_position') | int(0) }}"
+        open_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_schlafzimmer_shutter_bedroom_position
+            data:
+              value: 100
+        close_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_schlafzimmer_shutter_bedroom_position
+            data:
+              value: 0
+        set_cover_position:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_schlafzimmer_shutter_bedroom_position
+            data:
+              value: "{{ position }}"
   - binary_sensor:
       - name: Storeroom motion
         unique_id: virtual_abstellkammer_bewegung_abstellkammer

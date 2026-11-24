@@ -1,0 +1,176 @@
+# Wake-up, replacing Node-RED's "Get up, stand up!" (#2).
+# 30 minutes before the alarm time the wake-up light dims up in 30 minutes, holds until sunrise (at least 30
+# minutes), then goes off and the bedroom shutter opens in two steps. Workdays take the workday alarm; weekends and
+# holidays the weekend alarm. Holidays come from the Workday integration, set up in the UI (Germany, Bavaria, with
+# the Catholic holidays). timer.aufwachlicht (helpers.yaml) runs while the light is on.
+
+timer:
+  wecken_rollladen:
+    name: Wake-up, bedroom shutter half open
+    restore: true
+
+automation:
+  - id: wecken_start
+    alias: Wake-up starts 30 minutes before the alarm
+    mode: single
+    triggers:
+      - trigger: time
+        at:
+          entity_id: input_datetime.weckzeit_werktag
+          offset: "-00:30:00"
+        id: werktag
+      - trigger: time
+        at:
+          entity_id: input_datetime.weckzeit_wochenende
+          offset: "-00:30:00"
+        id: wochenende
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ is_state('input_boolean.wecker_' ~ trigger.id, 'on')
+             and (trigger.id == 'werktag') == is_state('binary_sensor.workday_sensor', 'on') }}
+    actions:
+      - if:
+          - condition: state
+            entity_id: input_boolean.wecken_aussetzen
+            state: "on"
+        then:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.wecken_aussetzen
+          # Keep the bedroom dark: no automatic shutter moves until they are allowed again
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.rollladen_schlafzimmer_sperre
+          - stop: Wake-up skipped once
+      # Opened already, or nobody to wake up
+      - condition: numeric_state
+        entity_id: cover.schlafzimmer_shutter_bedroom
+        attribute: current_position
+        below: 50
+      - condition: state
+        entity_id: binary_sensor.jemand_zuhause
+        state: "on"
+      - variables:
+          # Until sunrise less the dimming, at least 30 minutes; once the sun is up, next_rising is tomorrow's
+          hold_minutes: >-
+            {% set rising = state_attr('sun.sun', 'next_rising') | as_datetime(none) %}
+            {% set to_sunrise = ((rising - now()).total_seconds() // 60) | int if rising is not none else 0 %}
+            {{ [30, (to_sunrise - 30) if to_sunrise < 720 else 0] | max }}
+      - action: light.turn_on
+        target:
+          entity_id: light.schlafzimmer_aufwachlicht
+        data:
+          brightness: 1
+      - delay:
+          seconds: 2
+      - action: light.turn_on
+        target:
+          entity_id: light.schlafzimmer_aufwachlicht
+        data:
+          brightness: 255
+          transition: 1800
+      - action: timer.start
+        target:
+          entity_id: timer.aufwachlicht
+        data:
+          duration: "{{ (30 + hold_minutes | int) * 60 }}"
+
+  - id: wecken_ende
+    alias: Wake-up ends and opens the bedroom shutter
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.aufwachlicht
+    actions:
+      - action: light.turn_off
+        target:
+          entity_id: light.schlafzimmer_aufwachlicht
+      - condition: state
+        entity_id: input_boolean.rollladen_schlafzimmer_sperre
+        state: "off"
+      - condition: numeric_state
+        entity_id: cover.schlafzimmer_shutter_bedroom
+        attribute: current_position
+        below: 50
+      # Half open, even if the shutter was moved by hand
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.schlafzimmer_shutter_bedroom
+        data:
+          position: 40
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_schlafzimmer_soll
+        data:
+          value: 40
+      - action: timer.start
+        target:
+          entity_id: timer.wecken_rollladen
+        data:
+          duration: "01:00:00"
+
+  - id: wecken_rollladen_auf
+    alias: Wake-up opens the bedroom shutter fully an hour later
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.wecken_rollladen
+    conditions:
+      - condition: state
+        entity_id: input_boolean.rollladen_schlafzimmer_sperre
+        state: "off"
+      # Unless it was moved by hand meanwhile
+      - condition: template
+        value_template: >-
+          {{ (state_attr('cover.schlafzimmer_shutter_bedroom', 'current_position') | int(-100)
+              - states('input_number.rollladen_schlafzimmer_soll') | int(0)) | abs <= 2 }}
+    actions:
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.schlafzimmer_shutter_bedroom
+        data:
+          position: 100
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rollladen_schlafzimmer_soll
+        data:
+          value: 100
+
+  - id: wecken_abbrechen
+    alias: Day switch stops the wake-up
+    description: The "day" button of the day/night switches ends a running wake-up; the shutter stays as it is.
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "18:7a:3e:ff:fe:f1:68:1f"
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "dc:8e:95:ff:fe:2e:1d:3b"
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.event.data.event == 1002 }}"
+    actions:
+      - action: timer.cancel
+        target:
+          entity_id: timer.aufwachlicht
+
+  - id: wecken_abgebrochen
+    alias: Stopped wake-up switches the light off
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: timer.cancelled
+        event_data:
+          entity_id: timer.aufwachlicht
+    actions:
+      - action: light.turn_off
+        target:
+          entity_id: light.schlafzimmer_aufwachlicht

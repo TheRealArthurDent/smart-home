@@ -1,0 +1,108 @@
+# Shoe heating, replacing Node-RED's "Shoe ventilation" (#2).
+# Plugging the plug in heats for the shoe heating duration, but not into night rest: if the time left until then
+# is at least 20 minutes, it heats until night rest and the rest the next day from the weekend alarm time;
+# otherwise all of it the next day. The timer and the rest survive restarts.
+
+input_number:
+  schuhheizung_rest:
+    name: Shoe heating left for the next day
+    min: 0
+    max: 1440
+    step: 1
+    mode: box
+    unit_of_measurement: min
+    icon: mdi:shoe-formal
+
+timer:
+  schuhheizung:
+    name: Shoe heating
+    restore: true
+
+automation:
+  - id: schuhheizung_start
+    alias: Shoe heating starts when plugged in
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: switch.bad_on_off_schuhheizung
+        from: unavailable
+    actions:
+      - variables:
+          now_s: "{{ now().hour * 3600 + now().minute * 60 + now().second }}"
+          duration_s: "{{ (states('input_number.dauer_schuhheizung') | float(0) * 3600) | int }}"
+          night_s: >-
+            {% set t = (states('input_datetime.nachtruhe') ~ ':0:0').split(':') %}
+            {{ t[0] | int(0) * 3600 + t[1] | int(0) * 60 }}
+          # Seconds to heat now and the next day
+          plan: >-
+            {%- if now_s + duration_s <= night_s -%}
+              {{ {'now': duration_s, 'later': 0} }}
+            {%- elif now_s > night_s or night_s - now_s <= 1200 -%}
+              {{ {'now': 0, 'later': duration_s} }}
+            {%- else -%}
+              {{ {'now': night_s - now_s, 'later': duration_s - (night_s - now_s)} }}
+            {%- endif -%}
+      - if:
+          - condition: template
+            value_template: "{{ plan.now > 0 }}"
+        then:
+          - action: switch.turn_on
+            target:
+              entity_id: switch.bad_on_off_schuhheizung
+          - action: timer.start
+            target:
+              entity_id: timer.schuhheizung
+            data:
+              duration: "{{ plan.now }}"
+        else:
+          - action: timer.cancel
+            target:
+              entity_id: timer.schuhheizung
+          - action: switch.turn_off
+            target:
+              entity_id: switch.bad_on_off_schuhheizung
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.schuhheizung_rest
+        data:
+          value: "{{ (plan.later / 60) | round(0, 'ceil') | int }}"
+
+  - id: schuhheizung_naechster_tag
+    alias: Shoe heating finishes the next day
+    mode: single
+    triggers:
+      - trigger: time
+        at: input_datetime.weckzeit_wochenende
+    conditions:
+      - condition: numeric_state
+        entity_id: input_number.schuhheizung_rest
+        above: 0
+    actions:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.bad_on_off_schuhheizung
+      - action: timer.start
+        target:
+          entity_id: timer.schuhheizung
+        data:
+          duration: "{{ states('input_number.schuhheizung_rest') | int(0) * 60 }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.schuhheizung_rest
+        data:
+          value: 0
+
+  - id: schuhheizung_aus
+    alias: Shoe heating stops
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.schuhheizung
+    actions:
+      # Also when it was unplugged meanwhile
+      - action: switch.turn_off
+        target:
+          entity_id: switch.bad_on_off_schuhheizung
+        continue_on_error: true
