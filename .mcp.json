@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "ha-testbench": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["ha-mcp==9.2.0"],
+      "env": {
+        "HOMEASSISTANT_URL": "${HA_TESTBENCH_URL}",
+        "HOMEASSISTANT_TOKEN": "${HA_TESTBENCH_TOKEN}",
+        "SSL_CERT_FILE": "${HA_CA_FILE}"
+      }
+    },
+    "ha-raspi": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["ha-mcp==9.2.0"],
+      "env": {
+        "HOMEASSISTANT_URL": "${HA_RASPI_URL}",
+        "HOMEASSISTANT_TOKEN": "${HA_RASPI_TOKEN}",
+        "SSL_CERT_FILE": "${HA_CA_FILE}"
+      }
+    }
+  }
+}
