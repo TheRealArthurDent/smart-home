@@ -15,6 +15,22 @@ homeassistant:
   # One file per topic (presence, shutters, ...), each with its automations, scripts and helpers
   packages: !include_dir_named packages
 
+# Dashboards written in the repo, read-only like the packages; dashboards made in the UI live in the volume as usual
+lovelace:
+  dashboards:
+    dashboard-presence:
+      mode: yaml
+      filename: dashboards/presence.yaml
+      title: Presence
+      icon: mdi:home-account
+      show_in_sidebar: true
+
+# Sandbox for prototypes made in the UI or through the MCP server, kept in the volume, not in the repo. What works
+# moves into a package; then its prototype is deleted. The smart_home role creates the files empty.
+automation sandbox: !include automations.yaml
+script sandbox: !include scripts.yaml
+scene sandbox: !include scenes.yaml
+
 # No http: here. Home Assistant keeps it in .storage/http and imports YAML only once, as a trial an admin must
 # confirm in the UI. The smart_home role seeds that store with the reverse proxy settings instead
 # (smart_home_homeassistant_http_store).

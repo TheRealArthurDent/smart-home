@@ -61,6 +61,8 @@ def test_ui_state_lives_in_a_volume_and_the_repo_config_is_read_only():
         "homeassistant-config:/config",
         "./homeassistant/configuration.yaml:/config/configuration.yaml:ro",
         "./homeassistant/packages:/config/packages:ro",
+        "./homeassistant/dashboards:/config/dashboards:ro",
+        "./homeassistant-virtual:/config/virtual:ro",
     ]
     assert "homeassistant-config" in compose()["volumes"]
 
@@ -260,3 +262,241 @@ def test_evening_ends_at_midnight():
     end = automation("presence", "abend_endet")
     assert end["triggers"] == [{"trigger": "time", "at": "00:00:00"}]
     assert end["actions"] == [{"action": "input_boolean.turn_off", "target": {"entity_id": "input_boolean.abend"}}]
+
+
+DECO_LIGHTS = ["light.wohnzimmer_dekolights", "light.wohnzimmer_weihnachtssterne"]
+
+
+def targets(actions):
+    """Every entity the actions (and their choose/if branches) act on."""
+    found = []
+    for action in actions:
+        entity = action.get("target", {}).get("entity_id")
+        found += entity if isinstance(entity, list) else [entity] if entity else []
+        for option in action.get("choose", []):
+            found += targets(option["sequence"])
+        found += targets(action.get("default", [])) + targets(action.get("then", [])) + targets(action.get("else", []))
+    return found
+
+
+def test_deco_lights_follow_evening_and_presence():
+    on = automation("lights", "deko_an")
+    assert {(t["entity_id"], t["to"]) for t in on["triggers"]} == {
+        ("input_boolean.abend", "on"), ("binary_sensor.jemand_zuhause", "on")}
+    assert {(c["entity_id"], c["state"]) for c in on["conditions"]} == {
+        ("input_boolean.abend", "on"), ("binary_sensor.jemand_zuhause", "on")}
+    assert targets(on["actions"]) == DECO_LIGHTS
+    off = automation("lights", "deko_aus")
+    assert {(t["entity_id"], t["to"]) for t in off["triggers"]} == {
+        ("input_boolean.abend", "off"), ("binary_sensor.jemand_zuhause", "off")}
+    assert targets(off["actions"]) == DECO_LIGHTS
+
+
+def test_buttons_are_matched_by_the_ieee_address_home_assistant_sends():
+    """Home Assistant's deCONZ integration puts the device's IEEE address into deconz_event's unique_id, without the
+    endpoint and cluster suffix (-01-1000) of the deCONZ REST uniqueid that the Node-RED flows matched."""
+    expected = {
+        "deko_taster": ("5c:c7:c1:ff:fe:83:4b:a0", DECO_LIGHTS),
+        "deko_schalter": ("84:ba:20:ff:fe:d4:12:52", DECO_LIGHTS),
+        "homeoffice_schalter": ("94:34:69:ff:fe:3d:c9:a6", ["switch.buro_on_off_homeoffice"]),
+        "eckschreibtisch_schalter": ("dc:8e:95:ff:fe:2e:1d:3b", ["light.buro_eckschreibtisch"]),
+    }
+    for automation_id, (unique_id, entities) in expected.items():
+        button = automation("lights", automation_id)
+        assert button["triggers"] == [
+            {"trigger": "event", "event_type": "deconz_event", "event_data": {"unique_id": unique_id}}], automation_id
+        assert sorted(set(targets(button["actions"]))) == sorted(entities), automation_id
+
+
+def test_every_deconz_trigger_uses_a_bare_ieee_address():
+    """A suffixed unique_id never matches; the trigger would stay silent without any error."""
+    ieee = re.compile(r"([0-9a-f]{2}:){7}[0-9a-f]{2}")
+    for file in (CONFIG_DIR / "packages").glob("*.yaml"):
+        config = yaml.load(file.read_text(), Loader=HomeAssistantLoader)
+        for item in (config or {}).get("automation", []) if isinstance(config, dict) else []:
+            for trigger in item.get("triggers", []):
+                if trigger.get("event_type") == "deconz_event":
+                    assert ieee.fullmatch(trigger["event_data"]["unique_id"]), item["id"]
+    example = virtual_devices()["script"]["virtual_button_press"]["fields"]["unique_id"]["example"]
+    assert ieee.fullmatch(example)
+
+
+def test_storeroom_light_follows_the_motion_sensor_with_30_seconds_delay():
+    storeroom = automation("lights", "abstellkammer_licht")
+    triggers = {t["id"]: t for t in storeroom["triggers"]}
+    assert triggers["motion"]["to"] == "on"
+    assert triggers["still"]["to"] == "off"
+    assert triggers["still"]["for"] == {"seconds": 30}
+    # Node-RED also checked hourly, in case an event got lost
+    assert triggers["hourly"]["trigger"] == "time_pattern"
+    assert set(targets(storeroom["actions"])) == {"switch.abstellkammer_light_storeroom_output_0"}
+
+
+def test_bedroom_wall_switch_switches_the_wake_up_light_and_stops_its_dimming():
+    bedroom = automation("lights", "schlafzimmer_wandschalter")
+    assert bedroom["triggers"][0]["entity_id"] == "binary_sensor.schlafzimmer_light_bedroom_eingang_0"
+    assert set(targets(bedroom["actions"])) == {"light.schlafzimmer_aufwachlicht", "timer.aufwachlicht"}
+
+
+def test_christmas_stars_in_winter():
+    """December and January mornings 7 to 9; November to January from 15:00 while someone is home."""
+    morning = automation("lights", "weihnachtssterne_morgens")
+    assert sorted(t["at"] for t in morning["triggers"]) == ["07:00:00", "09:00:00"]
+    assert "(12, 1)" in str(morning["conditions"])
+    afternoon = automation("lights", "weihnachtssterne_nachmittags")
+    assert afternoon["triggers"] == [{"trigger": "time", "at": "15:00:00"}]
+    assert "(11, 12, 1)" in str(afternoon["conditions"])
+    assert "binary_sensor.jemand_zuhause" in str(afternoon["conditions"])
+    assert targets(morning["actions"]) == targets(afternoon["actions"]) == ["light.wohnzimmer_weihnachtssterne"]
+
+
+def test_ci_checks_the_configuration_with_the_release_the_stack_runs():
+    """check_config of the pinned image catches invalid YAML before it reaches main; the image is read from the
+    compose file, so Renovate bumps one place. check_config exits 0 even on errors, so the job reads its output."""
+    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text())
+    job = workflow["jobs"]["config"]
+    assert job["name"] == "Home Assistant config"
+    script = "\n".join(step.get("run", "") for step in job["steps"])
+    assert ".services.homeassistant.image" in script
+    assert "homeassistant/home-assistant:" not in script
+    assert "check_config" in script
+    assert "Invalid config" in script
+
+
+SANDBOX = {"automation sandbox": "automations.yaml", "script sandbox": "scripts.yaml", "scene sandbox": "scenes.yaml"}
+
+
+def test_prototypes_made_in_the_ui_land_in_a_sandbox_in_the_volume():
+    """The UI editors and the MCP server save to automations.yaml, scripts.yaml and scenes.yaml. They live in the
+    volume, not in the repo: what works moves into a package, then the file is emptied again."""
+    config = configuration()
+    for key, file in SANDBOX.items():
+        assert config[key] == ("!include", file)
+
+
+def test_the_role_creates_empty_sandbox_files_without_touching_existing_ones():
+    """An !include of a missing file breaks the whole configuration, so the files must exist before the first
+    start; force: false keeps what is in them."""
+    assert role_defaults()["smart_home_homeassistant_sandbox_files"] == {
+        "automations.yaml": "[]", "scripts.yaml": "{}", "scenes.yaml": "[]"}
+    names = [task.get("name") for task in role_tasks()]
+    task = next(task for task in role_tasks() if task.get("name") == "Ensure Home Assistant has its sandbox files")
+    assert task["ansible.builtin.copy"]["force"] is False
+    assert task["loop"] == "{{ smart_home_homeassistant_sandbox_files | dict2items }}"
+    assert names.index("Restore the volumes on a fresh host") < names.index(task["name"]) < names.index(
+        "Start containers")
+
+
+def test_ci_checks_the_configuration_with_the_sandbox_files():
+    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text())
+    script = "\n".join(step.get("run", "") for step in workflow["jobs"]["config"]["steps"])
+    for file in SANDBOX.values():
+        assert file in script
+
+
+def test_the_presence_dashboard_comes_from_the_repo():
+    """A YAML dashboard, read-only like the packages. It lists people and their trackers from the states, so no names
+    or device ids end up in this repo."""
+    dashboard = configuration()["lovelace"]["dashboards"]["dashboard-presence"]
+    assert dashboard["mode"] == "yaml"
+    assert dashboard["filename"] == "dashboards/presence.yaml"
+    text = (CONFIG_DIR / "dashboards" / "presence.yaml").read_text()
+    views = yaml.safe_load(text)["views"]
+    assert views
+    assert "binary_sensor.jemand_zuhause" in text and "zone.home" in text
+    assert "states.person" in text and "states.device_tracker" in text
+    assert "device_tracker." not in text.replace("states.device_tracker", "")
+    assert "person." not in text.replace("states.person", "")
+
+
+VIRTUAL_DIR = ROOT / "homeassistant-virtual"
+# Domains of physical devices; testbench has neither the Zigbee stick nor the Shellies of raspi
+DEVICE_DOMAINS = ("light", "switch", "binary_sensor", "sensor", "cover")
+# Actions, not devices; a templated one (light.turn_{{ ... }}) ends in "_"
+ACTIONS = {"turn_on", "turn_off", "toggle", "open_cover", "close_cover", "stop_cover", "set_cover_position"}
+
+
+def virtual_devices():
+    return yaml.safe_load((VIRTUAL_DIR / "devices.yaml").read_text())
+
+
+def template_entities(config):
+    """(domain, entity) of every template entity of a package."""
+    return [(domain, entity) for block in config.get("template", []) for domain, entities in block.items()
+            if domain in DEVICE_DOMAINS for entity in entities]
+
+
+def test_every_device_the_packages_use_has_a_virtual_twin_on_testbench():
+    """Automations run on testbench against virtual devices with the entity ids of raspi. A new device in a package
+    fails here until it has its twin."""
+    pattern = re.compile(rf"\b(?:{'|'.join(DEVICE_DOMAINS)})\.[a-z0-9_]+")
+    used, own = set(), set()
+    for file in (CONFIG_DIR / "packages").glob("*.yaml"):
+        used |= {e for e in pattern.findall(file.read_text()) if e.split(".")[1] not in ACTIONS and not e.endswith("_")}
+        config = yaml.load(file.read_text(), Loader=HomeAssistantLoader)
+        if isinstance(config, dict):
+            own |= {entity.get("default_entity_id") for _, entity in template_entities(config)}
+    twins = {entity["default_entity_id"] for _, entity in template_entities(virtual_devices())}
+    assert used - own, "the packages use no devices?"
+    assert sorted(used - own - twins) == []
+    assert all(twin.split(".")[0] == domain for domain, entity in template_entities(virtual_devices())
+               for twin in [entity["default_entity_id"]])
+
+
+def test_virtual_devices_keep_their_state_in_helpers():
+    """Switching a twin changes a helper, so its state can be read back and survives a restart (no initial:)."""
+    config = virtual_devices()
+    booleans = config["input_boolean"]
+    for domain, entity in template_entities(config):
+        helper = f"virtual_{entity['default_entity_id'].split('.')[1]}"
+        assert helper in booleans, entity["default_entity_id"]
+        assert f"input_boolean.{helper}" in entity["state"]
+        assert entity["unique_id"] == helper
+        if domain in ("light", "switch"):
+            assert f"input_boolean.{helper}" in str(entity["turn_on"]) and "turn_on" in str(entity["turn_on"])
+            assert f"input_boolean.{helper}" in str(entity["turn_off"]) and "turn_off" in str(entity["turn_off"])
+        if domain == "light":
+            assert f"input_number.{helper}_brightness" in entity["level"]
+            assert f"input_number.{helper}_brightness" in str(entity["set_level"])
+    for helpers in (config["input_boolean"], config["input_number"]):
+        assert all("initial" not in helper for helper in helpers.values())
+
+
+def test_virtual_buttons_fire_the_event_of_a_deconz_button():
+    """Buttons have no state; the script fires the deconz_event the automations match by unique_id."""
+    script = virtual_devices()["script"]["virtual_button_press"]
+    assert set(script["fields"]) == {"unique_id", "event"}
+    assert script["sequence"][0]["event"] == "deconz_event"
+    assert set(script["sequence"][0]["event_data"]) == {"unique_id", "event"}
+
+
+def test_virtual_devices_load_only_where_the_role_puts_them():
+    """The package includes a directory the role fills on testbench only and keeps empty everywhere else."""
+    assert package("virtual_devices") == ("!include_dir_merge_named", "../virtual")
+    assert "./homeassistant-virtual:/config/virtual:ro" in homeassistant()["volumes"]
+    assert role_defaults()["smart_home_homeassistant_virtual_devices"] is False
+    hosts = yaml.safe_load((ROOT / "ansible" / "inventory" / "hosts.yaml").read_text())["all"]["hosts"]
+    assert hosts["testbench"]["smart_home_homeassistant_virtual_devices"] is True
+    assert "smart_home_homeassistant_virtual_devices" not in hosts["raspi"]
+    names = [task.get("name") for task in role_tasks()]
+    for name in ("Ensure the directory of the virtual devices exists", "Ensure the virtual devices are present",
+                 "Ensure no other virtual devices are present"):
+        assert name in names
+    copy = next(task for task in role_tasks() if task.get("name") == "Ensure the virtual devices are present")
+    assert copy["when"] == "smart_home_homeassistant_virtual_devices | bool"
+
+
+def test_ci_checks_the_configuration_with_and_without_the_virtual_devices():
+    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text())
+    script = "\n".join(step.get("run", "") for step in workflow["jobs"]["config"]["steps"])
+    assert "homeassistant-virtual/." in script
+    assert script.count("check_config") == 1 and "for virtual in" in script
+
+
+def test_ci_fails_when_the_check_itself_fails():
+    """The default shell has no pipefail, so a failing docker run (e.g. the image can't be pulled) piped into tee
+    would leave an empty log and a green job. shell: bash runs with -eo pipefail."""
+    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text())
+    for step in workflow["jobs"]["config"]["steps"]:
+        if "run" in step:
+            assert step.get("shell") == "bash", step["name"]

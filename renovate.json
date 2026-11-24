@@ -3,6 +3,19 @@
   "extends": [
     "github>TheRealArthurDent/renovate:homelab"
   ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Home Assistant's MCP server for Claude Code: the image .mcp.json starts with docker run.",
+      "managerFilePatterns": [
+        "/^\\.mcp\\.json$/"
+      ],
+      "matchStrings": [
+        "\"(?<depName>ghcr\\.io/homeassistant-ai/ha-mcp):(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
   "packageRules": [
     {
       "description": "Pin deconz stable versions.",

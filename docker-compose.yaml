@@ -51,6 +51,9 @@ services:
       - homeassistant-config:/config
       - ./homeassistant/configuration.yaml:/config/configuration.yaml:ro
       - ./homeassistant/packages:/config/packages:ro
+      - ./homeassistant/dashboards:/config/dashboards:ro
+      # Virtual twins of the devices on testbench, empty elsewhere (smart_home_homeassistant_virtual_devices)
+      - ./homeassistant-virtual:/config/virtual:ro
     environment:
       - TZ=Europe/Berlin
     # SONOS_ADVERTISE_ADDR, the host's address; written by the smart_home role

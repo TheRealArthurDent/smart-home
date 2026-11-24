@@ -15,3 +15,5 @@ all:
       ansible_become: true
       # No ConBee stick attached (/dev/ttyACM0), deCONZ wouldn't start
       smart_home_disabled_services: [deconz]
+      # Without Zigbee and Shellies, Home Assistant's automations run against virtual twins of raspi's devices
+      smart_home_homeassistant_virtual_devices: true

@@ -1,0 +1,68 @@
+{
+  "mcpServers": {
+    "ha-testbench": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--pull=missing",
+        "--name",
+        "ha-mcp-testbench",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges:true",
+        "--tmpfs",
+        "/tmp",
+        "-e",
+        "HOMEASSISTANT_URL",
+        "-e",
+        "HOMEASSISTANT_TOKEN",
+        "-e",
+        "SSL_CERT_FILE=/etc/ha-mcp/root-ca.pem",
+        "-v",
+        "${HA_CA_FILE}:/etc/ha-mcp/root-ca.pem:ro",
+        "-v",
+        "ha-mcp-testbench:/home/mcpuser/.ha-mcp",
+        "ghcr.io/homeassistant-ai/ha-mcp:9.2.0"
+      ],
+      "env": {
+        "HOMEASSISTANT_URL": "${HA_TESTBENCH_URL}",
+        "HOMEASSISTANT_TOKEN": "${HA_TESTBENCH_TOKEN}"
+      }
+    },
+    "ha-raspi": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--pull=missing",
+        "--name",
+        "ha-mcp-raspi",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges:true",
+        "--tmpfs",
+        "/tmp",
+        "-e",
+        "HOMEASSISTANT_URL",
+        "-e",
+        "HOMEASSISTANT_TOKEN",
+        "-e",
+        "SSL_CERT_FILE=/etc/ha-mcp/root-ca.pem",
+        "-v",
+        "${HA_CA_FILE}:/etc/ha-mcp/root-ca.pem:ro",
+        "-v",
+        "ha-mcp-raspi:/home/mcpuser/.ha-mcp",
+        "ghcr.io/homeassistant-ai/ha-mcp:9.2.0"
+      ],
+      "env": {
+        "HOMEASSISTANT_URL": "${HA_RASPI_URL}",
+        "HOMEASSISTANT_TOKEN": "${HA_RASPI_TOKEN}"
+      }
+    }
+  }
+}

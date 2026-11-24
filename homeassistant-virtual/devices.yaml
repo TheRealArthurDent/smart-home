@@ -1,0 +1,209 @@
+# Virtual twins of the devices the packages use, for testbench only: it has neither the Zigbee stick nor the Shellies
+# of raspi (#2). The smart_home role copies this directory to hosts with smart_home_homeassistant_virtual_devices
+# and keeps it empty everywhere else; packages/virtual_devices.yaml includes it.
+#
+# Each twin has the entity id of the real device and keeps its state in a helper (virtual_<object id>), so an
+# automation switching it changes a state that can be read back, and that survives a restart. Sensors are switched
+# by hand through their helper. Buttons have no state: the script virtual_button_press fires their deconz_event.
+# tests/test_homeassistant.py fails when a package uses a device without a twin here.
+
+input_boolean:
+  virtual_wohnzimmer_dekolights:
+    name: Decoration lights (virtual)
+  virtual_wohnzimmer_weihnachtssterne:
+    name: Christmas stars (virtual)
+  virtual_schlafzimmer_aufwachlicht:
+    name: Wake-up light (virtual)
+  virtual_buro_eckschreibtisch:
+    name: Corner desk light (virtual)
+  virtual_abstellkammer_light_storeroom_output_0:
+    name: Storeroom light (virtual)
+  virtual_buro_on_off_homeoffice:
+    name: Home office (virtual)
+  virtual_abstellkammer_bewegung_abstellkammer:
+    name: Storeroom motion (virtual)
+    icon: mdi:gesture-tap
+  virtual_schlafzimmer_light_bedroom_eingang_0:
+    name: Bedroom wall switch (virtual)
+    icon: mdi:gesture-tap
+
+input_number:
+  virtual_wohnzimmer_dekolights_brightness:
+    name: Decoration lights brightness (virtual)
+    min: 1
+    max: 255
+    step: 1
+    mode: box
+  virtual_wohnzimmer_weihnachtssterne_brightness:
+    name: Christmas stars brightness (virtual)
+    min: 1
+    max: 255
+    step: 1
+    mode: box
+  virtual_schlafzimmer_aufwachlicht_brightness:
+    name: Wake-up light brightness (virtual)
+    min: 1
+    max: 255
+    step: 1
+    mode: box
+  virtual_buro_eckschreibtisch_brightness:
+    name: Corner desk light brightness (virtual)
+    min: 1
+    max: 255
+    step: 1
+    mode: box
+
+template:
+  - light:
+      - name: Decoration lights
+        unique_id: virtual_wohnzimmer_dekolights
+        default_entity_id: light.wohnzimmer_dekolights
+        state: "{{ is_state('input_boolean.virtual_wohnzimmer_dekolights', 'on') }}"
+        level: "{{ states('input_number.virtual_wohnzimmer_dekolights_brightness') | int(255) }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_dekolights
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_dekolights
+        set_level:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_wohnzimmer_dekolights_brightness
+            data:
+              value: "{{ [brightness | int(255), 1] | max }}"
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_dekolights
+      - name: Christmas stars
+        unique_id: virtual_wohnzimmer_weihnachtssterne
+        default_entity_id: light.wohnzimmer_weihnachtssterne
+        state: "{{ is_state('input_boolean.virtual_wohnzimmer_weihnachtssterne', 'on') }}"
+        level: "{{ states('input_number.virtual_wohnzimmer_weihnachtssterne_brightness') | int(255) }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_weihnachtssterne
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_weihnachtssterne
+        set_level:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_wohnzimmer_weihnachtssterne_brightness
+            data:
+              value: "{{ [brightness | int(255), 1] | max }}"
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_weihnachtssterne
+      - name: Wake-up light
+        unique_id: virtual_schlafzimmer_aufwachlicht
+        default_entity_id: light.schlafzimmer_aufwachlicht
+        state: "{{ is_state('input_boolean.virtual_schlafzimmer_aufwachlicht', 'on') }}"
+        level: "{{ states('input_number.virtual_schlafzimmer_aufwachlicht_brightness') | int(255) }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_schlafzimmer_aufwachlicht
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.virtual_schlafzimmer_aufwachlicht
+        set_level:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_schlafzimmer_aufwachlicht_brightness
+            data:
+              value: "{{ [brightness | int(255), 1] | max }}"
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_schlafzimmer_aufwachlicht
+      - name: Corner desk light
+        unique_id: virtual_buro_eckschreibtisch
+        default_entity_id: light.buro_eckschreibtisch
+        state: "{{ is_state('input_boolean.virtual_buro_eckschreibtisch', 'on') }}"
+        level: "{{ states('input_number.virtual_buro_eckschreibtisch_brightness') | int(255) }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_buro_eckschreibtisch
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.virtual_buro_eckschreibtisch
+        set_level:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_buro_eckschreibtisch_brightness
+            data:
+              value: "{{ [brightness | int(255), 1] | max }}"
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_buro_eckschreibtisch
+  - switch:
+      - name: Storeroom light
+        unique_id: virtual_abstellkammer_light_storeroom_output_0
+        default_entity_id: switch.abstellkammer_light_storeroom_output_0
+        state: "{{ is_state('input_boolean.virtual_abstellkammer_light_storeroom_output_0', 'on') }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_abstellkammer_light_storeroom_output_0
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.virtual_abstellkammer_light_storeroom_output_0
+      - name: Home office
+        unique_id: virtual_buro_on_off_homeoffice
+        default_entity_id: switch.buro_on_off_homeoffice
+        state: "{{ is_state('input_boolean.virtual_buro_on_off_homeoffice', 'on') }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_buro_on_off_homeoffice
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.virtual_buro_on_off_homeoffice
+  - binary_sensor:
+      - name: Storeroom motion
+        unique_id: virtual_abstellkammer_bewegung_abstellkammer
+        default_entity_id: binary_sensor.abstellkammer_bewegung_abstellkammer
+        state: "{{ is_state('input_boolean.virtual_abstellkammer_bewegung_abstellkammer', 'on') }}"
+        device_class: motion
+      - name: Bedroom wall switch
+        unique_id: virtual_schlafzimmer_light_bedroom_eingang_0
+        default_entity_id: binary_sensor.schlafzimmer_light_bedroom_eingang_0
+        state: "{{ is_state('input_boolean.virtual_schlafzimmer_light_bedroom_eingang_0', 'on') }}"
+
+script:
+  virtual_button_press:
+    alias: Press a virtual button
+    description: Fires the deconz_event a deCONZ button sends, for the automations that match it by unique_id.
+    mode: queued
+    fields:
+      unique_id:
+        name: Button
+        description: unique_id of the button, as in the automation's trigger
+        required: true
+        example: "5c:c7:c1:ff:fe:83:4b:a0"
+        selector:
+          text:
+      event:
+        name: Event code
+        description: 1002 "on" pressed, 2002 "off" pressed; x001 held, x003 released after holding
+        required: true
+        default: 1002
+        selector:
+          number:
+            min: 1000
+            max: 9999
+            mode: box
+    sequence:
+      - event: deconz_event
+        event_data:
+          unique_id: "{{ unique_id }}"
+          event: "{{ event | int }}"

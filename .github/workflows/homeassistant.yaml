@@ -1,0 +1,59 @@
+name: Home Assistant
+
+on:
+  # Feature branches are covered by their PR, so pushes only run on main (no duplicate runs).
+  push:
+    branches:
+      - main
+  # Every PR, without a paths filter: the main ruleset requires this check, and a skipped required check
+  # would block the merge forever.
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  config:
+    name: Home Assistant config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Same image as the stack (Renovate bumps it in docker-compose.yaml), on a writable copy of the config, since
+      # check_config writes its own files. check_config exits 0 even when a package is invalid, so the output decides.
+      # Once like raspi (no virtual devices) and once like testbench (with them).
+      - name: Check the configuration with the release the stack runs
+        # -eo pipefail: a failing docker run must fail the step, not leave tee with an empty, error-free log
+        shell: bash
+        run: |
+          image=$(yq '.services.homeassistant.image' docker-compose.yaml)
+          status=0
+          for virtual in without with; do
+            echo "::group::Configuration $virtual virtual devices"
+            config=$(mktemp -d)
+            cp -r homeassistant/. "$config"
+            # The sandbox files live in the volume; the role creates them empty like this
+            echo '[]' > "$config/automations.yaml"
+            echo '{}' > "$config/scripts.yaml"
+            echo '[]' > "$config/scenes.yaml"
+            # Mounted at /config/virtual; the role fills it on testbench only
+            mkdir "$config/virtual"
+            if [ "$virtual" = with ]; then
+              cp -r homeassistant-virtual/. "$config/virtual"
+            fi
+            docker run --rm \
+              --env SONOS_ADVERTISE_ADDR=192.0.2.1 \
+              --volume "$config:/config" \
+              --entrypoint python3 \
+              "$image" -m homeassistant --script check_config --config /config 2>&1 | tee "check-config-$virtual.log"
+            echo "::endgroup::"
+            if grep -E '^ERROR|Invalid config|Failed config|failed to set ?up' "check-config-$virtual.log"; then
+              echo "::error::Home Assistant rejects the configuration $virtual virtual devices, see above"
+              status=1
+            fi
+          done
+          exit "$status"

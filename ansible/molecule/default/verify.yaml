@@ -163,6 +163,8 @@
         - setup/iobroker/obsolete.sh
         # Home Assistant would load a leftover package as if it were still in the repo
         - homeassistant/packages/obsolete.yaml
+        # Twins would shadow raspi's real devices
+        - homeassistant-virtual/devices.yaml
 
     # Grafana provisions every file it finds, so a leftover contact point keeps breaking its start.
     - name: Check files the repo dropped are removed from the host
@@ -197,6 +199,34 @@
           - store.data.use_x_forwarded_for
           - store.data.trusted_proxies == ['172.30.2.0/24']
         fail_msg: "Home Assistant's HTTP store is wrong: {{ store | to_json }}"
+
+    - name: Stat Home Assistant's sandbox files
+      ansible.builtin.stat:
+        path: "/var/lib/docker/volumes/smart-home_homeassistant-config/_data/{{ item }}"
+        get_checksum: false
+      register: ha_sandbox
+      loop: [automations.yaml, scripts.yaml, scenes.yaml]
+
+    # configuration.yaml includes them; a missing one breaks the whole configuration
+    - name: Check Home Assistant's sandbox files exist
+      ansible.builtin.assert:
+        that: item.stat.exists and item.stat.pw_name == 'root' and item.stat.mode == '0644'
+        fail_msg: "{{ item.item }} is missing or has the wrong owner or mode"
+        quiet: true
+      loop: "{{ ha_sandbox.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Stat the directory of the virtual devices
+      ansible.builtin.stat:
+        path: "{{ compose_dir }}/homeassistant-virtual"
+      register: ha_virtual_dir
+
+    # Compose mounts it on every host; a missing one would make Docker create it, owned by root, on the first up
+    - name: Check the directory of the virtual devices exists
+      ansible.builtin.assert:
+        that: ha_virtual_dir.stat.isdir and ha_virtual_dir.stat.pw_name == 'root' and ha_virtual_dir.stat.mode == '0755'
+        quiet: true
 
     - name: Read Home Assistant's host address file
       ansible.builtin.slurp:
