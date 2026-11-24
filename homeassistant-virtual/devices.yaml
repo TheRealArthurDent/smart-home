@@ -189,7 +189,7 @@ script:
         name: Button
         description: unique_id of the button, as in the automation's trigger
         required: true
-        example: "5c:c7:c1:ff:fe:83:4b:a0-01-fc80"
+        example: "5c:c7:c1:ff:fe:83:4b:a0"
         selector:
           text:
       event:

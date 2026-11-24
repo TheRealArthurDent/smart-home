@@ -1,5 +1,6 @@
 # Lights, replacing Node-RED's "Illumination" and "Direct Button actions" (#2).
-# deCONZ buttons fire deconz_event with the unique_id the Node-RED flows used. Event codes: 1002 = "on" pressed,
+# deCONZ buttons fire deconz_event with the device's IEEE address as unique_id (Node-RED's REST uniqueid had a
+# -01-1000 style suffix that Home Assistant leaves out). Event codes: 1002 = "on" pressed,
 # 2002 = "off" pressed (x001 held, x003 released after holding).
 
 automation:
@@ -51,7 +52,7 @@ automation:
       - trigger: event
         event_type: deconz_event
         event_data:
-          unique_id: "5c:c7:c1:ff:fe:83:4b:a0-01-fc80"
+          unique_id: "5c:c7:c1:ff:fe:83:4b:a0"
     conditions:
       - condition: template
         value_template: "{{ trigger.event.data.event in (1002, 2002) }}"
@@ -69,7 +70,7 @@ automation:
       - trigger: event
         event_type: deconz_event
         event_data:
-          unique_id: "84:ba:20:ff:fe:d4:12:52-01-1000"
+          unique_id: "84:ba:20:ff:fe:d4:12:52"
     conditions:
       - condition: template
         value_template: "{{ trigger.event.data.event in (1002, 2002) }}"
@@ -184,7 +185,7 @@ automation:
       - trigger: event
         event_type: deconz_event
         event_data:
-          unique_id: "94:34:69:ff:fe:3d:c9:a6-01-1000"
+          unique_id: "94:34:69:ff:fe:3d:c9:a6"
     conditions:
       - condition: template
         value_template: "{{ trigger.event.data.event in (1002, 2002) }}"
@@ -200,7 +201,7 @@ automation:
       - trigger: event
         event_type: deconz_event
         event_data:
-          unique_id: "dc:8e:95:ff:fe:2e:1d:3b-01-1000"
+          unique_id: "dc:8e:95:ff:fe:2e:1d:3b"
     conditions:
       - condition: template
         value_template: "{{ trigger.event.data.event in (1002, 2002) }}"

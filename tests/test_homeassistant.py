@@ -292,19 +292,33 @@ def test_deco_lights_follow_evening_and_presence():
     assert targets(off["actions"]) == DECO_LIGHTS
 
 
-def test_buttons_are_matched_by_the_unique_id_node_red_used():
-    """deCONZ buttons fire deconz_event with the same unique_id as in the Node-RED flows."""
+def test_buttons_are_matched_by_the_ieee_address_home_assistant_sends():
+    """Home Assistant's deCONZ integration puts the device's IEEE address into deconz_event's unique_id, without the
+    endpoint and cluster suffix (-01-1000) of the deCONZ REST uniqueid that the Node-RED flows matched."""
     expected = {
-        "deko_taster": ("5c:c7:c1:ff:fe:83:4b:a0-01-fc80", DECO_LIGHTS),
-        "deko_schalter": ("84:ba:20:ff:fe:d4:12:52-01-1000", DECO_LIGHTS),
-        "homeoffice_schalter": ("94:34:69:ff:fe:3d:c9:a6-01-1000", ["switch.buro_on_off_homeoffice"]),
-        "eckschreibtisch_schalter": ("dc:8e:95:ff:fe:2e:1d:3b-01-1000", ["light.buro_eckschreibtisch"]),
+        "deko_taster": ("5c:c7:c1:ff:fe:83:4b:a0", DECO_LIGHTS),
+        "deko_schalter": ("84:ba:20:ff:fe:d4:12:52", DECO_LIGHTS),
+        "homeoffice_schalter": ("94:34:69:ff:fe:3d:c9:a6", ["switch.buro_on_off_homeoffice"]),
+        "eckschreibtisch_schalter": ("dc:8e:95:ff:fe:2e:1d:3b", ["light.buro_eckschreibtisch"]),
     }
     for automation_id, (unique_id, entities) in expected.items():
         button = automation("lights", automation_id)
         assert button["triggers"] == [
             {"trigger": "event", "event_type": "deconz_event", "event_data": {"unique_id": unique_id}}], automation_id
         assert sorted(set(targets(button["actions"]))) == sorted(entities), automation_id
+
+
+def test_every_deconz_trigger_uses_a_bare_ieee_address():
+    """A suffixed unique_id never matches; the trigger would stay silent without any error."""
+    ieee = re.compile(r"([0-9a-f]{2}:){7}[0-9a-f]{2}")
+    for file in (CONFIG_DIR / "packages").glob("*.yaml"):
+        config = yaml.load(file.read_text(), Loader=HomeAssistantLoader)
+        for item in (config or {}).get("automation", []) if isinstance(config, dict) else []:
+            for trigger in item.get("triggers", []):
+                if trigger.get("event_type") == "deconz_event":
+                    assert ieee.fullmatch(trigger["event_data"]["unique_id"]), item["id"]
+    example = virtual_devices()["script"]["virtual_button_press"]["fields"]["unique_id"]["example"]
+    assert ieee.fullmatch(example)
 
 
 def test_storeroom_light_follows_the_motion_sensor_with_30_seconds_delay():
