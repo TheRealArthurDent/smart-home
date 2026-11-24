@@ -624,10 +624,10 @@ def test_the_day_switch_and_switching_off_stop_the_wake_up_without_moving_the_sh
         "18:7a:3e:ff:fe:f1:68:1f", "dc:8e:95:ff:fe:2e:1d:3b"]
     assert "1002" in str(stop["conditions"])
     assert targets(stop["actions"]) == ["timer.aufwachlicht"]
-    cancelled = automation("wakeup", "wecken_abgebrochen")
-    assert cancelled["triggers"] == [{"trigger": "event", "event_type": "timer.cancelled",
-                                      "event_data": {"entity_id": "timer.aufwachlicht"}}]
-    assert targets(cancelled["actions"]) == ["light.schlafzimmer_aufwachlicht"]
+    stopped = automation("wakeup", "wecken_abgebrochen")
+    assert stopped["triggers"] == [{"trigger": "event", "event_type": "timer.cancelled",
+                                    "event_data": {"entity_id": "timer.aufwachlicht"}}]
+    assert targets(stopped["actions"]) == ["light.schlafzimmer_aufwachlicht"]
 
 
 SHOES = "switch.bad_on_off_schuhheizung"
