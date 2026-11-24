@@ -61,6 +61,8 @@ def test_the_containers_are_hardened():
         for flag in ("--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true"):
             assert flag in args, name
         assert "/tmp" in option_values(args, "--tmpfs"), name
+        # Named, so `docker ps` tells the instances apart
+        assert option_values(args, "--name") == [name.replace("ha-", "ha-mcp-", 1)], name
         # ha-mcp keeps its settings and backups in ~/.ha-mcp
         assert f"{name.replace('ha-', 'ha-mcp-')}:/home/mcpuser/.ha-mcp" in option_values(args, "-v"), name
 
