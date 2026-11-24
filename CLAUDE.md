@@ -54,9 +54,10 @@ Never push from a clone of the old repo: it would bring back the old history.
 - `tests/` – pytest tests (Claude hook, rulesets, repo settings, repo hygiene, `--limit` guard, Mosquitto filter,
   compose)
 - `.claude/` – Claude Code settings, the guard hook (`hooks/guard.py`) and skills
-- `.mcp.json` + `tools/ha-mcp/` – Home Assistant's MCP server (ha-mcp) for testbench and raspi: Docker containers on
-  the user's dev machine (not the Pis), reached on loopback, used through Remote Control; their URLs, tokens and root
-  CA come from a git-ignored env file next to `tools/ha-mcp/docker-compose.yaml` (keys in its `.env.example`)
+- `.mcp.json` – Home Assistant's MCP server (ha-mcp, image pinned, Renovate) for testbench and raspi, started on
+  demand by Claude Code with `docker run` on the user's dev machine and used through Remote Control; URLs, tokens and
+  the root CA come from `HA_TESTBENCH_URL`/`_TOKEN`, `HA_RASPI_URL`/`_TOKEN` and `HA_CA_FILE` there. It talks stdio,
+  which ha-mcp warns about (ha-mcp#1713); if connections hang, switch to uvx (the user's choice)
 - `.github/rulesets/` (rulesets for `main`) + `.github/repo-settings.json` (auto merge, branch cleanup, secret
   scanning) – GitHub settings, applied by the user with `scripts/github-settings.sh apply`
 
