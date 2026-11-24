@@ -1,0 +1,4 @@
+# Virtual twins of the devices, on testbench only (homeassistant-virtual/ in the repo). The smart_home role fills the
+# included directory where smart_home_homeassistant_virtual_devices is set and keeps it empty everywhere else, so
+# this package is empty on raspi.
+!include_dir_merge_named ../virtual

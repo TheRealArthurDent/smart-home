@@ -25,21 +25,33 @@ jobs:
 
       # Same image as the stack (Renovate bumps it in docker-compose.yaml), on a writable copy of the config, since
       # check_config writes its own files. check_config exits 0 even when a package is invalid, so the output decides.
+      # Once like raspi (no virtual devices) and once like testbench (with them).
       - name: Check the configuration with the release the stack runs
         run: |
           image=$(yq '.services.homeassistant.image' docker-compose.yaml)
-          config=$(mktemp -d)
-          cp -r homeassistant/. "$config"
-          # The sandbox files live in the volume; the role creates them empty like this
-          echo '[]' > "$config/automations.yaml"
-          echo '{}' > "$config/scripts.yaml"
-          echo '[]' > "$config/scenes.yaml"
-          docker run --rm \
-            --env SONOS_ADVERTISE_ADDR=192.0.2.1 \
-            --volume "$config:/config" \
-            --entrypoint python3 \
-            "$image" -m homeassistant --script check_config --config /config 2>&1 | tee check-config.log
-          if grep -E '^ERROR|Invalid config|Failed config|failed to set ?up' check-config.log; then
-            echo "::error::Home Assistant rejects the configuration, see above"
-            exit 1
-          fi
+          status=0
+          for virtual in without with; do
+            echo "::group::Configuration $virtual virtual devices"
+            config=$(mktemp -d)
+            cp -r homeassistant/. "$config"
+            # The sandbox files live in the volume; the role creates them empty like this
+            echo '[]' > "$config/automations.yaml"
+            echo '{}' > "$config/scripts.yaml"
+            echo '[]' > "$config/scenes.yaml"
+            # Mounted at /config/virtual; the role fills it on testbench only
+            mkdir "$config/virtual"
+            if [ "$virtual" = with ]; then
+              cp -r homeassistant-virtual/. "$config/virtual"
+            fi
+            docker run --rm \
+              --env SONOS_ADVERTISE_ADDR=192.0.2.1 \
+              --volume "$config:/config" \
+              --entrypoint python3 \
+              "$image" -m homeassistant --script check_config --config /config 2>&1 | tee "check-config-$virtual.log"
+            echo "::endgroup::"
+            if grep -E '^ERROR|Invalid config|Failed config|failed to set ?up' "check-config-$virtual.log"; then
+              echo "::error::Home Assistant rejects the configuration $virtual virtual devices, see above"
+              status=1
+            fi
+          done
+          exit "$status"

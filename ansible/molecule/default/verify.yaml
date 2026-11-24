@@ -163,6 +163,8 @@
         - setup/iobroker/obsolete.sh
         # Home Assistant would load a leftover package as if it were still in the repo
         - homeassistant/packages/obsolete.yaml
+        # Twins would shadow raspi's real devices
+        - homeassistant-virtual/devices.yaml
 
     # Grafana provisions every file it finds, so a leftover contact point keeps breaking its start.
     - name: Check files the repo dropped are removed from the host
@@ -214,6 +216,17 @@
       loop: "{{ ha_sandbox.results }}"
       loop_control:
         label: "{{ item.item }}"
+
+    - name: Stat the directory of the virtual devices
+      ansible.builtin.stat:
+        path: "{{ compose_dir }}/homeassistant-virtual"
+      register: ha_virtual_dir
+
+    # Compose mounts it on every host; a missing one would make Docker create it, owned by root, on the first up
+    - name: Check the directory of the virtual devices exists
+      ansible.builtin.assert:
+        that: ha_virtual_dir.stat.isdir and ha_virtual_dir.stat.pw_name == 'root' and ha_virtual_dir.stat.mode == '0755'
+        quiet: true
 
     - name: Read Home Assistant's host address file
       ansible.builtin.slurp:

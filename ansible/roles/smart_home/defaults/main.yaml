@@ -35,6 +35,10 @@ smart_home_homeassistant_sandbox_files:
   scripts.yaml: "{}"
   scenes.yaml: "[]"
 
+# Virtual twins of the devices (homeassistant-virtual/), for a host without the Zigbee stick and the Shellies of raspi.
+# Off, the role keeps their directory empty, so Home Assistant loads none.
+smart_home_homeassistant_virtual_devices: false
+
 # Home Assistant's HTTP settings, written to .storage/http in its volume before its first start and never again
 # (Home Assistant owns the file from then on). Since 2026.x it imports http: from YAML only once, as a trial that an
 # admin must confirm in the UI within 5 minutes. Version 1 of the store holds the bare settings; Home Assistant

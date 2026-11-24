@@ -62,6 +62,7 @@ def test_ui_state_lives_in_a_volume_and_the_repo_config_is_read_only():
         "./homeassistant/configuration.yaml:/config/configuration.yaml:ro",
         "./homeassistant/packages:/config/packages:ro",
         "./homeassistant/dashboards:/config/dashboards:ro",
+        "./homeassistant-virtual:/config/virtual:ro",
     ]
     assert "homeassistant-config" in compose()["volumes"]
 
@@ -392,3 +393,87 @@ def test_the_presence_dashboard_comes_from_the_repo():
     assert "states.person" in text and "states.device_tracker" in text
     assert "device_tracker." not in text.replace("states.device_tracker", "")
     assert "person." not in text.replace("states.person", "")
+
+
+VIRTUAL_DIR = ROOT / "homeassistant-virtual"
+# Domains of physical devices; testbench has neither the Zigbee stick nor the Shellies of raspi
+DEVICE_DOMAINS = ("light", "switch", "binary_sensor", "sensor", "cover")
+# Actions, not devices; a templated one (light.turn_{{ ... }}) ends in "_"
+ACTIONS = {"turn_on", "turn_off", "toggle", "open_cover", "close_cover", "stop_cover", "set_cover_position"}
+
+
+def virtual_devices():
+    return yaml.safe_load((VIRTUAL_DIR / "devices.yaml").read_text())
+
+
+def template_entities(config):
+    """(domain, entity) of every template entity of a package."""
+    return [(domain, entity) for block in config.get("template", []) for domain, entities in block.items()
+            if domain in DEVICE_DOMAINS for entity in entities]
+
+
+def test_every_device_the_packages_use_has_a_virtual_twin_on_testbench():
+    """Automations run on testbench against virtual devices with the entity ids of raspi. A new device in a package
+    fails here until it has its twin."""
+    pattern = re.compile(rf"\b(?:{'|'.join(DEVICE_DOMAINS)})\.[a-z0-9_]+")
+    used, own = set(), set()
+    for file in (CONFIG_DIR / "packages").glob("*.yaml"):
+        used |= {e for e in pattern.findall(file.read_text()) if e.split(".")[1] not in ACTIONS and not e.endswith("_")}
+        config = yaml.load(file.read_text(), Loader=HomeAssistantLoader)
+        if isinstance(config, dict):
+            own |= {entity.get("default_entity_id") for _, entity in template_entities(config)}
+    twins = {entity["default_entity_id"] for _, entity in template_entities(virtual_devices())}
+    assert used - own, "the packages use no devices?"
+    assert sorted(used - own - twins) == []
+    assert all(twin.split(".")[0] == domain for domain, entity in template_entities(virtual_devices())
+               for twin in [entity["default_entity_id"]])
+
+
+def test_virtual_devices_keep_their_state_in_helpers():
+    """Switching a twin changes a helper, so its state can be read back and survives a restart (no initial:)."""
+    config = virtual_devices()
+    booleans = config["input_boolean"]
+    for domain, entity in template_entities(config):
+        helper = f"virtual_{entity['default_entity_id'].split('.')[1]}"
+        assert helper in booleans, entity["default_entity_id"]
+        assert f"input_boolean.{helper}" in entity["state"]
+        assert entity["unique_id"] == helper
+        if domain in ("light", "switch"):
+            assert f"input_boolean.{helper}" in str(entity["turn_on"]) and "turn_on" in str(entity["turn_on"])
+            assert f"input_boolean.{helper}" in str(entity["turn_off"]) and "turn_off" in str(entity["turn_off"])
+        if domain == "light":
+            assert f"input_number.{helper}_brightness" in entity["level"]
+            assert f"input_number.{helper}_brightness" in str(entity["set_level"])
+    for helpers in (config["input_boolean"], config["input_number"]):
+        assert all("initial" not in helper for helper in helpers.values())
+
+
+def test_virtual_buttons_fire_the_event_of_a_deconz_button():
+    """Buttons have no state; the script fires the deconz_event the automations match by unique_id."""
+    script = virtual_devices()["script"]["virtual_button_press"]
+    assert set(script["fields"]) == {"unique_id", "event"}
+    assert script["sequence"][0]["event"] == "deconz_event"
+    assert set(script["sequence"][0]["event_data"]) == {"unique_id", "event"}
+
+
+def test_virtual_devices_load_only_where_the_role_puts_them():
+    """The package includes a directory the role fills on testbench only and keeps empty everywhere else."""
+    assert package("virtual_devices") == ("!include_dir_merge_named", "../virtual")
+    assert "./homeassistant-virtual:/config/virtual:ro" in homeassistant()["volumes"]
+    assert role_defaults()["smart_home_homeassistant_virtual_devices"] is False
+    hosts = yaml.safe_load((ROOT / "ansible" / "inventory" / "hosts.yaml").read_text())["all"]["hosts"]
+    assert hosts["testbench"]["smart_home_homeassistant_virtual_devices"] is True
+    assert "smart_home_homeassistant_virtual_devices" not in hosts["raspi"]
+    names = [task.get("name") for task in role_tasks()]
+    for name in ("Ensure the directory of the virtual devices exists", "Ensure the virtual devices are present",
+                 "Ensure no other virtual devices are present"):
+        assert name in names
+    copy = next(task for task in role_tasks() if task.get("name") == "Ensure the virtual devices are present")
+    assert copy["when"] == "smart_home_homeassistant_virtual_devices | bool"
+
+
+def test_ci_checks_the_configuration_with_and_without_the_virtual_devices():
+    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text())
+    script = "\n".join(step.get("run", "") for step in workflow["jobs"]["config"]["steps"])
+    assert "homeassistant-virtual/." in script
+    assert script.count("check_config") == 1 and "for virtual in" in script
