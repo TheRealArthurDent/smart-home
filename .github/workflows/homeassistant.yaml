@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # Same image as the stack (Renovate bumps it in docker-compose.yaml), on a writable copy of the config, since
       # check_config writes its own files. check_config exits 0 even when a package is invalid, so the output decides.
