@@ -299,13 +299,23 @@ def test_buttons_are_matched_by_the_ieee_address_home_assistant_sends():
         "deko_taster": ("5c:c7:c1:ff:fe:83:4b:a0", DECO_LIGHTS),
         "deko_schalter": ("84:ba:20:ff:fe:d4:12:52", DECO_LIGHTS),
         "homeoffice_schalter": ("94:34:69:ff:fe:3d:c9:a6", ["switch.buro_on_off_homeoffice"]),
-        "eckschreibtisch_schalter": ("dc:8e:95:ff:fe:2e:1d:3b", ["light.buro_eckschreibtisch"]),
     }
     for automation_id, (unique_id, entities) in expected.items():
         button = automation("lights", automation_id)
         assert button["triggers"] == [
             {"trigger": "event", "event_type": "deconz_event", "event_data": {"unique_id": unique_id}}], automation_id
         assert sorted(set(targets(button["actions"]))) == sorted(entities), automation_id
+
+
+def test_the_old_corner_desk_switch_mapping_is_gone():
+    """The corner desk switch's Node-RED mapping was a leftover; its light has no automation in Home Assistant."""
+    ids = {a["id"] for file in (CONFIG_DIR / "packages").glob("*.yaml")
+           for config in [yaml.load(file.read_text(), Loader=HomeAssistantLoader)] if isinstance(config, dict)
+           for a in config.get("automation", [])}
+    assert "eckschreibtisch_schalter" not in ids
+    for file in (CONFIG_DIR / "packages").glob("*.yaml"):
+        assert "dc:8e:95:ff:fe:2e:1d:3b" not in file.read_text(), file.name
+        assert "light.buro_eckschreibtisch" not in file.read_text(), file.name
 
 
 def test_every_deconz_trigger_uses_a_bare_ieee_address():
@@ -336,6 +346,50 @@ def test_bedroom_wall_switch_switches_the_wake_up_light_and_stops_its_dimming():
     bedroom = automation("lights", "schlafzimmer_wandschalter")
     assert bedroom["triggers"][0]["entity_id"] == "binary_sensor.schlafzimmer_light_bedroom_eingang_0"
     assert set(targets(bedroom["actions"])) == {"light.schlafzimmer_aufwachlicht", "timer.aufwachlicht"}
+
+
+WAKE_UP_LIGHT = "light.schlafzimmer_aufwachlicht"
+
+
+def test_the_weekend_alarm_ramps_up_the_wake_up_light_in_30_minutes():
+    """Only Saturday and Sunday run in Home Assistant for now; the workday alarm stays in Node-RED until it moves
+    too (#2). The light is fully on at the wake-up time, so the ramp starts 30 minutes before it."""
+    alarm = automation("wake_up", "wecker_wochenende")
+    assert alarm["mode"] == "single"
+    assert alarm["triggers"] == [{"trigger": "time", "at": {"entity_id": "input_datetime.weckzeit_wochenende",
+                                                            "offset": "-00:30:00"}}]
+    assert {"condition": "time", "weekday": ["sat", "sun"]} in alarm["conditions"]
+    assert {"condition": "state", "entity_id": "input_boolean.wecker_wochenende", "state": "on"} in alarm["conditions"]
+    assert "input_datetime.weckzeit_werktag" not in str(alarm)
+    ramp = next(a for a in alarm["actions"] if a.get("data", {}).get("transition"))
+    assert ramp["action"] == "light.turn_on"
+    assert ramp["target"]["entity_id"] == WAKE_UP_LIGHT
+    assert ramp["data"] == {"brightness": 255, "transition": 1800}
+    timer = next(a for a in alarm["actions"] if a.get("action") == "timer.start")
+    assert timer == {"action": "timer.start", "target": {"entity_id": "timer.aufwachlicht"},
+                     "data": {"duration": "00:30:00"}}
+
+
+def test_skipping_the_next_wake_up_skips_it_once():
+    """The skip flag stops one alarm and is cleared by it, so the next weekend wakes again."""
+    alarm = automation("wake_up", "wecker_wochenende")
+    skip = alarm["actions"][0]
+    assert skip["if"] == [{"condition": "state", "entity_id": "input_boolean.wecken_aussetzen", "state": "on"}]
+    assert skip["then"] == [
+        {"action": "input_boolean.turn_off", "target": {"entity_id": "input_boolean.wecken_aussetzen"}},
+        {"stop": "Wake-up skipped"},
+    ]
+
+
+def test_the_wake_up_light_ends_fully_on_even_after_a_restart():
+    """The timer survives a restart, the light's own transition doesn't; when the timer ends, the light gets its
+    final brightness, unless it was switched off meanwhile."""
+    end = automation("wake_up", "aufwachlicht_ende")
+    assert end["triggers"] == [{"trigger": "event", "event_type": "timer.finished",
+                                "event_data": {"entity_id": "timer.aufwachlicht"}}]
+    assert end["conditions"] == [{"condition": "state", "entity_id": WAKE_UP_LIGHT, "state": "on"}]
+    assert end["actions"] == [{"action": "light.turn_on", "target": {"entity_id": WAKE_UP_LIGHT},
+                               "data": {"brightness": 255}}]
 
 
 def test_christmas_stars_in_winter():

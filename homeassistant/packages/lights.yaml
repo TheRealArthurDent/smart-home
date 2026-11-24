@@ -193,19 +193,3 @@ automation:
       - action: "switch.turn_{{ 'on' if trigger.event.data.event == 1002 else 'off' }}"
         target:
           entity_id: switch.buro_on_off_homeoffice
-
-  - id: eckschreibtisch_schalter
-    alias: Corner desk light switch
-    mode: queued
-    triggers:
-      - trigger: event
-        event_type: deconz_event
-        event_data:
-          unique_id: "dc:8e:95:ff:fe:2e:1d:3b"
-    conditions:
-      - condition: template
-        value_template: "{{ trigger.event.data.event in (1002, 2002) }}"
-    actions:
-      - action: "light.turn_{{ 'on' if trigger.event.data.event == 1002 else 'off' }}"
-        target:
-          entity_id: light.buro_eckschreibtisch

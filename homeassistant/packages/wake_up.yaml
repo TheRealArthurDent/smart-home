@@ -1,0 +1,70 @@
+# Wake-up light (#2). For now only the weekend alarm runs here; the workday alarm (and holidays on workdays) stays in
+# Node-RED until it moves too. Node-RED's weekend alarm must be switched off at the same time, or both ramp the light.
+# The alarm times and switches are the helpers in helpers.yaml.
+
+automation:
+  - id: wecker_wochenende
+    alias: Weekend alarm ramps up the wake-up light
+    description: >-
+      On Saturday and Sunday the wake-up light dims up over 30 minutes and is fully on at the weekend wake-up time.
+    mode: single
+    triggers:
+      - trigger: time
+        at:
+          entity_id: input_datetime.weckzeit_wochenende
+          offset: "-00:30:00"
+    conditions:
+      - condition: time
+        weekday:
+          - sat
+          - sun
+      - condition: state
+        entity_id: input_boolean.wecker_wochenende
+        state: "on"
+    actions:
+      - if:
+          - condition: state
+            entity_id: input_boolean.wecken_aussetzen
+            state: "on"
+        then:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.wecken_aussetzen
+          - stop: Wake-up skipped
+      - action: light.turn_on
+        target:
+          entity_id: light.schlafzimmer_aufwachlicht
+        data:
+          brightness: 1
+      - action: light.turn_on
+        target:
+          entity_id: light.schlafzimmer_aufwachlicht
+        data:
+          brightness: 255
+          transition: 1800
+      # Survives a restart, unlike the light's transition; the wall switch cancels it
+      - action: timer.start
+        target:
+          entity_id: timer.aufwachlicht
+        data:
+          duration: "00:30:00"
+
+  - id: aufwachlicht_ende
+    alias: Wake-up light ends fully on
+    description: Gives the light its final brightness if a restart interrupted the transition.
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.aufwachlicht
+    conditions:
+      - condition: state
+        entity_id: light.schlafzimmer_aufwachlicht
+        state: "on"
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.schlafzimmer_aufwachlicht
+        data:
+          brightness: 255
