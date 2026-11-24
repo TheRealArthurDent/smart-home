@@ -345,3 +345,34 @@ def test_ci_checks_the_configuration_with_the_release_the_stack_runs():
     assert "homeassistant/home-assistant:" not in script
     assert "check_config" in script
     assert "Invalid config" in script
+
+
+SANDBOX = {"automation sandbox": "automations.yaml", "script sandbox": "scripts.yaml", "scene sandbox": "scenes.yaml"}
+
+
+def test_prototypes_made_in_the_ui_land_in_a_sandbox_in_the_volume():
+    """The UI editors and the MCP server save to automations.yaml, scripts.yaml and scenes.yaml. They live in the
+    volume, not in the repo: what works moves into a package, then the file is emptied again."""
+    config = configuration()
+    for key, file in SANDBOX.items():
+        assert config[key] == ("!include", file)
+
+
+def test_the_role_creates_empty_sandbox_files_without_touching_existing_ones():
+    """An !include of a missing file breaks the whole configuration, so the files must exist before the first
+    start; force: false keeps what is in them."""
+    assert role_defaults()["smart_home_homeassistant_sandbox_files"] == {
+        "automations.yaml": "[]", "scripts.yaml": "{}", "scenes.yaml": "[]"}
+    names = [task.get("name") for task in role_tasks()]
+    task = next(task for task in role_tasks() if task.get("name") == "Ensure Home Assistant has its sandbox files")
+    assert task["ansible.builtin.copy"]["force"] is False
+    assert task["loop"] == "{{ smart_home_homeassistant_sandbox_files | dict2items }}"
+    assert names.index("Restore the volumes on a fresh host") < names.index(task["name"]) < names.index(
+        "Start containers")
+
+
+def test_ci_checks_the_configuration_with_the_sandbox_files():
+    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text())
+    script = "\n".join(step.get("run", "") for step in workflow["jobs"]["config"]["steps"])
+    for file in SANDBOX.values():
+        assert file in script

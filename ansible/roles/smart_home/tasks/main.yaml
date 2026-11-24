@@ -282,6 +282,20 @@
     force: false
   when: "'homeassistant' not in smart_home_disabled_services"
 
+# An !include of a missing file breaks the whole configuration. force: false keeps the prototypes in them.
+- name: Ensure Home Assistant has its sandbox files
+  ansible.builtin.copy:
+    content: "{{ item.value }}\n"
+    dest: "{{ smart_home_docker_volumes_dir }}/{{ smart_home_project_name }}_homeassistant-config/_data/{{ item.key }}"
+    owner: root
+    group: root
+    mode: '0644'
+    force: false
+  loop: "{{ smart_home_homeassistant_sandbox_files | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when: "'homeassistant' not in smart_home_disabled_services"
+
 - name: Start containers
   when: smart_home_manage_containers | bool
   block:

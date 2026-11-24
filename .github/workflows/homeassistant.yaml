@@ -28,6 +28,10 @@ jobs:
           image=$(yq '.services.homeassistant.image' docker-compose.yaml)
           config=$(mktemp -d)
           cp -r homeassistant/. "$config"
+          # The sandbox files live in the volume; the role creates them empty like this
+          echo '[]' > "$config/automations.yaml"
+          echo '{}' > "$config/scripts.yaml"
+          echo '[]' > "$config/scenes.yaml"
           docker run --rm \
             --env SONOS_ADVERTISE_ADDR=192.0.2.1 \
             --volume "$config:/config" \

@@ -198,6 +198,23 @@
           - store.data.trusted_proxies == ['172.30.2.0/24']
         fail_msg: "Home Assistant's HTTP store is wrong: {{ store | to_json }}"
 
+    - name: Stat Home Assistant's sandbox files
+      ansible.builtin.stat:
+        path: "/var/lib/docker/volumes/smart-home_homeassistant-config/_data/{{ item }}"
+        get_checksum: false
+      register: ha_sandbox
+      loop: [automations.yaml, scripts.yaml, scenes.yaml]
+
+    # configuration.yaml includes them; a missing one breaks the whole configuration
+    - name: Check Home Assistant's sandbox files exist
+      ansible.builtin.assert:
+        that: item.stat.exists and item.stat.pw_name == 'root' and item.stat.mode == '0644'
+        fail_msg: "{{ item.item }} is missing or has the wrong owner or mode"
+        quiet: true
+      loop: "{{ ha_sandbox.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
     - name: Read Home Assistant's host address file
       ansible.builtin.slurp:
         src: "{{ compose_dir }}/homeassistant.env"

@@ -28,6 +28,13 @@ smart_home_wait_timeout: 600
 # Compose up and restarts need a running Docker daemon (false in Molecule).
 smart_home_manage_containers: true
 
+# Sandbox for prototypes made in Home Assistant's UI or through its MCP server (configuration.yaml includes them).
+# Created empty before the first start, never overwritten: what works moves into a package in the repo.
+smart_home_homeassistant_sandbox_files:
+  automations.yaml: "[]"
+  scripts.yaml: "{}"
+  scenes.yaml: "[]"
+
 # Home Assistant's HTTP settings, written to .storage/http in its volume before its first start and never again
 # (Home Assistant owns the file from then on). Since 2026.x it imports http: from YAML only once, as a trial that an
 # admin must confirm in the UI within 5 minutes. Version 1 of the store holds the bare settings; Home Assistant
