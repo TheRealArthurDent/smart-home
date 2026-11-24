@@ -3,19 +3,6 @@
   "extends": [
     "github>TheRealArthurDent/renovate:homelab"
   ],
-  "customManagers": [
-    {
-      "customType": "regex",
-      "description": "Home Assistant's MCP server for Claude Code, pinned in .mcp.json and run with uvx.",
-      "managerFilePatterns": [
-        "/^\\.mcp\\.json$/"
-      ],
-      "matchStrings": [
-        "\"(?<depName>ha-mcp)==(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
-      ],
-      "datasourceTemplate": "pypi"
-    }
-  ],
   "packageRules": [
     {
       "description": "Pin deconz stable versions.",
