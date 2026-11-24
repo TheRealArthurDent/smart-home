@@ -535,11 +535,12 @@ def wake_up():
 
 
 def test_wake_up_starts_30_minutes_before_the_alarm_time():
+    """Weekends and holidays only for now; Node-RED still wakes on workdays until the workday trigger is added."""
     triggers = {t["id"]: t for t in wake_up()["triggers"]}
     assert triggers == {
         day: {"trigger": "time", "at": {"entity_id": f"input_datetime.weckzeit_{day}", "offset": "-00:30:00"},
               "id": day}
-        for day in ("werktag", "wochenende")}
+        for day in ("wochenende",)}
 
 
 def test_wake_up_takes_the_alarm_of_workdays_or_of_weekends_and_holidays():
@@ -620,8 +621,8 @@ def test_the_wake_up_ends_with_the_light_off_and_the_shutter_opening_in_two_step
 
 def test_the_day_switch_and_switching_off_stop_the_wake_up_without_moving_the_shutter():
     stop = automation("wakeup", "wecken_abbrechen")
-    assert sorted(t["event_data"]["unique_id"] for t in stop["triggers"]) == [
-        "18:7a:3e:ff:fe:f1:68:1f", "dc:8e:95:ff:fe:2e:1d:3b"]
+    # Only the day/night switch in the corridor; the corner desk switch had that role once
+    assert [t["event_data"]["unique_id"] for t in stop["triggers"]] == ["18:7a:3e:ff:fe:f1:68:1f"]
     assert "1002" in str(stop["conditions"])
     assert targets(stop["actions"]) == ["timer.aufwachlicht"]
     stopped = automation("wakeup", "wecken_abgebrochen")

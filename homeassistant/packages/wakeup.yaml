@@ -1,8 +1,9 @@
 # Wake-up, replacing Node-RED's "Get up, stand up!" (#2).
 # 30 minutes before the alarm time the wake-up light dims up in 30 minutes, holds until sunrise (at least 30
-# minutes), then goes off and the bedroom shutter opens in two steps. Workdays take the workday alarm; weekends and
-# holidays the weekend alarm. Holidays come from the Workday integration, set up in the UI (Germany, Bavaria, with
-# the Catholic holidays). timer.aufwachlicht (helpers.yaml) runs while the light is on.
+# minutes), then goes off and the bedroom shutter opens in two steps. Weekends and holidays take the weekend alarm;
+# workdays the workday alarm, which Node-RED still runs for now. Holidays come from the Workday integration, set up
+# in the UI (Germany, Bavaria, with the Catholic holidays). timer.aufwachlicht (helpers.yaml) runs while the light
+# is on.
 
 timer:
   wecken_rollladen:
@@ -13,12 +14,13 @@ automation:
   - id: wecken_start
     alias: Wake-up starts 30 minutes before the alarm
     mode: single
+    # Weekends and holidays only, while Node-RED still wakes on workdays. Its workday twin, once Node-RED stops:
+    #   - trigger: time
+    #     at:
+    #       entity_id: input_datetime.weckzeit_werktag
+    #       offset: "-00:30:00"
+    #     id: werktag
     triggers:
-      - trigger: time
-        at:
-          entity_id: input_datetime.weckzeit_werktag
-          offset: "-00:30:00"
-        id: werktag
       - trigger: time
         at:
           entity_id: input_datetime.weckzeit_wochenende
@@ -143,17 +145,14 @@ automation:
 
   - id: wecken_abbrechen
     alias: Day switch stops the wake-up
-    description: The "day" button of the day/night switches ends a running wake-up; the shutter stays as it is.
+    description: >-
+      The "day" button of the day/night switch in the corridor ends a running wake-up; the shutter stays as it is.
     mode: single
     triggers:
       - trigger: event
         event_type: deconz_event
         event_data:
           unique_id: "18:7a:3e:ff:fe:f1:68:1f"
-      - trigger: event
-        event_type: deconz_event
-        event_data:
-          unique_id: "dc:8e:95:ff:fe:2e:1d:3b"
     conditions:
       - condition: template
         value_template: "{{ trigger.event.data.event == 1002 }}"
