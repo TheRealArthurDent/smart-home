@@ -10,6 +10,9 @@ __pycache__/
 .pytest_cache/
 test-results/
 
+# Claude Code: per-machine settings, e.g. which servers of .mcp.json were approved there
+.claude/settings.local.json
+
 # Pre-commit
 .pre-commit-config.local.yaml
 
