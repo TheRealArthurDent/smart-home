@@ -332,3 +332,16 @@ def test_christmas_stars_in_winter():
     assert "(11, 12, 1)" in str(afternoon["conditions"])
     assert "binary_sensor.jemand_zuhause" in str(afternoon["conditions"])
     assert targets(morning["actions"]) == targets(afternoon["actions"]) == ["light.wohnzimmer_weihnachtssterne"]
+
+
+def test_ci_checks_the_configuration_with_the_release_the_stack_runs():
+    """check_config of the pinned image catches invalid YAML before it reaches main; the image is read from the
+    compose file, so Renovate bumps one place. check_config exits 0 even on errors, so the job reads its output."""
+    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text())
+    job = workflow["jobs"]["config"]
+    assert job["name"] == "Home Assistant config"
+    script = "\n".join(step.get("run", "") for step in job["steps"])
+    assert ".services.homeassistant.image" in script
+    assert "homeassistant/home-assistant:" not in script
+    assert "check_config" in script
+    assert "Invalid config" in script

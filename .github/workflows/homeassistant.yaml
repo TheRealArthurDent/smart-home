@@ -1,0 +1,39 @@
+name: Home Assistant
+
+on:
+  # Feature branches are covered by their PR, so pushes only run on main (no duplicate runs).
+  push:
+    branches:
+      - main
+  # Every PR, without a paths filter: the main ruleset requires this check, and a skipped required check
+  # would block the merge forever.
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  config:
+    name: Home Assistant config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Same image as the stack (Renovate bumps it in docker-compose.yaml), on a writable copy of the config, since
+      # check_config writes its own files. check_config exits 0 even when a package is invalid, so the output decides.
+      - name: Check the configuration with the release the stack runs
+        run: |
+          image=$(yq '.services.homeassistant.image' docker-compose.yaml)
+          config=$(mktemp -d)
+          cp -r homeassistant/. "$config"
+          docker run --rm \
+            --env SONOS_ADVERTISE_ADDR=192.0.2.1 \
+            --volume "$config:/config" \
+            --entrypoint python3 \
+            "$image" -m homeassistant --script check_config --config /config 2>&1 | tee check-config.log
+          if grep -E '^ERROR|Invalid config|Failed config|failed to set ?up' check-config.log; then
+            echo "::error::Home Assistant rejects the configuration, see above"
+            exit 1
+          fi
