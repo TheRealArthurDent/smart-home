@@ -27,6 +27,8 @@ jobs:
       # check_config writes its own files. check_config exits 0 even when a package is invalid, so the output decides.
       # Once like raspi (no virtual devices) and once like testbench (with them).
       - name: Check the configuration with the release the stack runs
+        # -eo pipefail: a failing docker run must fail the step, not leave tee with an empty, error-free log
+        shell: bash
         run: |
           image=$(yq '.services.homeassistant.image' docker-compose.yaml)
           status=0

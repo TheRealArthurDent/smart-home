@@ -477,3 +477,12 @@ def test_ci_checks_the_configuration_with_and_without_the_virtual_devices():
     script = "\n".join(step.get("run", "") for step in workflow["jobs"]["config"]["steps"])
     assert "homeassistant-virtual/." in script
     assert script.count("check_config") == 1 and "for virtual in" in script
+
+
+def test_ci_fails_when_the_check_itself_fails():
+    """The default shell has no pipefail, so a failing docker run (e.g. the image can't be pulled) piped into tee
+    would leave an empty log and a green job. shell: bash runs with -eo pipefail."""
+    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text())
+    for step in workflow["jobs"]["config"]["steps"]:
+        if "run" in step:
+            assert step.get("shell") == "bash", step["name"]
