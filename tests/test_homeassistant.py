@@ -5,9 +5,11 @@ Its UI state (integrations, devices, users, history) lives in a named volume; ev
 read-only, so the UI can't change it behind the repo's back.
 """
 
+import datetime
 import re
 from pathlib import Path
 
+import jinja2
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -416,6 +418,11 @@ DEVICE_DOMAINS = ("light", "switch", "binary_sensor", "sensor", "cover")
 ACTIONS = {"turn_on", "turn_off", "toggle", "open_cover", "close_cover", "stop_cover", "set_cover_position"}
 
 
+# Entities of integrations that are no devices and are set up in the UI on testbench as on raspi: Workday
+# (Germany, Bavaria, with the Catholic holidays, so Assumption Day counts as in Node-RED)
+SET_UP_ON_BOTH_HOSTS = {"binary_sensor.workday_sensor"}
+
+
 def virtual_devices():
     return yaml.safe_load((VIRTUAL_DIR / "devices.yaml").read_text())
 
@@ -438,7 +445,7 @@ def test_every_device_the_packages_use_has_a_virtual_twin_on_testbench():
             own |= {entity.get("default_entity_id") for _, entity in template_entities(config)}
     twins = {entity["default_entity_id"] for _, entity in template_entities(virtual_devices())}
     assert used - own, "the packages use no devices?"
-    assert sorted(used - own - twins) == []
+    assert sorted(used - own - twins - SET_UP_ON_BOTH_HOSTS) == []
     assert all(twin.split(".")[0] == domain for domain, entity in template_entities(virtual_devices())
                for twin in [entity["default_entity_id"]])
 
@@ -449,6 +456,13 @@ def test_virtual_devices_keep_their_state_in_helpers():
     booleans = config["input_boolean"]
     for domain, entity in template_entities(config):
         helper = f"virtual_{entity['default_entity_id'].split('.')[1]}"
+        assert entity["unique_id"] == helper
+        if domain == "cover":
+            # A shutter's state is its position
+            assert f"{helper}_position" in config["input_number"], entity["default_entity_id"]
+            assert f"input_number.{helper}_position" in entity["position"]
+            assert f"input_number.{helper}_position" in str(entity["set_cover_position"])
+            continue
         assert helper in booleans, entity["default_entity_id"]
         assert f"input_boolean.{helper}" in entity["state"]
         assert entity["unique_id"] == helper
@@ -500,3 +514,219 @@ def test_ci_fails_when_the_check_itself_fails():
     for step in workflow["jobs"]["config"]["steps"]:
         if "run" in step:
             assert step.get("shell") == "bash", step["name"]
+
+
+# Templates are rendered with plain Jinja and stand-ins for Home Assistant's functions, so the decisions the
+# automations take (which alarm, how long to hold, when to heat the shoes) are checked case by case.
+def render(template, **context):
+    env = jinja2.Environment()
+    env.filters["as_datetime"] = lambda value, default=None: value if value is not None else default
+    env.filters["int"] = lambda value, default=0: int(float(value)) if value not in (None, "") else default
+    env.filters["float"] = lambda value, default=0.0: float(value) if value not in (None, "") else default
+    return env.from_string(template).render(**context).strip()
+
+
+def is_state_of(states):
+    return lambda entity, state: states.get(entity) == state
+
+
+def wake_up():
+    return automation("wakeup", "wecken_start")
+
+
+def test_wake_up_starts_30_minutes_before_the_alarm_time():
+    """Weekends and holidays only for now; Node-RED still wakes on workdays until the workday trigger is added."""
+    triggers = {t["id"]: t for t in wake_up()["triggers"]}
+    assert triggers == {
+        day: {"trigger": "time", "at": {"entity_id": f"input_datetime.weckzeit_{day}", "offset": "-00:30:00"},
+              "id": day}
+        for day in ("wochenende",)}
+
+
+def test_wake_up_takes_the_alarm_of_workdays_or_of_weekends_and_holidays():
+    """Node-RED took the weekend alarm on Saturdays, Sundays and holidays (german-holidays, Bavaria)."""
+    condition = wake_up()["conditions"][0]["value_template"]
+    for workday in (True, False):
+        for day in ("werktag", "wochenende"):
+            for alarm in (True, False):
+                states = {"binary_sensor.workday_sensor": "on" if workday else "off",
+                          f"input_boolean.wecker_{day}": "on" if alarm else "off"}
+                fires = render(condition, trigger={"id": day}, is_state=is_state_of(states)) == "True"
+                assert fires == (alarm and workday == (day == "werktag")), (workday, day, alarm)
+
+
+def test_skipping_a_wake_up_resets_the_skip_and_keeps_the_bedroom_shutter_down():
+    skip = wake_up()["actions"][0]
+    assert skip["if"] == [{"condition": "state", "entity_id": "input_boolean.wecken_aussetzen", "state": "on"}]
+    assert targets(skip["then"]) == ["input_boolean.wecken_aussetzen", "input_boolean.rollladen_schlafzimmer_sperre"]
+    assert [a["action"] for a in skip["then"][:2]] == ["input_boolean.turn_off", "input_boolean.turn_on"]
+    assert skip["then"][-1] == {"stop": "Wake-up skipped once"}
+
+
+def test_wake_up_only_with_the_shutter_down_and_someone_home():
+    checks = wake_up()["actions"][1:3]
+    assert checks[0]["condition"] == "numeric_state"
+    assert checks[0]["entity_id"] == "cover.schlafzimmer_shutter_bedroom"
+    assert checks[0]["attribute"] == "current_position"
+    assert checks[0]["below"] == 50
+    assert checks[1] == {"condition": "state", "entity_id": "binary_sensor.jemand_zuhause", "state": "on"}
+
+
+def test_the_wake_up_light_dims_up_in_30_minutes_and_holds_until_sunrise():
+    """Node-RED dimmed the wake-up light up to 255 in 30 minutes, then held it for the minutes to sunrise less the
+    dimming, at least 30."""
+    actions = wake_up()["actions"]
+    lights = [a for a in actions if a.get("action") == "light.turn_on"]
+    assert [a["data"] for a in lights] == [{"brightness": 1}, {"brightness": 255, "transition": 1800}]
+    assert all(a["target"]["entity_id"] == "light.schlafzimmer_aufwachlicht" for a in lights)
+    timer = next(a for a in actions if a.get("action") == "timer.start")
+    assert timer["target"]["entity_id"] == "timer.aufwachlicht"
+    hold = next(a for a in actions if "variables" in a)["variables"]["hold_minutes"]
+    now = datetime.datetime(2026, 11, 25, 6, 50)
+    for minutes_to_sunrise, expected in ((120, 90), (45, 30), (-10, 30)):
+        rising = now + datetime.timedelta(minutes=minutes_to_sunrise)
+        if minutes_to_sunrise < 0:  # sun.sun's next rising is tomorrow's once the sun is up
+            rising += datetime.timedelta(days=1)
+        result = render(hold, now=lambda: now, state_attr=lambda entity, attribute: rising)
+        assert int(result) == expected, minutes_to_sunrise
+    assert "hold_minutes" in str(timer["data"]["duration"]) and "30" in str(timer["data"]["duration"])
+
+
+def test_the_wake_up_ends_with_the_light_off_and_the_shutter_opening_in_two_steps():
+    """After the hold, Node-RED switched the light off, opened the bedroom shutter to 40 % (over a manual change)
+    and an hour later fully, unless it had been moved by hand meanwhile."""
+    end = automation("wakeup", "wecken_ende")
+    assert end["triggers"] == [{"trigger": "event", "event_type": "timer.finished",
+                                "event_data": {"entity_id": "timer.aufwachlicht"}}]
+    actions = end["actions"]
+    assert actions[0] == {"action": "light.turn_off", "target": {"entity_id": "light.schlafzimmer_aufwachlicht"}}
+    text = str(actions)
+    for needed in ("input_boolean.rollladen_schlafzimmer_sperre", "input_number.rollladen_schlafzimmer_soll",
+                   "'position': 40"):
+        assert needed in text, needed
+    assert actions[-1] == {"action": "timer.start", "target": {"entity_id": "timer.wecken_rollladen"},
+                           "data": {"duration": "01:00:00"}}
+    # A timer, not a delay, so a restart in that hour doesn't lose it
+    assert package("wakeup")["timer"]["wecken_rollladen"]["restore"] is True
+    full = automation("wakeup", "wecken_rollladen_auf")
+    assert full["triggers"] == [{"trigger": "event", "event_type": "timer.finished",
+                                 "event_data": {"entity_id": "timer.wecken_rollladen"}}]
+    text = str(full)
+    for needed in ("input_boolean.rollladen_schlafzimmer_sperre", "input_number.rollladen_schlafzimmer_soll",
+                   "'position': 100", "current_position"):
+        assert needed in text, needed
+    assert targets(actions)[1:].count("cover.schlafzimmer_shutter_bedroom") == 1
+    assert targets(full["actions"]).count("cover.schlafzimmer_shutter_bedroom") == 1
+
+
+def test_the_day_switch_and_switching_off_stop_the_wake_up_without_moving_the_shutter():
+    stop = automation("wakeup", "wecken_abbrechen")
+    # Only the day/night switch in the corridor; the corner desk switch had that role once
+    assert [t["event_data"]["unique_id"] for t in stop["triggers"]] == ["18:7a:3e:ff:fe:f1:68:1f"]
+    assert "1002" in str(stop["conditions"])
+    assert targets(stop["actions"]) == ["timer.aufwachlicht"]
+    stopped = automation("wakeup", "wecken_abgebrochen")
+    assert stopped["triggers"] == [{"trigger": "event", "event_type": "timer.cancelled",
+                                    "event_data": {"entity_id": "timer.aufwachlicht"}}]
+    assert targets(stopped["actions"]) == ["light.schlafzimmer_aufwachlicht"]
+
+
+SHOES = "switch.bad_on_off_schuhheizung"
+
+
+def shoe_plan(now, hours=8.0, night="22:00:00"):
+    """Seconds the shoe heating runs now and the next day, by the branch the automation takes."""
+    actions = automation("shoe_heating", "schuhheizung_start")["actions"]
+    clock = datetime.datetime(2026, 11, 25, *(int(x) for x in now.split(":")))
+    states = {"input_number.dauer_schuhheizung": str(hours), "input_datetime.nachtruhe": night}
+    functions = {"states": states.get, "now": lambda: clock,
+                 "today_at": lambda time: datetime.datetime.combine(clock.date(), datetime.time.fromisoformat(time))}
+    values = {name: float(render(template, **functions)) for name, template in actions[0]["variables"].items()}
+    choose = actions[1]
+    branch = next((option["sequence"] for option in choose["choose"]
+                   if render(option["conditions"], **values) == "True"), choose["default"])
+    timer = next((a for a in branch if a.get("action") == "timer.start"), None)
+    rest = next(a for a in branch if a.get("action") == "input_number.set_value")
+    return {"now": int(float(render(timer["data"]["duration"], **values))) if timer else 0,
+            "later": int(float(render(str(rest["data"]["value"]), **values))) * 60}
+
+
+def test_shoe_heating_starts_when_the_plug_is_plugged_in():
+    start = automation("shoe_heating", "schuhheizung_start")
+    assert start["triggers"] == [{"trigger": "state", "entity_id": SHOES, "from": "unavailable"}]
+    assert set(start["actions"][0]["variables"]) == {"heating_seconds", "seconds_until_night_rest"}
+
+
+def test_shoe_heating_runs_before_night_rest_and_finishes_the_next_day():
+    """Node-RED: in one go if it ends before night rest; past night rest, all of it the next day from the weekend
+    alarm time; otherwise until night rest if at least 20 minutes are left, the rest the next day."""
+    hour = 3600
+    assert shoe_plan("08:00") == {"now": 8 * hour, "later": 0}
+    assert shoe_plan("14:00") == {"now": 8 * hour, "later": 0}
+    assert shoe_plan("18:00") == {"now": 4 * hour, "later": 4 * hour}
+    assert shoe_plan("21:30") == {"now": 1800, "later": 8 * hour - 1800}
+    assert shoe_plan("21:50") == {"now": 0, "later": 8 * hour}
+    assert shoe_plan("23:00") == {"now": 0, "later": 8 * hour}
+    assert shoe_plan("10:00", hours=0.5) == {"now": 1800, "later": 0}
+
+
+def test_shoe_heating_switches_on_for_now_and_keeps_the_rest_for_the_next_day():
+    actions = automation("shoe_heating", "schuhheizung_start")["actions"]
+    # Every branch says in words when it applies
+    assert all(option.get("alias") for option in actions[1]["choose"])
+    text = str(actions)
+    assert "timer.schuhheizung" in text and "input_number.schuhheizung_rest" in text
+    assert set(targets(actions)) == {SHOES, "timer.schuhheizung", "input_number.schuhheizung_rest"}
+    later = automation("shoe_heating", "schuhheizung_naechster_tag")
+    assert later["triggers"] == [{"trigger": "time", "at": "input_datetime.weckzeit_wochenende"}]
+    assert later["conditions"] == [{"condition": "numeric_state", "entity_id": "input_number.schuhheizung_rest",
+                                    "above": 0}]
+    assert set(targets(later["actions"])) == {SHOES, "timer.schuhheizung", "input_number.schuhheizung_rest"}
+    off = automation("shoe_heating", "schuhheizung_aus")
+    assert off["triggers"] == [{"trigger": "event", "event_type": "timer.finished",
+                                "event_data": {"entity_id": "timer.schuhheizung"}}]
+    assert targets(off["actions"]) == [SHOES]
+
+
+def test_shoe_heating_keeps_its_state_across_restarts():
+    config = package("shoe_heating")
+    assert config["timer"]["schuhheizung"]["restore"] is True
+    assert "initial" not in config["input_number"]["schuhheizung_rest"]
+
+
+def test_the_shoe_heating_twin_can_be_plugged_in_and_out():
+    """The real plug is unavailable while unplugged; plugging it in starts the heating."""
+    switches = {e["default_entity_id"]: e for e in next(b for b in virtual_devices()["template"] if "switch" in b)["switch"]}
+    assert "input_boolean.virtual_bad_on_off_schuhheizung_plugged_in" in switches[SHOES]["availability"]
+    assert "virtual_bad_on_off_schuhheizung_plugged_in" in virtual_devices()["input_boolean"]
+
+
+def defined_entities():
+    """Entity ids the packages define (helpers, timers, template entities) or that have a twin on testbench."""
+    found = {entity["default_entity_id"] for _, entity in template_entities(virtual_devices())}
+    for file in (CONFIG_DIR / "packages").glob("*.yaml"):
+        config = yaml.load(file.read_text(), Loader=HomeAssistantLoader)
+        if not isinstance(config, dict):
+            continue
+        for domain in ("input_boolean", "input_datetime", "input_number", "timer"):
+            found |= {f"{domain}.{name}" for name in config.get(domain, {})}
+        found |= {entity.get("default_entity_id") for _, entity in template_entities(config)}
+    return found
+
+
+def test_the_home_dashboard_controls_wake_up_and_shoe_heating():
+    """Replaces the bedroom and settings views of ioBroker's lovelace UI, without its custom cards."""
+    dashboard = configuration()["lovelace"]["dashboards"]["dashboard-home"]
+    assert dashboard["mode"] == "yaml"
+    assert dashboard["filename"] == "dashboards/home.yaml"
+    text = (CONFIG_DIR / "dashboards" / "home.yaml").read_text()
+    assert yaml.safe_load(text)["views"]
+    assert "custom:" not in text
+    used = set(re.findall(r"\b(?:input_boolean|input_datetime|input_number|timer|light|switch|cover)\.[a-z0-9_]+",
+                          text)) - {"timer.cancel"}
+    for needed in ("input_boolean.wecker_wochenende", "input_datetime.weckzeit_wochenende",
+                   "input_boolean.wecken_aussetzen", "input_boolean.rollladen_schlafzimmer_sperre",
+                   "input_datetime.nachtruhe", "timer.aufwachlicht", "input_number.dauer_schuhheizung",
+                   "timer.schuhheizung", "switch.bad_on_off_schuhheizung"):
+        assert needed in used, needed
+    assert sorted(used - defined_entities()) == []

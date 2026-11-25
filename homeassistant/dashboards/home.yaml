@@ -1,0 +1,76 @@
+# Everyday controls, replacing the bedroom and settings views of ioBroker's lovelace UI (#2) with built-in cards
+# only. The workday alarm joins once Home Assistant wakes on workdays too; until then it is set in ioBroker.
+title: Zuhause
+views:
+  - title: Schlafzimmer
+    path: schlafzimmer
+    icon: mdi:bed
+    cards:
+      # Only while the wake-up light is dimming
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: timer.aufwachlicht
+            state: active
+        card:
+          type: button
+          name: Aufwachlicht stoppen
+          icon: mdi:close-octagon-outline
+          tap_action:
+            action: perform-action
+            perform_action: timer.cancel
+            target:
+              entity_id: timer.aufwachlicht
+      - type: entities
+        title: Wecker
+        show_header_toggle: false
+        state_color: true
+        entities:
+          - entity: input_boolean.wecker_wochenende
+            name: Wochenende und Feiertage
+            icon: mdi:alarm
+          - type: conditional
+            conditions:
+              - entity: input_boolean.wecker_wochenende
+                state: "on"
+            row:
+              entity: input_datetime.weckzeit_wochenende
+              name: Weckzeit
+          - entity: input_datetime.nachtruhe
+            name: Nachtruhe ab
+          - type: divider
+          - entity: input_boolean.wecken_aussetzen
+            name: Nächstes Wecken aussetzen
+            icon: mdi:sleep
+          - entity: input_boolean.rollladen_schlafzimmer_sperre
+            name: Rollladen nicht automatisch bewegen
+            icon: mdi:window-shutter
+      - type: tile
+        entity: light.schlafzimmer_aufwachlicht
+        name: Aufwachlicht
+        features:
+          - type: light-brightness
+      - type: tile
+        entity: cover.schlafzimmer_shutter_bedroom
+        name: Rollladen
+        features:
+          - type: cover-open-close
+          - type: cover-position
+  - title: Bad
+    path: bad
+    icon: mdi:shoe-formal
+    cards:
+      - type: entities
+        title: Schuhheizung
+        show_header_toggle: false
+        state_color: true
+        entities:
+          - entity: switch.bad_on_off_schuhheizung
+            name: Steckdose
+          - entity: timer.schuhheizung
+            name: Läuft noch
+          - entity: input_number.schuhheizung_rest
+            name: Rest am nächsten Tag
+          - type: divider
+          - entity: input_number.dauer_schuhheizung
+            name: Dauer

@@ -26,7 +26,8 @@ jobs:
         with:
           reporter: github-pr-review
           locale: US
-          ignore: mosquitto
+          # "cancelled" is British spelling, but the name of the timer.cancelled event that Home Assistant fires
+          ignore: mosquitto,cancelled
 
       - name: Action lint
         uses: reviewdog/action-actionlint@ae857e78c1b42b3d0a49637181b09d3d56d402b4 # v1.84.1

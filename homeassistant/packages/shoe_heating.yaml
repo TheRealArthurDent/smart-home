@@ -1,0 +1,120 @@
+# Shoe heating, replacing Node-RED's "Shoe ventilation" (#2).
+# Plugging the plug in heats for the shoe heating duration, but not into night rest: if more than 20 minutes are
+# left until then, it heats until night rest and the rest the next day from the weekend alarm time;
+# otherwise all of it the next day. The timer and the rest survive restarts.
+
+input_number:
+  schuhheizung_rest:
+    name: Shoe heating left for the next day
+    min: 0
+    max: 1440
+    step: 1
+    mode: box
+    unit_of_measurement: min
+    icon: mdi:shoe-formal
+
+timer:
+  schuhheizung:
+    name: Shoe heating
+    restore: true
+
+automation:
+  - id: schuhheizung_start
+    alias: Shoe heating starts when plugged in
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: switch.bad_on_off_schuhheizung
+        from: unavailable
+    actions:
+      - variables:
+          heating_seconds: "{{ (states('input_number.dauer_schuhheizung') | float(0) * 3600) | int }}"
+          # Negative once night rest has begun
+          seconds_until_night_rest: >-
+            {{ (today_at(states('input_datetime.nachtruhe')) - now()).total_seconds() | int }}
+      - choose:
+          - alias: Done before night rest, heat in one go
+            conditions: "{{ heating_seconds <= seconds_until_night_rest }}"
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.bad_on_off_schuhheizung
+              - action: timer.start
+                target:
+                  entity_id: timer.schuhheizung
+                data:
+                  duration: "{{ heating_seconds }}"
+              - action: input_number.set_value
+                target:
+                  entity_id: input_number.schuhheizung_rest
+                data:
+                  value: 0
+          - alias: More than 20 minutes until night rest, heat until then and the rest the next day
+            conditions: "{{ seconds_until_night_rest > 20 * 60 }}"
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.bad_on_off_schuhheizung
+              - action: timer.start
+                target:
+                  entity_id: timer.schuhheizung
+                data:
+                  duration: "{{ seconds_until_night_rest }}"
+              - action: input_number.set_value
+                target:
+                  entity_id: input_number.schuhheizung_rest
+                data:
+                  value: "{{ ((heating_seconds - seconds_until_night_rest) / 60) | round(0, 'ceil') }}"
+        # Too late today: all of it the next day
+        default:
+          - action: timer.cancel
+            target:
+              entity_id: timer.schuhheizung
+          - action: switch.turn_off
+            target:
+              entity_id: switch.bad_on_off_schuhheizung
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.schuhheizung_rest
+            data:
+              value: "{{ (heating_seconds / 60) | round(0, 'ceil') }}"
+
+  - id: schuhheizung_naechster_tag
+    alias: Shoe heating finishes the next day
+    mode: single
+    triggers:
+      - trigger: time
+        at: input_datetime.weckzeit_wochenende
+    conditions:
+      - condition: numeric_state
+        entity_id: input_number.schuhheizung_rest
+        above: 0
+    actions:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.bad_on_off_schuhheizung
+      - action: timer.start
+        target:
+          entity_id: timer.schuhheizung
+        data:
+          duration: "{{ states('input_number.schuhheizung_rest') | int(0) * 60 }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.schuhheizung_rest
+        data:
+          value: 0
+
+  - id: schuhheizung_aus
+    alias: Shoe heating stops
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.schuhheizung
+    actions:
+      # Also when it was unplugged meanwhile
+      - action: switch.turn_off
+        target:
+          entity_id: switch.bad_on_off_schuhheizung
+        continue_on_error: true
