@@ -56,7 +56,7 @@ script:
         {%- elif current | int == wanted -%} there
         {%- elif shutter == 'terrace' and wanted < current | int
              and is_state('binary_sensor.wohnzimmer_openclose_terrace', 'on') -%} door_open
-        {%- elif override or (current | int - states(target_helper) | int(-100)) | abs <= 2 -%} move
+        {%- elif override | default(false) or (current | int - states(target_helper) | int(-100)) | abs <= 2 -%} move
         {%- else -%} moved_by_hand
         {%- endif -%}
     sequence:
@@ -70,7 +70,7 @@ script:
                   entity_id: "{{ cover }}"
                 data:
                   position: "{{ wanted }}"
-              - if: "{{ not keep_target }}"
+              - if: "{{ not keep_target | default(false) }}"
                 then:
                   - action: input_number.set_value
                     target:
@@ -80,7 +80,7 @@ script:
           - alias: Schon dort, nur die Sollposition merken
             conditions: "{{ decision == 'there' }}"
             sequence:
-              - if: "{{ not keep_target }}"
+              - if: "{{ not keep_target | default(false) }}"
                 then:
                   - action: input_number.set_value
                     target:

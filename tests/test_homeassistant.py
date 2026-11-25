@@ -783,7 +783,10 @@ def shutter_move():
 def shutter_decision(shutter, position, current, target, locked=False, override=False, door_open=False):
     """What shutter_move does: its wanted position and decision, rendered like Home Assistant would."""
     script = shutter_move()
-    variables = {"shutter": shutter, "position": position, "override": override}
+    # Home Assistant passes a field only when the call sets it; its default only fills the UI
+    variables = {"shutter": shutter, "position": position}
+    if override:
+        variables["override"] = True
     states = {f"input_number.shutter_{shutter}_target": str(target),
               f"input_boolean.shutter_{shutter}_locked": "on" if locked else "off",
               TERRACE_DOOR: "on" if door_open else "off"}
@@ -836,7 +839,7 @@ def test_shutter_move_acts_on_its_decision():
     store = {"action": "input_number.set_value", "target": {"entity_id": "{{ target_helper }}"},
              "data": {"value": "{{ wanted }}"}}
     # The terrace door opens the shutter without changing the target it returns to
-    assert move[1] == {"if": "{{ not keep_target }}", "then": [store]}
+    assert move[1] == {"if": "{{ not keep_target | default(false) }}", "then": [store]}
     assert branches["{{ decision == 'there' }}"] == move[1:]
     assert branches["{{ decision == 'door_open' }}"] == [store]
     assert script["mode"] == "parallel"
