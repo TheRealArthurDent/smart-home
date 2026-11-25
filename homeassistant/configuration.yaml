@@ -30,6 +30,12 @@ lovelace:
       title: Zuhause
       icon: mdi:home
       show_in_sidebar: true
+    dashboard-devices:
+      mode: yaml
+      filename: dashboards/devices.yaml
+      title: Geräte
+      icon: mdi:devices
+      show_in_sidebar: true
 
 # Sandbox for prototypes made in the UI or through the MCP server, kept in the volume, not in the repo. What works
 # moves into a package; then its prototype is deleted. The smart_home role creates the files empty.

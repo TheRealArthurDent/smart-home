@@ -1,4 +1,5 @@
 # Read by codespell (spell-check.yaml) next to the action's inputs.
 [codespell]
-# Home Assistant shows German: names, aliases, descriptions and titles in homeassistant/ (see CLAUDE.md)
-ignore-regex = ^\s*-?\s*(name|alias|description|title|stop): .*$
+# Home Assistant shows German: names, aliases, descriptions, titles, headings and card texts in homeassistant/
+# (see CLAUDE.md)
+ignore-regex = ^\s*-?\s*(name|alias|description|title|stop|heading|content): .*$

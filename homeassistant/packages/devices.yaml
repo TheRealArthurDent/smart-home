@@ -1,0 +1,47 @@
+# Device status, replacing Grafana's "Device status" dashboard (#2), shown by dashboards/devices.yaml.
+# The counts take every device of the house's integrations (deCONZ, Shelly, Sonos), so a new device counts without an
+# edit here. Home Assistant renders templates over all states at most once a minute.
+
+template:
+  - sensor:
+      - name: Nicht erreichbare Geräte
+        unique_id: unreachable_devices
+        default_entity_id: sensor.unreachable_devices
+        icon: mdi:lan-disconnect
+        unit_of_measurement: Geräte
+        state_class: measurement
+        # Devices, not entities: a climate sensor with three unavailable values is one device. The shoe heating's
+        # plug is unavailable whenever it is unplugged, which is how it is used.
+        state: >-
+          {{ (integration_entities('deconz') + integration_entities('shelly') + integration_entities('sonos'))
+             | reject('eq', 'switch.bad_on_off_schuhheizung') | select('is_state', 'unavailable')
+             | map('device_id') | reject('none') | unique | list | count }}
+      - name: Batterien schwach
+        unique_id: low_batteries
+        default_entity_id: sensor.low_batteries
+        icon: mdi:battery-alert
+        unit_of_measurement: Batterien
+        state_class: measurement
+        state: >-
+          {{ integration_entities('deconz') | select('is_state_attr', 'device_class', 'battery')
+             | map('states') | map('float', none) | reject('none') | select('lt', 20) | list | count }}
+      - name: Niedrigster Batteriestand
+        unique_id: lowest_battery
+        default_entity_id: sensor.lowest_battery
+        device_class: battery
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: >-
+          {% set levels = integration_entities('deconz') | select('is_state_attr', 'device_class', 'battery')
+               | map('states') | map('float', none) | reject('none') | list %}
+          {{ levels | min if levels else none }}
+      - name: Warnungen der Shellies
+        unique_id: device_warnings
+        default_entity_id: sensor.device_warnings
+        icon: mdi:alert
+        unit_of_measurement: Warnungen
+        state_class: measurement
+        # Overheating, overload, overcurrent, overvoltage: the Shellies' binary sensors, on while it applies
+        state: >-
+          {{ integration_entities('shelly') | select('match', 'binary_sensor[.]') | select('is_state', 'on')
+             | list | count }}

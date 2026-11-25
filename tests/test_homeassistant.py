@@ -1044,3 +1044,106 @@ def test_the_home_dashboard_moves_and_locks_every_shutter():
 def test_every_shutter_has_a_twin_on_testbench():
     twins = {e["default_entity_id"] for _, e in template_entities(virtual_devices())}
     assert set(COVERS.values()) | {TERRACE_DOOR} <= twins
+
+
+# Device status, replacing Grafana's "Device status" dashboard: unreachable devices, battery levels and the
+# Shellies' warnings. The counts find devices by integration, so a new device counts without an edit here.
+DEVICE_STATES = {
+    # entity: (integration, device, state, device_class)
+    "light.wohnzimmer_dekolights": ("deconz", "dekolights", "unavailable", None),
+    "sensor.wohnzimmer_wohnzimmer_2": ("deconz", "climate", "unavailable", "temperature"),
+    "sensor.wohnzimmer_wohnzimmer": ("deconz", "climate", "unavailable", "humidity"),
+    "sensor.wohnzimmer_wohnzimmer_battery": ("deconz", "climate", "unavailable", "battery"),
+    "sensor.buro_button_battery": ("deconz", "button", "16", "battery"),
+    "sensor.flur_switch_battery": ("deconz", "switch", "34", "battery"),
+    "switch.bad_on_off_schuhheizung": ("deconz", "shoes", "unavailable", None),
+    "cover.buro_shutter_office": ("shelly", "shutter", "open", "shutter"),
+    "binary_sensor.buro_shutter_office_uberhitzung": ("shelly", "shutter", "on", "problem"),
+    "binary_sensor.buro_shutter_office_uberlast": ("shelly", "shutter", "off", "problem"),
+    "media_player.bad_bad": ("sonos", "sonos", "unavailable", None),
+    "sensor.phone_battery_level": ("mobile_app", "phone", "5", "battery"),
+    "binary_sensor.fritz_box_7490_verbindung": ("fritz", "fritz", "unavailable", "connectivity"),
+}
+
+
+def render_device_template(template):
+    env = jinja2.Environment()
+    env.filters["device_id"] = lambda entity: DEVICE_STATES[entity][1]
+    env.filters["states"] = lambda entity: DEVICE_STATES[entity][2]
+    env.filters["float"] = lambda value, default=0.0: float(value) if value.replace(".", "").isdigit() else default
+    env.tests["is_state"] = lambda entity, state: DEVICE_STATES[entity][2] == state
+    env.tests["is_state_attr"] = (
+        lambda entity, name, value: name == "device_class" and DEVICE_STATES[entity][3] == value)
+    env.tests["match"] = lambda value, pattern: re.match(pattern, value) is not None
+    env.tests["none"] = lambda value: value is None
+
+    def integration_entities(integration):
+        return [e for e, (i, *_) in DEVICE_STATES.items() if i == integration]
+
+    return env.from_string(template).render(integration_entities=integration_entities).strip()
+
+
+def device_sensors():
+    return {e["default_entity_id"]: e for _, e in template_entities(package("devices"))}
+
+
+def test_unreachable_devices_count_devices_not_entities():
+    """Three unavailable entities of one device count once; the unplugged shoe heating is no fault, the FRITZ!Box no
+    house device."""
+    assert render_device_template(device_sensors()["sensor.unreachable_devices"]["state"]) == "3"
+
+
+def test_battery_sensors_count_the_house_devices_only():
+    """deCONZ's batteries; a phone's battery is no device of the house."""
+    sensors = device_sensors()
+    assert render_device_template(sensors["sensor.low_batteries"]["state"]) == "1"
+    assert float(render_device_template(sensors["sensor.lowest_battery"]["state"])) == 16
+    assert sensors["sensor.lowest_battery"]["device_class"] == "battery"
+
+
+def test_shelly_warnings_count_their_problem_sensors_that_are_on():
+    assert render_device_template(device_sensors()["sensor.device_warnings"]["state"]) == "1"
+
+
+def device_dashboard():
+    return yaml.safe_load((CONFIG_DIR / "dashboards" / "devices.yaml").read_text())
+
+
+def dashboard_cards(dashboard):
+    return [card for view in dashboard["views"] for section in view.get("sections", [])
+            for card in section["cards"]]
+
+
+def test_the_devices_dashboard_is_a_built_in_sections_view():
+    dashboard = configuration()["lovelace"]["dashboards"]["dashboard-devices"]
+    assert dashboard["mode"] == "yaml"
+    assert dashboard["filename"] == "dashboards/devices.yaml"
+    text = (CONFIG_DIR / "dashboards" / "devices.yaml").read_text()
+    assert "custom:" not in text
+    assert [view["type"] for view in device_dashboard()["views"]] == ["sections"]
+    for sensor in device_sensors():
+        assert sensor in text, sensor
+
+
+def test_device_tiles_show_only_while_something_is_wrong():
+    """Unreachable devices and low batteries show up as tiles of their own; the rest of the time those sections only
+    say that all is well."""
+    reachability, low = [], []
+    for card in dashboard_cards(device_dashboard()):
+        for condition in card.get("visibility", []):
+            if card["type"] == "tile" and condition.get("state") == "unavailable":
+                assert condition["entity"] == card["entity"]
+                reachability.append(card["entity"])
+            if card["type"] == "tile" and condition.get("below") == 20:
+                assert condition["entity"] == card["entity"]
+                low.append(card["entity"])
+    assert len(reachability) == len(set(reachability)) > 40
+    assert "switch.bad_on_off_schuhheizung" not in reachability
+    assert len(low) == len(set(low)) > 15
+    assert all(entity.endswith("_battery") for entity in low)
+
+
+def test_the_devices_dashboard_holds_no_personal_devices():
+    """Phones and their trackers carry their owners' names."""
+    text = "".join((CONFIG_DIR / folder / "devices.yaml").read_text() for folder in ("dashboards", "packages"))
+    assert "device_tracker." not in text and "mobile_app" not in text
