@@ -8,4 +8,6 @@ Long waits are timer helpers, not `delay`, so they survive a restart. No private
 chat ids) goes into these files.
 
 `virtual_devices.yaml` is the exception: it includes `homeassistant-virtual/` (mounted at `/config/virtual`), which
-the smart_home role fills only on testbench. A device a package uses needs a twin there.
+the smart_home role fills only on testbench. A device a package uses needs a twin there. `real_devices.yaml` is its
+counterpart: it includes `homeassistant-real/` (mounted at `/config/real`), the integrations of the real devices
+(Sonos), which the role fills only where there are no twins (raspi).

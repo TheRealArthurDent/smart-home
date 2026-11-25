@@ -47,7 +47,10 @@ Never push from a clone of the old repo: it would bring back the old history.
   scripts and helpers), mounted read-only; integrations are set up in the UI and live in the volume
 - `homeassistant-virtual/` – virtual twins of the devices the packages use (state kept in helpers, a script for
   deCONZ button events), deployed only where `smart_home_homeassistant_virtual_devices` is set (testbench, which has
-  no Zigbee stick and no Shellies); `tests/test_homeassistant.py` fails when a package uses a device without a twin
+  no Zigbee stick and no Shellies, and shares the network with the real Sonos speakers); `tests/test_homeassistant.py`
+  fails when a package uses a device without a twin
+- `homeassistant-real/` – the other way round: integrations of real devices testbench must not reach (Sonos),
+  deployed only where `smart_home_homeassistant_virtual_devices` is off (raspi)
 - `grafana-provisioning/` – Grafana datasources, dashboards (`dashboards/provisioned/*.json`, linted in CI with
   `dashboard-linter`, exclusions in `.lint`) and alerting (rules, contact points, templates)
 - `doc/` – notes on the measurement concept

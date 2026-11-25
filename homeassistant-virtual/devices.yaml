@@ -1,12 +1,14 @@
 # Virtual twins of the devices the packages use, for testbench only: it has neither the Zigbee stick nor the Shellies
-# of raspi (#2). The smart_home role copies this directory to hosts with smart_home_homeassistant_virtual_devices
-# and keeps it empty everywhere else; packages/virtual_devices.yaml includes it.
+# of raspi, and its Sonos twins keep it off the house's real speakers (#2). The smart_home role copies this directory
+# to hosts with smart_home_homeassistant_virtual_devices and keeps it empty everywhere else;
+# packages/virtual_devices.yaml includes it.
 #
 # Each twin has the entity id of the real device and keeps its state in a helper (virtual_<object id>), so an
 # automation switching it changes a state that can be read back, and that survives a restart. Sensors are switched
 # by hand through their helper (a measuring sensor through its input_number), a shutter through its position
 # helper, a plug's plugging in through its plugged_in helper. Buttons have no state: the script
-# virtual_button_press fires their deconz_event.
+# virtual_button_press fires their deconz_event. A Sonos speaker plays while its helper is on and counts its
+# skipped tracks in a second one.
 # tests/test_homeassistant.py fails when a package uses a device without a twin here.
 
 input_boolean:
@@ -24,6 +26,8 @@ input_boolean:
     name: Homeoffice (virtuell)
   virtual_bad_on_off_schuhheizung:
     name: Schuhheizung (virtuell)
+  virtual_wohnzimmer_on_off_sonos:
+    name: On/Off Sonos (virtuell)
   virtual_bad_on_off_schuhheizung_plugged_in:
     name: Schuhheizung eingesteckt (virtuell)
     icon: mdi:power-plug
@@ -36,8 +40,35 @@ input_boolean:
   virtual_wohnzimmer_openclose_terrace:
     name: Terrassentür offen (virtuell)
     icon: mdi:door-open
+  virtual_wohnzimmer_wohnzimmer:
+    name: Sonos Wohnzimmer spielt (virtuell)
+    icon: mdi:speaker
+  virtual_buro_buro:
+    name: Sonos Büro spielt (virtuell)
+    icon: mdi:speaker
+  virtual_bad_bad:
+    name: Sonos Bad spielt (virtuell)
+    icon: mdi:speaker
 
 input_number:
+  virtual_wohnzimmer_wohnzimmer_track:
+    name: Sonos Wohnzimmer, Titel (virtuell)
+    min: 0
+    max: 1000
+    step: 1
+    mode: box
+  virtual_buro_buro_track:
+    name: Sonos Büro, Titel (virtuell)
+    min: 0
+    max: 1000
+    step: 1
+    mode: box
+  virtual_bad_bad_track:
+    name: Sonos Bad, Titel (virtuell)
+    min: 0
+    max: 1000
+    step: 1
+    mode: box
   virtual_schlafzimmer_shutter_bedroom_position:
     name: Rollladen Schlafzimmer, Position (virtuell)
     min: 0
@@ -111,6 +142,75 @@ input_number:
     max: 255
     step: 1
     mode: box
+
+# The Sonos speakers; a universal player's entity id comes from its name (media_player.wohnzimmer_wohnzimmer)
+media_player:
+  - platform: universal
+    name: Wohnzimmer Wohnzimmer
+    unique_id: virtual_wohnzimmer_wohnzimmer
+    children: []
+    state_template: "{{ 'playing' if is_state('input_boolean.virtual_wohnzimmer_wohnzimmer', 'on') else 'idle' }}"
+    commands:
+      media_play:
+        action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.virtual_wohnzimmer_wohnzimmer
+      media_pause:
+        action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.virtual_wohnzimmer_wohnzimmer
+      media_stop:
+        action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.virtual_wohnzimmer_wohnzimmer
+      media_next_track:
+        action: input_number.increment
+        target:
+          entity_id: input_number.virtual_wohnzimmer_wohnzimmer_track
+  - platform: universal
+    name: Büro Büro
+    unique_id: virtual_buro_buro
+    children: []
+    state_template: "{{ 'playing' if is_state('input_boolean.virtual_buro_buro', 'on') else 'idle' }}"
+    commands:
+      media_play:
+        action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.virtual_buro_buro
+      media_pause:
+        action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.virtual_buro_buro
+      media_stop:
+        action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.virtual_buro_buro
+      media_next_track:
+        action: input_number.increment
+        target:
+          entity_id: input_number.virtual_buro_buro_track
+  - platform: universal
+    name: Bad Bad
+    unique_id: virtual_bad_bad
+    children: []
+    state_template: "{{ 'playing' if is_state('input_boolean.virtual_bad_bad', 'on') else 'idle' }}"
+    commands:
+      media_play:
+        action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.virtual_bad_bad
+      media_pause:
+        action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.virtual_bad_bad
+      media_stop:
+        action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.virtual_bad_bad
+      media_next_track:
+        action: input_number.increment
+        target:
+          entity_id: input_number.virtual_bad_bad_track
 
 template:
   - light:
@@ -227,6 +327,18 @@ template:
           - action: input_boolean.turn_off
             target:
               entity_id: input_boolean.virtual_buro_on_off_homeoffice
+      - name: On/Off Sonos
+        unique_id: virtual_wohnzimmer_on_off_sonos
+        default_entity_id: switch.wohnzimmer_on_off_sonos
+        state: "{{ is_state('input_boolean.virtual_wohnzimmer_on_off_sonos', 'on') }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_on_off_sonos
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_on_off_sonos
       - name: Schuhheizung
         unique_id: virtual_bad_on_off_schuhheizung
         default_entity_id: switch.bad_on_off_schuhheizung

@@ -42,8 +42,12 @@ jobs:
             echo '[]' > "$config/scenes.yaml"
             # Mounted at /config/virtual; the role fills it on testbench only
             mkdir "$config/virtual"
+            # Mounted at /config/real; the role fills it where the virtual devices aren't
+            mkdir "$config/real"
             if [ "$virtual" = with ]; then
               cp -r homeassistant-virtual/. "$config/virtual"
+            else
+              cp -r homeassistant-real/. "$config/real"
             fi
             docker run --rm \
               --env SONOS_ADVERTISE_ADDR=192.0.2.1 \
