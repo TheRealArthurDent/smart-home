@@ -1418,3 +1418,22 @@ def test_the_changing_clothes_buttons_move_the_bedroom_shutter():
             assert render(position, trigger={"event": {"data": {"event": event}}}) == wanted, (automation_id, event)
         assert render(position, trigger={"event": {"data": {"event": 1001}}}) == ""
         assert shutter_calls(item["actions"]) == [("bedroom", "{{ position }}", True)]
+
+
+# The outside temperature on MQTT for the display next to the door (an ESP8266 reads it), as ioBroker's mqtt-client
+# published deconz.0.Sensors.41.temperature: retained, QoS 1.
+OUTSIDE_TEMPERATURE = "sensor.garten_aussentemperatur2"
+
+
+def test_the_outside_temperature_goes_to_mqtt_retained():
+    publish = automation("climate", "outside_temperature_to_mqtt")
+    triggers = {t["trigger"]: t for t in publish["triggers"]}
+    assert triggers["state"]["entity_id"] == OUTSIDE_TEMPERATURE and "to" not in triggers["state"]
+    # After a restart the display gets the value again, without waiting for the sensor's next report
+    assert triggers["homeassistant"]["event"] == "start"
+    assert publish["conditions"] == [{"condition": "template",
+                                      "value_template": f"{{{{ states('{OUTSIDE_TEMPERATURE}') | is_number }}}}"}]
+    assert publish["actions"] == [{"action": "mqtt.publish", "data": {
+        "topic": "climate/outside/temperature", "payload": f"{{{{ states('{OUTSIDE_TEMPERATURE}') }}}}",
+        "qos": 1, "retain": True}}]
+    assert publish["mode"] == "queued"
