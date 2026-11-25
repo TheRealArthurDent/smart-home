@@ -1,0 +1,130 @@
+# Good night and changing clothes, replacing Node-RED's "Button | Good night" and "Bedroom | Changing cloth" (#2).
+# deCONZ buttons fire deconz_event with the device's IEEE address as unique_id; 1002 = "on" pressed, 2002 = "off"
+# pressed. Every shutter moves through script.shutter_move with override, as in Node-RED.
+
+automation:
+  - id: good_night
+    alias: Nacht-Taste im Flur beendet den Tag
+    description: Dekobeleuchtung und Sonos aus, Büro, Küche, Terrasse halb zu, Garten und Schlafzimmer ganz zu.
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "18:7a:3e:ff:fe:f1:68:1f"
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.event.data.event == 2002 }}"
+    actions:
+      - action: light.turn_off
+        target:
+          entity_id: light.wohnzimmer_dekolights
+      # A speaker that is off or unreachable must not stop the shutters
+      - action: media_player.media_stop
+        continue_on_error: true
+        target:
+          entity_id:
+            - media_player.wohnzimmer_wohnzimmer
+            - media_player.buro_buro
+            - media_player.bad_bad
+      - repeat:
+          for_each:
+            - office
+            - kitchen
+            - terrace
+          sequence:
+            - action: script.shutter_move
+              data:
+                shutter: "{{ repeat.item }}"
+                position: half_open
+                override: true
+      - action: script.shutter_move
+        data:
+          shutter: garden
+          position: closed
+          override: true
+      - if:
+          - condition: numeric_state
+            entity_id: cover.schlafzimmer_shutter_bedroom
+            attribute: current_position
+            above: 70
+        then:
+          - action: script.shutter_move
+            data:
+              shutter: bedroom
+              position: closed
+              override: true
+
+  - id: good_morning
+    alias: Tag-Taste im Flur öffnet alle Rollläden
+    description: Entsperrt den Rollladen im Schlafzimmer und öffnet alle; beendet auch ein laufendes Wecken.
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "18:7a:3e:ff:fe:f1:68:1f"
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.event.data.event == 1002 }}"
+    actions:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.shutter_bedroom_locked
+      - delay:
+          seconds: 1
+      - repeat:
+          for_each:
+            - office
+            - kitchen
+            - terrace
+            - garden
+            - bedroom
+          sequence:
+            - action: script.shutter_move
+              data:
+                shutter: "{{ repeat.item }}"
+                position: open
+                override: true
+
+  - id: changing_clothes_switch
+    alias: Umziehen-Schalter am Bett bewegt den Rollladen Schlafzimmer
+    description: An schließt den Rollladen halb, Aus öffnet ihn.
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "70:ac:08:ff:fe:db:de:23"
+    variables:
+      position: "{{ {1002: 'half_open', 2002: 'open'}.get(trigger.event.data.event, '') }}"
+    conditions:
+      - condition: template
+        value_template: "{{ position != '' }}"
+    actions:
+      - action: script.shutter_move
+        data:
+          shutter: bedroom
+          position: "{{ position }}"
+          override: true
+
+  - id: changing_clothes_dimmer
+    alias: Umziehen-Dimmer im Bad bewegt den Rollladen Schlafzimmer
+    description: An öffnet den Rollladen, Aus schließt ihn halb.
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "d4:48:67:ff:fe:22:93:16"
+    variables:
+      position: "{{ {1002: 'open', 2002: 'half_open'}.get(trigger.event.data.event, '') }}"
+    conditions:
+      - condition: template
+        value_template: "{{ position != '' }}"
+    actions:
+      - action: script.shutter_move
+        data:
+          shutter: bedroom
+          position: "{{ position }}"
+          override: true
