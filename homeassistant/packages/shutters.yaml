@@ -60,6 +60,7 @@ script:
         {%- else -%} moved_by_hand
         {%- endif -%}
     sequence:
+      # Locked, unavailable or moved by hand: no branch, the shutter stays where it is
       - choose:
           - alias: Bewegen
             conditions: "{{ decision == 'move' }}"
@@ -94,7 +95,6 @@ script:
                   entity_id: "{{ target_helper }}"
                 data:
                   value: "{{ wanted }}"
-        # Locked, unavailable or moved by hand: stays where it is
 
 automation:
   - id: shutters_dusk
