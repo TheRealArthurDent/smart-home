@@ -1147,3 +1147,59 @@ def test_the_devices_dashboard_holds_no_personal_devices():
     """Phones and their trackers carry their owners' names."""
     text = "".join((CONFIG_DIR / folder / "devices.yaml").read_text() for folder in ("dashboards", "packages"))
     assert "device_tracker." not in text and "mobile_app" not in text
+
+
+# Good night and changing clothes, replacing Node-RED's "Button | Good night" and "Bedroom | Changing cloth".
+DAY_NIGHT_SWITCH = "18:7a:3e:ff:fe:f1:68:1f"
+SONOS = ["media_player.wohnzimmer_wohnzimmer", "media_player.buro_buro", "media_player.bad_bad"]
+
+
+def button_trigger(item):
+    assert [t["event_type"] for t in item["triggers"]] == ["deconz_event"]
+    return item["triggers"][0]["event_data"]["unique_id"], item["conditions"]
+
+
+def test_the_night_button_ends_the_day():
+    """Night on the corridor's day/night switch: decoration lights and Sonos off, shutters half closed, garden closed,
+    the bedroom closed unless it is mostly closed already. All over a manual change."""
+    night = automation("good_night", "good_night")
+    unique_id, conditions = button_trigger(night)
+    assert unique_id == DAY_NIGHT_SWITCH and "2002" in str(conditions)
+    found = targets(night["actions"])
+    assert "light.wohnzimmer_dekolights" in found
+    assert all(speaker in found for speaker in SONOS)
+    stop = next(a for a in night["actions"] if a.get("action") == "media_player.media_stop")
+    assert stop["continue_on_error"] is True
+    assert sorted(shutter_calls(night["actions"])) == sorted(
+        [(s, "half_open", True) for s in ("office", "kitchen", "terrace")]
+        + [("garden", "closed", True), ("bedroom", "closed", True)])
+    bedroom = next(a for a in night["actions"] if "bedroom" in str(a.get("then")))
+    assert bedroom["if"] == [{"condition": "numeric_state", "entity_id": "cover.schlafzimmer_shutter_bedroom",
+                              "attribute": "current_position", "above": 70}]
+
+
+def test_the_day_button_opens_all_shutters_and_unlocks_the_bedroom():
+    """Day on the same switch also ends a wake-up (wakeup.yaml)."""
+    day = automation("good_night", "good_morning")
+    unique_id, conditions = button_trigger(day)
+    assert unique_id == DAY_NIGHT_SWITCH and "1002" in str(conditions)
+    assert day["actions"][0] == {"action": "input_boolean.turn_off",
+                                 "target": {"entity_id": "input_boolean.shutter_bedroom_locked"}}
+    assert sorted(shutter_calls(day["actions"])) == sorted(
+        (s, "open", True) for s in ("office", "kitchen", "terrace", "garden", "bedroom"))
+
+
+def test_the_changing_clothes_buttons_move_the_bedroom_shutter():
+    """Two buttons, each with on and off: one half-opens or opens the bedroom shutter, the other the other way round."""
+    expected = {"changing_clothes_switch": ("70:ac:08:ff:fe:db:de:23", {1002: "half_open", 2002: "open"}),
+                "changing_clothes_dimmer": ("d4:48:67:ff:fe:22:93:16", {1002: "open", 2002: "half_open"})}
+    for automation_id, (expected_id, positions) in expected.items():
+        item = automation("good_night", automation_id)
+        unique_id, conditions = button_trigger(item)
+        assert unique_id == expected_id, automation_id
+        assert conditions == [{"condition": "template", "value_template": "{{ position != '' }}"}]
+        position = item["variables"]["position"]
+        for event, wanted in positions.items():
+            assert render(position, trigger={"event": {"data": {"event": event}}}) == wanted, (automation_id, event)
+        assert render(position, trigger={"event": {"data": {"event": 1001}}}) == ""
+        assert shutter_calls(item["actions"]) == [("bedroom", "{{ position }}", True)]
