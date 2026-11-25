@@ -26,7 +26,7 @@ jobs:
         with:
           reporter: github-pr-review
           locale: US
-          # cancelled: Home Assistant spells its timer.cancelled event that way
+          # "cancelled" is British spelling, but the name of the timer.cancelled event that Home Assistant fires
           ignore: mosquitto,cancelled
 
       - name: Action lint
