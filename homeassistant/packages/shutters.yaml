@@ -97,6 +97,35 @@ script:
                   value: "{{ wanted }}"
 
 template:
+  # OpenWeatherMap's free "forecast" mode (set in the app) gives 3-hourly values; today's maximum above 24 °C with
+  # clouds below 30 % on average is a hot, clear day, as Node-RED took it from ioBroker's daily values
+  - triggers:
+      # Hourly, and at start
+      - trigger: time_pattern
+        minutes: 5
+      - trigger: homeassistant
+        event: start
+    actions:
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.garten_openweathermap
+        data:
+          type: hourly
+        response_variable: forecast
+    binary_sensor:
+      - name: Heißer, klarer Tag vorhergesagt
+        unique_id: hot_clear_day_forecast
+        default_entity_id: binary_sensor.hot_clear_day_forecast
+        icon: mdi:weather-sunny-alert
+        state: >-
+          {% set ns = namespace(temperatures=[], clouds=[]) %}
+          {% for entry in forecast['weather.garten_openweathermap'].forecast
+               if (entry.datetime | as_datetime | as_local).date() == now().date() %}
+            {% set ns.temperatures = ns.temperatures + [entry.temperature] %}
+            {% set ns.clouds = ns.clouds + [entry.cloud_coverage] %}
+          {% endfor %}
+          {{ ns.temperatures | count > 0 and ns.temperatures | max > 24
+             and (ns.clouds | sum / ns.clouds | count) < 30 }}
   - binary_sensor:
       - name: Hitzeschutz nötig
         unique_id: heat_protection
@@ -168,8 +197,11 @@ automation:
         id: dawn
     actions:
       - variables:
-          # The eastern shutters stay half open while heat protection is needed
-          eastern: "{{ 'half_open' if is_state('binary_sensor.heat_protection', 'on') else 'open' }}"
+          # The eastern shutters stay half open while heat protection is needed, and at 40 on a hot, clear day
+          eastern: >-
+            {% if is_state('binary_sensor.heat_protection', 'on') %}half_open
+            {% elif is_state('binary_sensor.hot_clear_day_forecast', 'on') %}40
+            {% else %}open{% endif %}
       - repeat:
           for_each:
             - kitchen

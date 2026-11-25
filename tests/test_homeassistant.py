@@ -906,9 +906,10 @@ def test_shutters_open_in_the_morning_but_not_on_guests_or_sleepers():
         [(s, "{{ eastern }}", True) for s in ("kitchen", "garden", "bedroom")]
         + [(s, "open", True) for s in ("terrace", "office")])
     eastern = next(a for a in morning["actions"] if "variables" in a)["variables"]["eastern"]
-    for heat, expected in (("on", "half_open"), ("off", "open"), ("unavailable", "open")):
-        states = {HEAT: heat}
-        assert render(eastern, is_state=is_state_of(states)) == expected, heat
+    for heat, forecast, expected in (("on", "on", "half_open"), ("on", "off", "half_open"), ("off", "on", "40"),
+                                     ("off", "off", "open"), ("unavailable", "unavailable", "open")):
+        states = {HEAT: heat, HOT_DAY: forecast}
+        assert render(eastern, is_state=is_state_of(states)) == expected, (heat, forecast)
     office = next(a for a in morning["actions"] if "office" in str(a.get("then")))
     assert office["if"] == [{"condition": "state", "entity_id": "input_boolean.guests", "state": "off"}]
     bedroom = next(a for a in morning["actions"] if "bedroom" in str(a.get("then")))
@@ -916,6 +917,43 @@ def test_shutters_open_in_the_morning_but_not_on_guests_or_sleepers():
 
 
 HEAT = "binary_sensor.heat_protection"
+HOT_DAY = "binary_sensor.hot_clear_day_forecast"
+
+
+def hot_day_forecast():
+    return next(block for block in package("shutters")["template"] if "triggers" in block)
+
+
+def hot_day(entries, now):
+    """The forecast sensor's state for 3-hourly forecast entries of (hour from now's midnight, °C, cloud %)."""
+    midnight = now.replace(hour=0, minute=0)
+    forecast = [{"datetime": midnight + datetime.timedelta(hours=h), "temperature": t, "cloud_coverage": c}
+                for h, t, c in entries]
+    env = jinja2.Environment()
+    env.filters["as_datetime"] = lambda value, default=None: value
+    env.filters["as_local"] = lambda value: value
+    sensor = hot_day_forecast()["binary_sensor"][0]
+    context = {"forecast": {"weather.garten_openweathermap": {"forecast": forecast}}, "now": lambda: now}
+    return env.from_string(sensor["state"]).render(**context).strip() == "True"
+
+
+def test_a_hot_clear_day_comes_from_the_free_3_hourly_forecast():
+    """Node-RED took ioBroker's daily values of OpenWeatherMap: today's maximum above 24 °C and clouds below 30 %.
+    The free forecast mode gives 3-hourly values; today's are taken, as ioBroker did."""
+    block = hot_day_forecast()
+    action = block["actions"][0]
+    assert action["action"] == "weather.get_forecasts"
+    assert action["target"] == {"entity_id": "weather.garten_openweathermap"}
+    assert action["data"] == {"type": "hourly"}
+    assert action["response_variable"] == "forecast"
+    assert block["binary_sensor"][0]["default_entity_id"] == HOT_DAY
+    now = datetime.datetime(2026, 7, 1, 6, 0)
+    assert hot_day([(9, 20, 10), (12, 25, 20), (15, 26, 30)], now)
+    assert not hot_day([(9, 20, 10), (12, 24, 20), (15, 23, 30)], now)
+    assert not hot_day([(9, 20, 40), (12, 25, 40), (15, 26, 30)], now)
+    # Tomorrow's heat doesn't count
+    assert not hot_day([(12, 22, 10), (36, 30, 10)], now)
+    assert not hot_day([], now)
 LIVING_ROOM_LUX = "sensor.wohnzimmer_lichtsensor_wohnzimmer"
 LIVING_ROOM_TEMPERATURE = "sensor.wohnzimmer_wohnzimmer_2"
 
