@@ -3,118 +3,118 @@
 # and deployments. The start values are set once, by the automation at the end.
 
 input_boolean:
-  wecker_werktag:
-    name: Wake-up alarm on workdays
+  wake_up_workday:
+    name: Wecker an Werktagen
     icon: mdi:alarm
-  wecker_wochenende:
-    name: Wake-up alarm on weekends and holidays
+  wake_up_weekend:
+    name: Wecker am Wochenende und an Feiertagen
     icon: mdi:alarm
-  wecken_aussetzen:
-    name: Skip the next wake-up
+  skip_next_wake_up:
+    name: Nächstes Wecken aussetzen
     icon: mdi:alarm-off
-  gaeste:
-    name: Guests present
+  guests:
+    name: Gäste da
     icon: mdi:account-multiple
-  abend:
-    name: Evening
+  evening:
+    name: Abend
     icon: mdi:weather-sunset
-  rollladen_buero_sperre:
-    name: Shutter office, no automatic moves
+  shutter_office_locked:
+    name: Rollladen Büro nicht automatisch bewegen
     icon: mdi:window-shutter-alert
-  rollladen_kueche_sperre:
-    name: Shutter kitchen, no automatic moves
+  shutter_kitchen_locked:
+    name: Rollladen Küche nicht automatisch bewegen
     icon: mdi:window-shutter-alert
-  rollladen_schlafzimmer_sperre:
-    name: Shutter bedroom, no automatic moves
+  shutter_bedroom_locked:
+    name: Rollladen Schlafzimmer nicht automatisch bewegen
     icon: mdi:window-shutter-alert
-  rollladen_garten_sperre:
-    name: Shutter garden, no automatic moves
+  shutter_garden_locked:
+    name: Rollladen Garten nicht automatisch bewegen
     icon: mdi:window-shutter-alert
-  rollladen_terrasse_sperre:
-    name: Shutter terrace, no automatic moves
+  shutter_terrace_locked:
+    name: Rollladen Terrasse nicht automatisch bewegen
     icon: mdi:window-shutter-alert
-  helfer_startwerte_gesetzt:
-    name: Helper start values set
+  helper_start_values_set:
+    name: Startwerte der Helfer gesetzt
     icon: mdi:check-circle-outline
 
 input_datetime:
-  weckzeit_werktag:
-    name: Wake-up time on workdays
+  wake_up_time_workday:
+    name: Weckzeit an Werktagen
     has_date: false
     has_time: true
-  weckzeit_wochenende:
-    name: Wake-up time on weekends and holidays
+  wake_up_time_weekend:
+    name: Weckzeit am Wochenende und an Feiertagen
     has_date: false
     has_time: true
-  nachtruhe:
-    name: Night rest from
+  night_rest:
+    name: Nachtruhe ab
     has_date: false
     has_time: true
 
 input_number:
-  dauer_schuhheizung:
-    name: Shoe heating duration
+  shoe_heating_duration:
+    name: Dauer der Schuhheizung
     min: 0
     max: 24
     step: 0.5
     unit_of_measurement: h
     icon: mdi:shoe-formal
-  rollladen_helligkeit:
-    name: Heat protection brightness (with temperature)
+  shutter_brightness:
+    name: Hitzeschutz Helligkeit (mit Temperatur)
     min: 0
     max: 100000
     step: 1000
     mode: box
     unit_of_measurement: lx
-  rollladen_helligkeit_max:
-    name: Heat protection brightness (alone)
+  shutter_brightness_max:
+    name: Hitzeschutz Helligkeit (allein)
     min: 0
     max: 100000
     step: 1000
     mode: box
     unit_of_measurement: lx
-  rollladen_temperatur:
-    name: Heat protection temperature (with brightness)
+  shutter_temperature:
+    name: Hitzeschutz Temperatur (mit Helligkeit)
     min: 0
     max: 40
     step: 0.5
     unit_of_measurement: °C
-  rollladen_temperatur_max:
-    name: Heat protection temperature (alone)
+  shutter_temperature_max:
+    name: Hitzeschutz Temperatur (allein)
     min: 0
     max: 40
     step: 0.5
     unit_of_measurement: °C
-  rollladen_buero_soll:
-    name: Shutter office, desired position
+  shutter_office_target:
+    name: Rollladen Büro, Sollposition
     min: 0
     max: 100
     step: 1
     unit_of_measurement: "%"
     icon: mdi:window-shutter-settings
-  rollladen_kueche_soll:
-    name: Shutter kitchen, desired position
+  shutter_kitchen_target:
+    name: Rollladen Küche, Sollposition
     min: 0
     max: 100
     step: 1
     unit_of_measurement: "%"
     icon: mdi:window-shutter-settings
-  rollladen_schlafzimmer_soll:
-    name: Shutter bedroom, desired position
+  shutter_bedroom_target:
+    name: Rollladen Schlafzimmer, Sollposition
     min: 0
     max: 100
     step: 1
     unit_of_measurement: "%"
     icon: mdi:window-shutter-settings
-  rollladen_garten_soll:
-    name: Shutter garden, desired position
+  shutter_garden_target:
+    name: Rollladen Garten, Sollposition
     min: 0
     max: 100
     step: 1
     unit_of_measurement: "%"
     icon: mdi:window-shutter-settings
-  rollladen_terrasse_soll:
-    name: Shutter terrace, desired position
+  shutter_terrace_target:
+    name: Rollladen Terrasse, Sollposition
     min: 0
     max: 100
     step: 1
@@ -122,95 +122,95 @@ input_number:
     icon: mdi:window-shutter-settings
 
 timer:
-  aufwachlicht:
-    name: Wake-up light dimming
+  wake_up_light:
+    name: Aufwachlicht dimmt
     restore: true
 
 automation:
-  - id: helfer_startwerte
-    alias: Fill the helpers with the start values from ioBroker
-    description: Runs on the first start only; after that, what is set in the app applies.
+  - id: helper_start_values
+    alias: Helfer mit den Startwerten aus ioBroker füllen
+    description: Läuft nur beim ersten Start; danach gilt, was in der App eingestellt ist.
     mode: single
     triggers:
       - trigger: homeassistant
         event: start
     conditions:
       - condition: state
-        entity_id: input_boolean.helfer_startwerte_gesetzt
+        entity_id: input_boolean.helper_start_values_set
         state: "off"
     actions:
       - action: input_boolean.turn_on
         target:
-          entity_id: input_boolean.wecker_werktag
+          entity_id: input_boolean.wake_up_workday
       - action: input_boolean.turn_on
         target:
-          entity_id: input_boolean.wecker_wochenende
+          entity_id: input_boolean.wake_up_weekend
       - action: input_datetime.set_datetime
         target:
-          entity_id: input_datetime.weckzeit_werktag
+          entity_id: input_datetime.wake_up_time_workday
         data:
           time: "07:20:00"
       - action: input_datetime.set_datetime
         target:
-          entity_id: input_datetime.weckzeit_wochenende
+          entity_id: input_datetime.wake_up_time_weekend
         data:
           time: "10:00:00"
       - action: input_datetime.set_datetime
         target:
-          entity_id: input_datetime.nachtruhe
+          entity_id: input_datetime.night_rest
         data:
           time: "22:00:00"
       - action: input_number.set_value
         target:
-          entity_id: input_number.dauer_schuhheizung
+          entity_id: input_number.shoe_heating_duration
         data:
           value: 8
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_helligkeit
+          entity_id: input_number.shutter_brightness
         data:
           value: 30000
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_helligkeit_max
+          entity_id: input_number.shutter_brightness_max
         data:
           value: 35000
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_temperatur
+          entity_id: input_number.shutter_temperature
         data:
           value: 23
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_temperatur_max
+          entity_id: input_number.shutter_temperature_max
         data:
           value: 26
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_buero_soll
+          entity_id: input_number.shutter_office_target
         data:
           value: 100
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_kueche_soll
+          entity_id: input_number.shutter_kitchen_target
         data:
           value: 100
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_schlafzimmer_soll
+          entity_id: input_number.shutter_bedroom_target
         data:
           value: 100
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_garten_soll
+          entity_id: input_number.shutter_garden_target
         data:
           value: 100
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_terrasse_soll
+          entity_id: input_number.shutter_terrace_target
         data:
           value: 100
       # Last, so a failed run is retried on the next start
       - action: input_boolean.turn_on
         target:
-          entity_id: input_boolean.helfer_startwerte_gesetzt
+          entity_id: input_boolean.helper_start_values_set

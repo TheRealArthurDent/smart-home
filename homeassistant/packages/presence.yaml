@@ -4,9 +4,9 @@
 
 template:
   - binary_sensor:
-      - name: Someone home
-        unique_id: jemand_zuhause
-        default_entity_id: binary_sensor.jemand_zuhause
+      - name: Jemand zu Hause
+        unique_id: someone_home
+        default_entity_id: binary_sensor.someone_home
         device_class: presence
         state: "{{ states('zone.home') | int(0) > 0 }}"
         # Arriving counts at once; leaving only after five minutes, so a phone briefly dropping off Wi-Fi is ignored
@@ -14,11 +14,9 @@ template:
           minutes: 5
 
 automation:
-  - id: abend_beginnt
-    alias: Evening starts
-    description: >-
-      15 minutes before sunset in winter (standard time), 19 minutes before civil dusk in summer (daylight saving
-      time).
+  - id: evening_starts
+    alias: Abend beginnt
+    description: Im Winter 15 Minuten vor Sonnenuntergang, im Sommer 19 Minuten vor der bürgerlichen Dämmerung.
     mode: single
     triggers:
       - trigger: sun
@@ -36,10 +34,10 @@ automation:
     actions:
       - action: input_boolean.turn_on
         target:
-          entity_id: input_boolean.abend
+          entity_id: input_boolean.evening
 
-  - id: abend_endet
-    alias: Evening ends
+  - id: evening_ends
+    alias: Abend endet
     mode: single
     triggers:
       - trigger: time
@@ -47,4 +45,4 @@ automation:
     actions:
       - action: input_boolean.turn_off
         target:
-          entity_id: input_boolean.abend
+          entity_id: input_boolean.evening

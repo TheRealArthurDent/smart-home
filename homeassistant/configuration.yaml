@@ -6,7 +6,7 @@
 default_config:
 
 homeassistant:
-  name: Home
+  name: Zuhause
   time_zone: Europe/Berlin
   country: DE
   unit_system: metric
@@ -21,7 +21,7 @@ lovelace:
     dashboard-presence:
       mode: yaml
       filename: dashboards/presence.yaml
-      title: Presence
+      title: Anwesenheit
       icon: mdi:home-account
       show_in_sidebar: true
     dashboard-home:

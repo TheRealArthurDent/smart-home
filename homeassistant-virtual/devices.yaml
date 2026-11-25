@@ -10,57 +10,57 @@
 
 input_boolean:
   virtual_wohnzimmer_dekolights:
-    name: Decoration lights (virtual)
+    name: DekoLights (virtuell)
   virtual_wohnzimmer_weihnachtssterne:
-    name: Christmas stars (virtual)
+    name: Weihnachtssterne (virtuell)
   virtual_schlafzimmer_aufwachlicht:
-    name: Wake-up light (virtual)
+    name: Aufwachlicht (virtuell)
   virtual_buro_eckschreibtisch:
-    name: Corner desk light (virtual)
+    name: Eckschreibtisch (virtuell)
   virtual_abstellkammer_light_storeroom_output_0:
-    name: Storeroom light (virtual)
+    name: Licht Abstellkammer (virtuell)
   virtual_buro_on_off_homeoffice:
-    name: Home office (virtual)
+    name: Homeoffice (virtuell)
   virtual_bad_on_off_schuhheizung:
-    name: Shoe heating (virtual)
+    name: Schuhheizung (virtuell)
   virtual_bad_on_off_schuhheizung_plugged_in:
-    name: Shoe heating plugged in (virtual)
+    name: Schuhheizung eingesteckt (virtuell)
     icon: mdi:power-plug
   virtual_abstellkammer_bewegung_abstellkammer:
-    name: Storeroom motion (virtual)
+    name: Bewegung Abstellkammer (virtuell)
     icon: mdi:gesture-tap
   virtual_schlafzimmer_light_bedroom_eingang_0:
-    name: Bedroom wall switch (virtual)
+    name: Wandschalter Schlafzimmer (virtuell)
     icon: mdi:gesture-tap
 
 input_number:
   virtual_schlafzimmer_shutter_bedroom_position:
-    name: Shutter bedroom position (virtual)
+    name: Rollladen Schlafzimmer, Position (virtuell)
     min: 0
     max: 100
     step: 1
     mode: slider
     unit_of_measurement: "%"
   virtual_wohnzimmer_dekolights_brightness:
-    name: Decoration lights brightness (virtual)
+    name: DekoLights, Helligkeit (virtuell)
     min: 1
     max: 255
     step: 1
     mode: box
   virtual_wohnzimmer_weihnachtssterne_brightness:
-    name: Christmas stars brightness (virtual)
+    name: Weihnachtssterne, Helligkeit (virtuell)
     min: 1
     max: 255
     step: 1
     mode: box
   virtual_schlafzimmer_aufwachlicht_brightness:
-    name: Wake-up light brightness (virtual)
+    name: Aufwachlicht, Helligkeit (virtuell)
     min: 1
     max: 255
     step: 1
     mode: box
   virtual_buro_eckschreibtisch_brightness:
-    name: Corner desk light brightness (virtual)
+    name: Eckschreibtisch, Helligkeit (virtuell)
     min: 1
     max: 255
     step: 1
@@ -68,7 +68,7 @@ input_number:
 
 template:
   - light:
-      - name: Decoration lights
+      - name: DekoLights
         unique_id: virtual_wohnzimmer_dekolights
         default_entity_id: light.wohnzimmer_dekolights
         state: "{{ is_state('input_boolean.virtual_wohnzimmer_dekolights', 'on') }}"
@@ -90,7 +90,7 @@ template:
           - action: input_boolean.turn_on
             target:
               entity_id: input_boolean.virtual_wohnzimmer_dekolights
-      - name: Christmas stars
+      - name: Weihnachtssterne
         unique_id: virtual_wohnzimmer_weihnachtssterne
         default_entity_id: light.wohnzimmer_weihnachtssterne
         state: "{{ is_state('input_boolean.virtual_wohnzimmer_weihnachtssterne', 'on') }}"
@@ -112,7 +112,7 @@ template:
           - action: input_boolean.turn_on
             target:
               entity_id: input_boolean.virtual_wohnzimmer_weihnachtssterne
-      - name: Wake-up light
+      - name: Aufwachlicht
         unique_id: virtual_schlafzimmer_aufwachlicht
         default_entity_id: light.schlafzimmer_aufwachlicht
         state: "{{ is_state('input_boolean.virtual_schlafzimmer_aufwachlicht', 'on') }}"
@@ -134,7 +134,7 @@ template:
           - action: input_boolean.turn_on
             target:
               entity_id: input_boolean.virtual_schlafzimmer_aufwachlicht
-      - name: Corner desk light
+      - name: Eckschreibtisch
         unique_id: virtual_buro_eckschreibtisch
         default_entity_id: light.buro_eckschreibtisch
         state: "{{ is_state('input_boolean.virtual_buro_eckschreibtisch', 'on') }}"
@@ -157,7 +157,7 @@ template:
             target:
               entity_id: input_boolean.virtual_buro_eckschreibtisch
   - switch:
-      - name: Storeroom light
+      - name: Licht Abstellkammer
         unique_id: virtual_abstellkammer_light_storeroom_output_0
         default_entity_id: switch.abstellkammer_light_storeroom_output_0
         state: "{{ is_state('input_boolean.virtual_abstellkammer_light_storeroom_output_0', 'on') }}"
@@ -169,7 +169,7 @@ template:
           - action: input_boolean.turn_off
             target:
               entity_id: input_boolean.virtual_abstellkammer_light_storeroom_output_0
-      - name: Home office
+      - name: Homeoffice
         unique_id: virtual_buro_on_off_homeoffice
         default_entity_id: switch.buro_on_off_homeoffice
         state: "{{ is_state('input_boolean.virtual_buro_on_off_homeoffice', 'on') }}"
@@ -181,7 +181,7 @@ template:
           - action: input_boolean.turn_off
             target:
               entity_id: input_boolean.virtual_buro_on_off_homeoffice
-      - name: Shoe heating
+      - name: Schuhheizung
         unique_id: virtual_bad_on_off_schuhheizung
         default_entity_id: switch.bad_on_off_schuhheizung
         # Unavailable while unplugged, like the real plug
@@ -196,7 +196,7 @@ template:
             target:
               entity_id: input_boolean.virtual_bad_on_off_schuhheizung
   - cover:
-      - name: Shutter bedroom
+      - name: Rollladen Schlafzimmer
         unique_id: virtual_schlafzimmer_shutter_bedroom
         default_entity_id: cover.schlafzimmer_shutter_bedroom
         device_class: shutter
@@ -221,32 +221,32 @@ template:
             data:
               value: "{{ position }}"
   - binary_sensor:
-      - name: Storeroom motion
+      - name: Bewegung Abstellkammer
         unique_id: virtual_abstellkammer_bewegung_abstellkammer
         default_entity_id: binary_sensor.abstellkammer_bewegung_abstellkammer
         state: "{{ is_state('input_boolean.virtual_abstellkammer_bewegung_abstellkammer', 'on') }}"
         device_class: motion
-      - name: Bedroom wall switch
+      - name: Wandschalter Schlafzimmer
         unique_id: virtual_schlafzimmer_light_bedroom_eingang_0
         default_entity_id: binary_sensor.schlafzimmer_light_bedroom_eingang_0
         state: "{{ is_state('input_boolean.virtual_schlafzimmer_light_bedroom_eingang_0', 'on') }}"
 
 script:
   virtual_button_press:
-    alias: Press a virtual button
-    description: Fires the deconz_event a deCONZ button sends, for the automations that match it by unique_id.
+    alias: Virtuellen Taster drücken
+    description: Löst das deconz_event eines deCONZ-Tasters aus, für die Automationen, die es per unique_id erkennen.
     mode: queued
     fields:
       unique_id:
-        name: Button
-        description: unique_id of the button, as in the automation's trigger
+        name: Taster
+        description: unique_id des Tasters, wie im Auslöser der Automation
         required: true
         example: "5c:c7:c1:ff:fe:83:4b:a0"
         selector:
           text:
       event:
-        name: Event code
-        description: 1002 "on" pressed, 2002 "off" pressed; x001 held, x003 released after holding
+        name: Event-Code
+        description: 1002 „an“ gedrückt, 2002 „aus“ gedrückt; x001 gehalten, x003 nach dem Halten losgelassen
         required: true
         default: 1002
         selector:

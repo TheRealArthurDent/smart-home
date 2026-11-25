@@ -1,25 +1,25 @@
 # Presence dashboard (#2): who is home, which trackers count for whom, and how presence changed. People and their
 # trackers are read from the states (assigned in Settings > People), so no names or device ids are in this repo.
-title: Presence
+title: Anwesenheit
 views:
-  - title: Presence
+  - title: Anwesenheit
     path: presence
     icon: mdi:home-account
     cards:
       - type: entities
-        title: Now
+        title: Jetzt
         entities:
-          - entity: binary_sensor.jemand_zuhause
-            name: Someone home (off 5 min after the last one left)
+          - entity: binary_sensor.someone_home
+            name: Jemand zu Hause (aus 5 Minuten, nachdem der Letzte gegangen ist)
           - entity: zone.home
-            name: People in the home zone
-          - entity: input_boolean.abend
-            name: Evening
-          - entity: input_boolean.gaeste
-            name: Guests present
+            name: Personen in der Zone Zuhause
+          - entity: input_boolean.evening
+            name: Abend
+          - entity: input_boolean.guests
+            name: Gäste da
 
       - type: markdown
-        title: People and their trackers
+        title: Personen und ihre Tracker
         content: >-
           {% for someone in states.person | sort(attribute='name') %}
 
@@ -42,17 +42,17 @@ views:
           {{ states.device_tracker | selectattr('state', 'eq', 'home') | list | count }} of them home.
 
       - type: history-graph
-        title: Last 48 hours
+        title: Letzte 48 Stunden
         hours_to_show: 48
         entities:
-          - entity: binary_sensor.jemand_zuhause
+          - entity: binary_sensor.someone_home
           - entity: zone.home
-          - entity: input_boolean.abend
+          - entity: input_boolean.evening
 
       - type: logbook
-        title: Changes
+        title: Änderungen
         hours_to_show: 48
         target:
           entity_id:
-            - binary_sensor.jemand_zuhause
+            - binary_sensor.someone_home
             - zone.home
