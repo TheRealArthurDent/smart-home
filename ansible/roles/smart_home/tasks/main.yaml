@@ -229,6 +229,58 @@
            | map('regex_replace', '^', smart_home_compose_dir ~ '/homeassistant-virtual/') | sort }}
       notify: Restart homeassistant
 
+# The other way round: integrations of the real devices (Sonos), mounted on every host (packages/real_devices.yaml
+# includes it), filled only where there are no twins, since testbench shares the house's network with them.
+- name: Ensure the directory of the real devices exists
+  ansible.builtin.file:
+    path: "{{ smart_home_compose_dir }}/homeassistant-real"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  register: smart_home_real_dir
+
+- name: Ensure the real devices are present
+  ansible.builtin.copy:
+    src: "{{ smart_home_repo_dir }}/homeassistant-real/"
+    dest: "{{ smart_home_compose_dir }}/homeassistant-real/"
+    owner: root
+    group: root
+    mode: '0644'
+    directory_mode: '0755'
+  when: not smart_home_homeassistant_virtual_devices | bool
+  notify: Restart homeassistant
+
+# Everything on a host with virtual devices; files the repo dropped on one without them
+- name: Ensure no other real devices are present
+  when: not (ansible_check_mode and smart_home_real_dir is changed)
+  block:
+    - name: Find the real devices in the repo
+      ansible.builtin.find:
+        paths: "{{ smart_home_repo_dir | realpath }}/homeassistant-real"
+        hidden: true
+      delegate_to: localhost
+      become: false
+      register: smart_home_real_repo_files
+
+    - name: Find the real devices on the host
+      ansible.builtin.find:
+        paths: "{{ smart_home_compose_dir }}/homeassistant-real"
+        file_type: any
+        hidden: true
+      register: smart_home_real_host_files
+
+    - name: Ensure real devices the host doesn't want are absent
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop: >-
+        {{ smart_home_real_host_files.files | map(attribute='path') | map('basename')
+           | difference(smart_home_real_repo_files.files | map(attribute='path') | map('basename')
+                        if not smart_home_homeassistant_virtual_devices | bool else [])
+           | map('regex_replace', '^', smart_home_compose_dir ~ '/homeassistant-real/') | sort }}
+      notify: Restart homeassistant
+
 # Not secret; next to the compose file, so a manual docker compose up gets it too. Compose recreates the container
 # when it changes.
 - name: Ensure Home Assistant knows the host address
