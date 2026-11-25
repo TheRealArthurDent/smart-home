@@ -521,7 +521,7 @@ def test_ci_fails_when_the_check_itself_fails():
 def render(template, **context):
     env = jinja2.Environment()
     env.filters["as_datetime"] = lambda value, default=None: value if value is not None else default
-    env.filters["int"] = lambda value, default=0: int(value) if value not in (None, "") else default
+    env.filters["int"] = lambda value, default=0: int(float(value)) if value not in (None, "") else default
     env.filters["float"] = lambda value, default=0.0: float(value) if value not in (None, "") else default
     return env.from_string(template).render(**context).strip()
 
@@ -635,21 +635,26 @@ SHOES = "switch.bad_on_off_schuhheizung"
 
 
 def shoe_plan(now, hours=8.0, night="22:00:00"):
-    variables = automation("shoe_heating", "schuhheizung_start")["actions"][0]["variables"]
-    h, m = (int(x) for x in now.split(":"))
-    now_s = h * 3600 + m * 60
-    values = {"now_s": now_s}
+    """Seconds the shoe heating runs now and the next day, by the branch the automation takes."""
+    actions = automation("shoe_heating", "schuhheizung_start")["actions"]
+    clock = datetime.datetime(2026, 11, 25, *(int(x) for x in now.split(":")))
     states = {"input_number.dauer_schuhheizung": str(hours), "input_datetime.nachtruhe": night}
-    for name in ("duration_s", "night_s", "plan"):
-        values[name] = render(variables[name], states=states.get, **values)
-        values[name] = eval(values[name]) if name == "plan" else int(values[name])
-    return values["plan"]
+    functions = {"states": states.get, "now": lambda: clock,
+                 "today_at": lambda time: datetime.datetime.combine(clock.date(), datetime.time.fromisoformat(time))}
+    values = {name: float(render(template, **functions)) for name, template in actions[0]["variables"].items()}
+    choose = actions[1]
+    branch = next((option["sequence"] for option in choose["choose"]
+                   if render(option["conditions"], **values) == "True"), choose["default"])
+    timer = next((a for a in branch if a.get("action") == "timer.start"), None)
+    rest = next(a for a in branch if a.get("action") == "input_number.set_value")
+    return {"now": int(float(render(timer["data"]["duration"], **values))) if timer else 0,
+            "later": int(float(render(str(rest["data"]["value"]), **values))) * 60}
 
 
 def test_shoe_heating_starts_when_the_plug_is_plugged_in():
     start = automation("shoe_heating", "schuhheizung_start")
     assert start["triggers"] == [{"trigger": "state", "entity_id": SHOES, "from": "unavailable"}]
-    assert "now().hour" in start["actions"][0]["variables"]["now_s"]
+    assert set(start["actions"][0]["variables"]) == {"heating_seconds", "seconds_until_night_rest"}
 
 
 def test_shoe_heating_runs_before_night_rest_and_finishes_the_next_day():
@@ -667,6 +672,8 @@ def test_shoe_heating_runs_before_night_rest_and_finishes_the_next_day():
 
 def test_shoe_heating_switches_on_for_now_and_keeps_the_rest_for_the_next_day():
     actions = automation("shoe_heating", "schuhheizung_start")["actions"]
+    # Every branch says in words when it applies
+    assert all(option.get("alias") for option in actions[1]["choose"])
     text = str(actions)
     assert "timer.schuhheizung" in text and "input_number.schuhheizung_rest" in text
     assert set(targets(actions)) == {SHOES, "timer.schuhheizung", "input_number.schuhheizung_rest"}

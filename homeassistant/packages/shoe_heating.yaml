@@ -1,6 +1,6 @@
 # Shoe heating, replacing Node-RED's "Shoe ventilation" (#2).
-# Plugging the plug in heats for the shoe heating duration, but not into night rest: if the time left until then
-# is at least 20 minutes, it heats until night rest and the rest the next day from the weekend alarm time;
+# Plugging the plug in heats for the shoe heating duration, but not into night rest: if more than 20 minutes are
+# left until then, it heats until night rest and the rest the next day from the weekend alarm time;
 # otherwise all of it the next day. The timer and the rest survive restarts.
 
 input_number:
@@ -28,44 +28,56 @@ automation:
         from: unavailable
     actions:
       - variables:
-          now_s: "{{ now().hour * 3600 + now().minute * 60 + now().second }}"
-          duration_s: "{{ (states('input_number.dauer_schuhheizung') | float(0) * 3600) | int }}"
-          night_s: >-
-            {% set t = (states('input_datetime.nachtruhe') ~ ':0:0').split(':') %}
-            {{ t[0] | int(0) * 3600 + t[1] | int(0) * 60 }}
-          # Seconds to heat now and the next day
-          plan: >-
-            {%- if now_s + duration_s <= night_s -%}
-              {{ {'now': duration_s, 'later': 0} }}
-            {%- elif now_s > night_s or night_s - now_s <= 1200 -%}
-              {{ {'now': 0, 'later': duration_s} }}
-            {%- else -%}
-              {{ {'now': night_s - now_s, 'later': duration_s - (night_s - now_s)} }}
-            {%- endif -%}
-      - if:
-          - condition: template
-            value_template: "{{ plan.now > 0 }}"
-        then:
-          - action: switch.turn_on
-            target:
-              entity_id: switch.bad_on_off_schuhheizung
-          - action: timer.start
-            target:
-              entity_id: timer.schuhheizung
-            data:
-              duration: "{{ plan.now }}"
-        else:
+          heating_seconds: "{{ (states('input_number.dauer_schuhheizung') | float(0) * 3600) | int }}"
+          # Negative once night rest has begun
+          seconds_until_night_rest: >-
+            {{ (today_at(states('input_datetime.nachtruhe')) - now()).total_seconds() | int }}
+      - choose:
+          - alias: Done before night rest, heat in one go
+            conditions: "{{ heating_seconds <= seconds_until_night_rest }}"
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.bad_on_off_schuhheizung
+              - action: timer.start
+                target:
+                  entity_id: timer.schuhheizung
+                data:
+                  duration: "{{ heating_seconds }}"
+              - action: input_number.set_value
+                target:
+                  entity_id: input_number.schuhheizung_rest
+                data:
+                  value: 0
+          - alias: More than 20 minutes until night rest, heat until then and the rest the next day
+            conditions: "{{ seconds_until_night_rest > 20 * 60 }}"
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.bad_on_off_schuhheizung
+              - action: timer.start
+                target:
+                  entity_id: timer.schuhheizung
+                data:
+                  duration: "{{ seconds_until_night_rest }}"
+              - action: input_number.set_value
+                target:
+                  entity_id: input_number.schuhheizung_rest
+                data:
+                  value: "{{ ((heating_seconds - seconds_until_night_rest) / 60) | round(0, 'ceil') }}"
+        # Too late today: all of it the next day
+        default:
           - action: timer.cancel
             target:
               entity_id: timer.schuhheizung
           - action: switch.turn_off
             target:
               entity_id: switch.bad_on_off_schuhheizung
-      - action: input_number.set_value
-        target:
-          entity_id: input_number.schuhheizung_rest
-        data:
-          value: "{{ (plan.later / 60) | round(0, 'ceil') | int }}"
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.schuhheizung_rest
+            data:
+              value: "{{ (heating_seconds / 60) | round(0, 'ceil') }}"
 
   - id: schuhheizung_naechster_tag
     alias: Shoe heating finishes the next day
