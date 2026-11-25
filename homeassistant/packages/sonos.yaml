@@ -1,14 +1,5 @@
-# Sonos (#2), with the automations of Node-RED's "Stop Sonos" tab. Home Assistant runs in bridge networks, where SSDP
-# discovery doesn't reach it, so the speakers are listed by address. They push their state to advertise_addr:1400,
-# the host's address, which the smart_home role writes into homeassistant.env; Compose forwards the port to the
-# container.
-sonos:
-  media_player:
-    advertise_addr: !env_var SONOS_ADVERTISE_ADDR
-    hosts:
-      - 192.168.1.88 # Wohnzimmer
-      - 192.168.1.61 # Büro
-      - 192.168.1.67 # Bad
+# Sonos (#2), with the automations of Node-RED's "Stop Sonos" tab. The integration itself is in
+# homeassistant-real/sonos.yaml (raspi only); testbench has twins of the speakers with the same entity ids.
 
 automation:
   - id: sonos_power_on

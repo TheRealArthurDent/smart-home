@@ -65,6 +65,7 @@ def test_ui_state_lives_in_a_volume_and_the_repo_config_is_read_only():
         "./homeassistant/packages:/config/packages:ro",
         "./homeassistant/dashboards:/config/dashboards:ro",
         "./homeassistant-virtual:/config/virtual:ro",
+        "./homeassistant-real:/config/real:ro",
     ]
     assert "homeassistant-config" in compose()["volumes"]
 
@@ -133,6 +134,10 @@ def test_home_assistant_has_its_own_mosquitto_user():
         assert f"\n{user['env']}=" in env_example
 
 
+def real_devices():
+    return yaml.load((ROOT / "homeassistant-real" / "sonos.yaml").read_text(), Loader=HomeAssistantLoader)
+
+
 def package(name):
     return yaml.load((CONFIG_DIR / "packages" / f"{name}.yaml").read_text(), Loader=HomeAssistantLoader)
 
@@ -140,7 +145,7 @@ def package(name):
 def test_sonos_speakers_are_configured_by_address():
     """SSDP discovery doesn't cross the bridge network, so the speakers are listed, and they send their events to the
     host's address on port 1400, which Compose forwards to the container."""
-    sonos = package("sonos")["sonos"]["media_player"]
+    sonos = real_devices()["sonos"]["media_player"]
     assert sonos["advertise_addr"] == ("!env_var", "SONOS_ADVERTISE_ADDR")
     assert len(sonos["hosts"]) >= 1
     assert all(re.fullmatch(r"192\.168\.1\.\d{1,3}", host) for host in sonos["hosts"])
@@ -413,9 +418,10 @@ def test_the_presence_dashboard_comes_from_the_repo():
 
 VIRTUAL_DIR = ROOT / "homeassistant-virtual"
 # Domains of physical devices; testbench has neither the Zigbee stick nor the Shellies of raspi
-DEVICE_DOMAINS = ("light", "switch", "binary_sensor", "sensor", "cover")
+DEVICE_DOMAINS = ("light", "switch", "binary_sensor", "sensor", "cover", "media_player")
 # Actions, not devices; a templated one (light.turn_{{ ... }}) ends in "_"
-ACTIONS = {"turn_on", "turn_off", "toggle", "open_cover", "close_cover", "stop_cover", "set_cover_position"}
+ACTIONS = {"turn_on", "turn_off", "toggle", "open_cover", "close_cover", "stop_cover", "set_cover_position",
+           "media_stop", "media_play", "media_pause", "media_next_track"}
 
 
 # Entities of integrations that are no devices and are set up in the UI on testbench as on raspi: Workday
@@ -444,6 +450,7 @@ def test_every_device_the_packages_use_has_a_virtual_twin_on_testbench():
         if isinstance(config, dict):
             own |= {entity.get("default_entity_id") for _, entity in template_entities(config)}
     twins = {entity["default_entity_id"] for _, entity in template_entities(virtual_devices())}
+    twins |= set(virtual_media_players())
     assert used - own, "the packages use no devices?"
     assert sorted(used - own - twins - SET_UP_ON_BOTH_HOSTS) == []
     assert all(twin.split(".")[0] == domain for domain, entity in template_entities(virtual_devices())
@@ -489,6 +496,46 @@ def test_virtual_buttons_fire_the_event_of_a_deconz_button():
     assert set(script["sequence"][0]["event_data"]) == {"unique_id", "event"}
 
 
+def virtual_media_players():
+    """Entity id -> config of the virtual media players; a universal player's entity id comes from its name."""
+    return {"media_player." + re.sub(r"[^a-z0-9]+", "_", player["name"].lower().translate(UMLAUTS)).strip("_"): player
+            for player in virtual_devices().get("media_player", [])}
+
+
+UMLAUTS = str.maketrans({"ä": "a", "ö": "o", "ü": "u", "ß": "ss"})
+
+
+def test_virtual_sonos_speakers_stand_in_for_the_real_ones_on_testbench():
+    """testbench shares the house's network with the real speakers; its automations must not stop the music. Each
+    twin plays while its helper is on; stop and pause turn it off, play on, the next track counts up."""
+    players = virtual_media_players()
+    assert set(players) == set(SONOS_SPEAKERS)
+    booleans, numbers = virtual_devices()["input_boolean"], virtual_devices()["input_number"]
+    for entity, player in players.items():
+        helper = f"virtual_{entity.split('.')[1]}"
+        assert player["platform"] == "universal" and player["unique_id"] == helper
+        assert player["children"] == []
+        assert helper in booleans and f"{helper}_track" in numbers
+        assert f"input_boolean.{helper}" in player["state_template"]
+        commands = player["commands"]
+        for command, action in (("media_stop", "turn_off"), ("media_pause", "turn_off"), ("media_play", "turn_on")):
+            assert commands[command] == {"action": f"input_boolean.{action}",
+                                         "target": {"entity_id": f"input_boolean.{helper}"}}, (entity, command)
+        assert commands["media_next_track"] == {"action": "input_number.increment",
+                                                "target": {"entity_id": f"input_number.{helper}_track"}}
+
+
+def test_real_devices_load_only_where_there_are_no_twins():
+    """The Sonos integration talks to the real speakers, so it loads on raspi only; testbench gets the twins."""
+    assert package("real_devices") == ("!include_dir_merge_named", "../real")
+    assert "sonos" not in package("sonos")
+    names = [task.get("name") for task in role_tasks()]
+    assert "Ensure the real devices are present" in names
+    copy = next(task for task in role_tasks() if task.get("name") == "Ensure the real devices are present")
+    assert copy["when"] == "not smart_home_homeassistant_virtual_devices | bool"
+    assert copy["ansible.builtin.copy"]["src"] == "{{ smart_home_repo_dir }}/homeassistant-real/"
+
+
 def test_virtual_devices_load_only_where_the_role_puts_them():
     """The package includes a directory the role fills on testbench only and keeps empty everywhere else."""
     assert package("virtual_devices") == ("!include_dir_merge_named", "../virtual")
@@ -509,6 +556,7 @@ def test_ci_checks_the_configuration_with_and_without_the_virtual_devices():
     workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text())
     script = "\n".join(step.get("run", "") for step in workflow["jobs"]["config"]["steps"])
     assert "homeassistant-virtual/." in script
+    assert 'cp -r homeassistant-real/. "$config/real"' in script
     assert script.count("check_config") == 1 and "for virtual in" in script
 
 
