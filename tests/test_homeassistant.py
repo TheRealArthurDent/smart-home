@@ -463,6 +463,11 @@ def test_virtual_devices_keep_their_state_in_helpers():
             assert f"input_number.{helper}_position" in entity["position"]
             assert f"input_number.{helper}_position" in str(entity["set_cover_position"])
             continue
+        if domain == "sensor":
+            # A measuring sensor's state is a number
+            assert helper in config["input_number"], entity["default_entity_id"]
+            assert f"input_number.{helper}" in entity["state"]
+            continue
         assert helper in booleans, entity["default_entity_id"]
         assert f"input_boolean.{helper}" in entity["state"]
         assert entity["unique_id"] == helper
@@ -518,11 +523,18 @@ def test_ci_fails_when_the_check_itself_fails():
 
 # Templates are rendered with plain Jinja and stand-ins for Home Assistant's functions, so the decisions the
 # automations take (which alarm, how long to hold, when to heat the shoes) are checked case by case.
+def to_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def render(template, **context):
     env = jinja2.Environment()
     env.filters["as_datetime"] = lambda value, default=None: value if value is not None else default
     env.filters["int"] = lambda value, default=0: int(float(value)) if value not in (None, "") else default
-    env.filters["float"] = lambda value, default=0.0: float(value) if value not in (None, "") else default
+    env.filters["float"] = to_float
     return env.from_string(template).render(**context).strip()
 
 
@@ -889,14 +901,62 @@ def test_shutters_open_in_the_morning_but_not_on_guests_or_sleepers():
     triggers = {t["id"]: t for t in morning["triggers"]}
     assert triggers["seven"] == {"trigger": "time", "at": "07:00:00", "id": "seven"}
     assert sun_trigger(triggers["dawn"]) == ("numeric_state", "sun.sun", "elevation", -6, None)
+    # The eastern shutters (kitchen, garden, bedroom) stay half open while heat protection is needed
     assert sorted(shutter_calls(morning["actions"])) == sorted(
-        (s, "open", True) for s in ("kitchen", "garden", "terrace", "office", "bedroom"))
-    text = str(morning["actions"])
+        [(s, "{{ eastern }}", True) for s in ("kitchen", "garden", "bedroom")]
+        + [(s, "open", True) for s in ("terrace", "office")])
+    eastern = next(a for a in morning["actions"] if "variables" in a)["variables"]["eastern"]
+    for heat, expected in (("on", "half_open"), ("off", "open"), ("unavailable", "open")):
+        states = {HEAT: heat}
+        assert render(eastern, is_state=is_state_of(states)) == expected, heat
     office = next(a for a in morning["actions"] if "office" in str(a.get("then")))
     assert office["if"] == [{"condition": "state", "entity_id": "input_boolean.guests", "state": "off"}]
     bedroom = next(a for a in morning["actions"] if "bedroom" in str(a.get("then")))
     assert bedroom["if"] == [{"condition": "state", "entity_id": "binary_sensor.someone_home", "state": "off"}]
-    assert "heat" not in text
+
+
+HEAT = "binary_sensor.heat_protection"
+LIVING_ROOM_LUX = "sensor.wohnzimmer_lichtsensor_wohnzimmer"
+LIVING_ROOM_TEMPERATURE = "sensor.wohnzimmer_wohnzimmer_2"
+
+
+def heat_needed(lux, temperature):
+    """The heat protection sensor's state with ioBroker's thresholds (30000/35000 lx, 23/26 °C)."""
+    sensor = next(e for _, e in template_entities(package("shutters")) if e["default_entity_id"] == HEAT)
+    states = {LIVING_ROOM_LUX: lux, LIVING_ROOM_TEMPERATURE: temperature,
+              "input_number.shutter_brightness": "30000.0", "input_number.shutter_brightness_max": "35000.0",
+              "input_number.shutter_temperature": "23.0", "input_number.shutter_temperature_max": "26.0"}
+    return render(sensor["state"], states=lambda entity: states.get(entity, "unknown")) == "True"
+
+
+def test_heat_protection_follows_the_living_room_like_node_red():
+    """Node-RED's "Close shutters based on sensor data": very bright, or very warm, or bright and warm."""
+    assert heat_needed("36000", "20")
+    assert heat_needed("1000", "27")
+    assert heat_needed("31000", "24")
+    assert not heat_needed("31000", "22")
+    assert not heat_needed("29000", "24")
+    assert not heat_needed("1000", "20")
+
+
+def test_heat_protection_without_a_sensor_uses_the_other():
+    """The temperature sensor's battery may be empty: its rules drop out, brightness alone still counts."""
+    assert heat_needed("36000", "unavailable")
+    assert not heat_needed("31000", "unavailable")
+    assert heat_needed("unavailable", "27")
+    assert not heat_needed("unavailable", "unavailable")
+
+
+def test_heat_protection_half_opens_the_eastern_shutters_in_the_morning():
+    """Node-RED checked every 5 minutes from 8 to 13; here from 8, and whenever it turns on until 13. Moved by hand
+    stays: no override."""
+    heat = automation("shutters", "shutters_heat_protection")
+    assert {(t["trigger"], t.get("entity_id"), t.get("to"), t.get("at")) for t in heat["triggers"]} == {
+        ("state", HEAT, "on", None), ("time", None, None, "08:00:00")}
+    assert heat["conditions"] == [
+        {"condition": "time", "after": "08:00:00", "before": "13:00:00"},
+        {"condition": "state", "entity_id": HEAT, "state": "on"}]
+    assert shutter_calls(heat["actions"]) == [(s, "half_open", False) for s in ("garden", "kitchen", "bedroom")]
 
 
 def test_eastern_shutters_open_before_solar_noon():

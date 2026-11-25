@@ -1,4 +1,4 @@
-# Shutters, replacing Node-RED's "Shutters" tab (#2); heat protection follows later.
+# Shutters, replacing Node-RED's "Shutters" tab (#2), with its heat protection from the living room's sensors.
 # Every automatic move goes through script.shutter_move, which keeps Node-RED's rules: a locked shutter
 # (input_boolean.shutter_<name>_locked) never moves, a shutter moved by hand since the last automatic move (more than
 # 2 % off input_number.shutter_<name>_target) only moves with override, and the terrace shutter doesn't close while
@@ -96,6 +96,26 @@ script:
                 data:
                   value: "{{ wanted }}"
 
+template:
+  - binary_sensor:
+      - name: Hitzeschutz nötig
+        unique_id: heat_protection
+        default_entity_id: binary_sensor.heat_protection
+        icon: mdi:sun-thermometer
+        # Node-RED's rules on the living room's sensors: very bright, or very warm, or bright and warm. A sensor
+        # that is unavailable (empty battery) drops out of the rules that need it.
+        state: >-
+          {% set lux = states('sensor.wohnzimmer_lichtsensor_wohnzimmer') | float(none) %}
+          {% set temperature = states('sensor.wohnzimmer_wohnzimmer_2') | float(none) %}
+          {% set very_bright = lux is not none
+               and lux > states('input_number.shutter_brightness_max') | float(0) %}
+          {% set very_warm = temperature is not none
+               and temperature > states('input_number.shutter_temperature_max') | float(0) %}
+          {% set bright = lux is not none and lux > states('input_number.shutter_brightness') | float(0) %}
+          {% set warm = temperature is not none
+               and temperature > states('input_number.shutter_temperature') | float(0) %}
+          {{ very_bright or very_warm or (bright and warm) }}
+
 automation:
   - id: shutters_dusk
     alias: Rollläden halb zu vor der nautischen Dämmerung
@@ -147,17 +167,24 @@ automation:
         above: -6
         id: dawn
     actions:
+      - variables:
+          # The eastern shutters stay half open while heat protection is needed
+          eastern: "{{ 'half_open' if is_state('binary_sensor.heat_protection', 'on') else 'open' }}"
       - repeat:
           for_each:
             - kitchen
             - garden
-            - terrace
           sequence:
             - action: script.shutter_move
               data:
                 shutter: "{{ repeat.item }}"
-                position: open
+                position: "{{ eastern }}"
                 override: true
+      - action: script.shutter_move
+        data:
+          shutter: terrace
+          position: open
+          override: true
       - if:
           - condition: state
             entity_id: input_boolean.guests
@@ -176,8 +203,37 @@ automation:
           - action: script.shutter_move
             data:
               shutter: bedroom
-              position: open
+              position: "{{ eastern }}"
               override: true
+
+  - id: shutters_heat_protection
+    alias: Hitzeschutz schließt die Rollläden im Osten halb
+    description: Garten, Küche und Schlafzimmer von 8 bis 13 Uhr, außer sie wurden von Hand bewegt.
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.heat_protection
+        to: "on"
+      - trigger: time
+        at: "08:00:00"
+    conditions:
+      - condition: time
+        after: "08:00:00"
+        before: "13:00:00"
+      - condition: state
+        entity_id: binary_sensor.heat_protection
+        state: "on"
+    actions:
+      - repeat:
+          for_each:
+            - garden
+            - kitchen
+            - bedroom
+          sequence:
+            - action: script.shutter_move
+              data:
+                shutter: "{{ repeat.item }}"
+                position: half_open
 
   - id: shutters_noon
     alias: Rollläden im Osten auf vor dem Sonnenhöchststand
