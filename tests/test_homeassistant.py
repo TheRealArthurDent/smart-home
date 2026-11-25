@@ -699,3 +699,34 @@ def test_the_shoe_heating_twin_can_be_plugged_in_and_out():
     switches = {e["default_entity_id"]: e for e in next(b for b in virtual_devices()["template"] if "switch" in b)["switch"]}
     assert "input_boolean.virtual_bad_on_off_schuhheizung_plugged_in" in switches[SHOES]["availability"]
     assert "virtual_bad_on_off_schuhheizung_plugged_in" in virtual_devices()["input_boolean"]
+
+
+def defined_entities():
+    """Entity ids the packages define (helpers, timers, template entities) or that have a twin on testbench."""
+    found = {entity["default_entity_id"] for _, entity in template_entities(virtual_devices())}
+    for file in (CONFIG_DIR / "packages").glob("*.yaml"):
+        config = yaml.load(file.read_text(), Loader=HomeAssistantLoader)
+        if not isinstance(config, dict):
+            continue
+        for domain in ("input_boolean", "input_datetime", "input_number", "timer"):
+            found |= {f"{domain}.{name}" for name in config.get(domain, {})}
+        found |= {entity.get("default_entity_id") for _, entity in template_entities(config)}
+    return found
+
+
+def test_the_home_dashboard_controls_wake_up_and_shoe_heating():
+    """Replaces the bedroom and settings views of ioBroker's lovelace UI, without its custom cards."""
+    dashboard = configuration()["lovelace"]["dashboards"]["dashboard-home"]
+    assert dashboard["mode"] == "yaml"
+    assert dashboard["filename"] == "dashboards/home.yaml"
+    text = (CONFIG_DIR / "dashboards" / "home.yaml").read_text()
+    assert yaml.safe_load(text)["views"]
+    assert "custom:" not in text
+    used = set(re.findall(r"\b(?:input_boolean|input_datetime|input_number|timer|light|switch|cover)\.[a-z0-9_]+",
+                          text)) - {"timer.cancel"}
+    for needed in ("input_boolean.wecker_wochenende", "input_datetime.weckzeit_wochenende",
+                   "input_boolean.wecken_aussetzen", "input_boolean.rollladen_schlafzimmer_sperre",
+                   "input_datetime.nachtruhe", "timer.aufwachlicht", "input_number.dauer_schuhheizung",
+                   "timer.schuhheizung", "switch.bad_on_off_schuhheizung"):
+        assert needed in used, needed
+    assert sorted(used - defined_entities()) == []
