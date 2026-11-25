@@ -58,6 +58,8 @@ services:
       - ./homeassistant-real:/config/real:ro
     environment:
       - TZ=Europe/Berlin
+      # Discord webhook of its alerts (packages/alerts.yaml)
+      - HOMEASSISTANT_DISCORD_WEBHOOK_URL=${HOMEASSISTANT_DISCORD_WEBHOOK_URL}
     # SONOS_ADVERTISE_ADDR, the host's address; written by the smart_home role
     env_file:
       - homeassistant.env

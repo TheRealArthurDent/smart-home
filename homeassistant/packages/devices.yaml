@@ -16,6 +16,16 @@ template:
           {{ (integration_entities('deconz') + integration_entities('shelly') + integration_entities('sonos'))
              | reject('eq', 'switch.bad_on_off_schuhheizung') | select('is_state', 'unavailable')
              | map('device_id') | reject('none') | unique | list | count }}
+        attributes:
+          # The devices unreachable for 10 minutes (an entity of theirs unavailable that long), for alerts.yaml
+          long_unreachable: >-
+            {% set ns = namespace(devices=[]) %}
+            {% for entity in (integration_entities('deconz') + integration_entities('shelly')
+                              + integration_entities('sonos')) | reject('eq', 'switch.bad_on_off_schuhheizung')
+                 if is_state(entity, 'unavailable') and states[entity].last_changed < now() - timedelta(minutes=10) %}
+              {% set ns.devices = ns.devices + [device_id(entity)] %}
+            {% endfor %}
+            {{ ns.devices | reject('none') | unique | sort | list }}
       - name: Batterien schwach
         unique_id: low_batteries
         default_entity_id: sensor.low_batteries
@@ -25,6 +35,15 @@ template:
         state: >-
           {{ integration_entities('deconz') | select('is_state_attr', 'device_class', 'battery')
              | map('states') | map('float', none) | reject('none') | select('lt', 20) | list | count }}
+        attributes:
+          # The battery sensors below 20 %, for alerts.yaml
+          entities: >-
+            {% set ns = namespace(entities=[]) %}
+            {% for entity in integration_entities('deconz') | select('is_state_attr', 'device_class', 'battery')
+                 if states(entity) | float(none) is not none and states(entity) | float(none) < 20 %}
+              {% set ns.entities = ns.entities + [entity] %}
+            {% endfor %}
+            {{ ns.entities | sort }}
       - name: Niedrigster Batteriestand
         unique_id: lowest_battery
         default_entity_id: sensor.lowest_battery

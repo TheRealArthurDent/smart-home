@@ -1,0 +1,117 @@
+# Alerts to Discord (#2), next to Grafana's: devices unreachable for 10 minutes and batteries below 20 %, each with an
+# all-clear when it is over. The lists come from the device status sensors (devices.yaml); an automation reports what
+# joined or left a list. The webhook URL holds its token, so it comes from the env file infrastructure renders.
+
+rest_command:
+  discord_message:
+    url: !env_var HOMEASSISTANT_DISCORD_WEBHOOK_URL
+    method: post
+    content_type: application/json
+    payload: "{{ {'content': message} | to_json }}"
+
+template:
+  - binary_sensor:
+      # Off for 15 minutes after a start: every device starts unavailable and counts its 10 minutes again, and the
+      # lists fill as the integrations come up
+      - name: Home Assistant eingeschwungen
+        unique_id: home_assistant_settled
+        default_entity_id: binary_sensor.home_assistant_settled
+        icon: mdi:timer-sand-complete
+        state: "{{ true }}"
+        delay_on:
+          minutes: 15
+
+automation:
+  - id: device_unreachable_alert
+    alias: Meldung, wenn ein Gerät nicht erreichbar ist oder wieder erreichbar
+    description: Nach 10 Minuten ohne Verbindung an Discord, und wenn es wieder da ist.
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: sensor.unreachable_devices
+        attribute: long_unreachable
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.home_assistant_settled
+        state: "on"
+      - condition: template
+        value_template: >-
+          {{ trigger.from_state.attributes.long_unreachable is defined
+             and trigger.to_state.attributes.long_unreachable is defined }}
+    variables:
+      gone: >-
+        {% set ns = namespace(names=[]) %}
+        {% for device in trigger.to_state.attributes.long_unreachable
+             if device not in trigger.from_state.attributes.long_unreachable %}
+          {% set ns.names = ns.names + [device_attr(device, 'name_by_user') or device_attr(device, 'name')] %}
+        {% endfor %}
+        {{ ns.names }}
+      back: >-
+        {% set ns = namespace(names=[]) %}
+        {% for device in trigger.from_state.attributes.long_unreachable
+             if device not in trigger.to_state.attributes.long_unreachable %}
+          {% set ns.names = ns.names + [device_attr(device, 'name_by_user') or device_attr(device, 'name')] %}
+        {% endfor %}
+        {{ ns.names }}
+    actions:
+      - if:
+          - condition: template
+            value_template: "{{ gone | count > 0 }}"
+        then:
+          - action: rest_command.discord_message
+            data:
+              message: "📴 Nicht erreichbar: {{ gone | join(', ') }}"
+      - if:
+          - condition: template
+            value_template: "{{ back | count > 0 }}"
+        then:
+          - action: rest_command.discord_message
+            data:
+              message: "✅ Wieder erreichbar: {{ back | join(', ') }}"
+
+  - id: battery_low_alert
+    alias: Meldung, wenn eine Batterie schwach ist oder wieder in Ordnung
+    description: Unter 20 % an Discord, und wenn sie gewechselt wurde.
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: sensor.low_batteries
+        attribute: entities
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.home_assistant_settled
+        state: "on"
+      - condition: template
+        value_template: >-
+          {{ trigger.from_state.attributes.entities is defined and trigger.to_state.attributes.entities is defined }}
+    variables:
+      low: >-
+        {% set ns = namespace(names=[]) %}
+        {% for entity in trigger.to_state.attributes.entities if entity not in trigger.from_state.attributes.entities %}
+          {% set device = device_id(entity) %}
+          {% set ns.names = ns.names + [(device_attr(device, 'name_by_user') or device_attr(device, 'name'))
+                                        ~ ' (' ~ states(entity) ~ ' %)'] %}
+        {% endfor %}
+        {{ ns.names }}
+      replaced: >-
+        {% set ns = namespace(names=[]) %}
+        {% for entity in trigger.from_state.attributes.entities if entity not in trigger.to_state.attributes.entities %}
+          {% set device = device_id(entity) %}
+          {% set ns.names = ns.names + [device_attr(device, 'name_by_user') or device_attr(device, 'name')] %}
+        {% endfor %}
+        {{ ns.names }}
+    actions:
+      - if:
+          - condition: template
+            value_template: "{{ low | count > 0 }}"
+        then:
+          - action: rest_command.discord_message
+            data:
+              message: "🪫 Batterie schwach: {{ low | join(', ') }}"
+      - if:
+          - condition: template
+            value_template: "{{ replaced | count > 0 }}"
+        then:
+          - action: rest_command.discord_message
+            data:
+              message: "🔋 Batterie wieder in Ordnung: {{ replaced | join(', ') }}"

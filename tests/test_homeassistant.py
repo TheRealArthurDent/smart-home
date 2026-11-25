@@ -6,6 +6,7 @@ read-only, so the UI can't change it behind the repo's back.
 """
 
 import datetime
+import json
 import re
 from pathlib import Path
 
@@ -1195,6 +1196,139 @@ def test_the_devices_dashboard_holds_no_personal_devices():
     """Phones and their trackers carry their owners' names."""
     text = "".join((CONFIG_DIR / folder / "devices.yaml").read_text() for folder in ("dashboards", "packages"))
     assert "device_tracker." not in text and "mobile_app" not in text
+
+
+# Alerts to Discord (#2): low batteries and devices unreachable for 10 minutes, with an all-clear when they are back.
+NOW = datetime.datetime(2026, 11, 25, 20, 0, tzinfo=datetime.timezone.utc)
+# Since when each unavailable entity of DEVICE_STATES is unavailable
+UNAVAILABLE_SINCE = {"light.wohnzimmer_dekolights": NOW - datetime.timedelta(minutes=30),
+                     "sensor.wohnzimmer_wohnzimmer_2": NOW - datetime.timedelta(minutes=3),
+                     "sensor.wohnzimmer_wohnzimmer": NOW - datetime.timedelta(minutes=12),
+                     "sensor.wohnzimmer_wohnzimmer_battery": NOW - datetime.timedelta(minutes=12),
+                     "switch.bad_on_off_schuhheizung": NOW - datetime.timedelta(hours=5),
+                     "media_player.bad_bad": NOW - datetime.timedelta(minutes=9)}
+
+
+class EntityState:
+    def __init__(self, entity):
+        self.last_changed = UNAVAILABLE_SINCE.get(entity, NOW - datetime.timedelta(days=1))
+
+
+class States:
+    """Home Assistant's states: states('x') gives the state, states['x'] the state object."""
+
+    def __call__(self, entity):
+        return DEVICE_STATES[entity][2]
+
+    def __getitem__(self, entity):
+        return EntityState(entity)
+
+
+def render_alert_template(template, **context):
+    """render_device_template with the states object, now() and the device registry."""
+    env = jinja2.Environment()
+    names = {"dekolights": ("DekoLights", None), "climate": ("Wohnzimmer", "Klima Wohnzimmer"),
+             "button": ("Button", None)}
+    env.filters["device_id"] = lambda entity: DEVICE_STATES[entity][1]
+    env.filters["states"] = lambda entity: DEVICE_STATES[entity][2]
+    env.filters["float"] = lambda value, default=0.0: float(value) if value.replace(".", "").isdigit() else default
+    env.tests["is_state"] = lambda entity, state: DEVICE_STATES[entity][2] == state
+    env.tests["is_state_attr"] = (
+        lambda entity, name, value: name == "device_class" and DEVICE_STATES[entity][3] == value)
+    env.tests["none"] = lambda value: value is None
+
+    def device_attr(device, attribute):
+        return {"name": names[device][0], "name_by_user": names[device][1]}[attribute]
+
+    def integration_entities(integration):
+        return [e for e, (i, *_) in DEVICE_STATES.items() if i == integration]
+
+    env.globals.update(integration_entities=integration_entities, now=lambda: NOW, timedelta=datetime.timedelta,
+                       device_attr=device_attr, device_id=lambda entity: DEVICE_STATES[entity][1],
+                       states=States(), is_state=env.tests["is_state"])
+    return env.from_string(template).render(**context).strip()
+
+
+def test_devices_unreachable_for_10_minutes_are_listed():
+    """The living room's climate sensor counts from its first entity that is unavailable for 10 minutes; the Sonos
+    only for 9 so far."""
+    attribute = device_sensors()["sensor.unreachable_devices"]["attributes"]["long_unreachable"]
+    assert render_alert_template(attribute) == "['climate', 'dekolights']"
+
+
+def test_low_batteries_are_listed():
+    attribute = device_sensors()["sensor.low_batteries"]["attributes"]["entities"]
+    assert render_alert_template(attribute) == "['sensor.buro_button_battery']"
+
+
+def test_discord_gets_the_message_through_the_webhook_from_the_env_file():
+    """The URL holds the webhook's token: it reaches the container from the env file that infrastructure renders."""
+    command = package("alerts")["rest_command"]["discord_message"]
+    assert command["url"] == ("!env_var", "HOMEASSISTANT_DISCORD_WEBHOOK_URL")
+    assert (command["method"], command["content_type"]) == ("post", "application/json")
+    env = jinja2.Environment()
+    env.filters["to_json"] = json.dumps
+    assert json.loads(env.from_string(command["payload"]).render(message='Er sagt "hallo"')) == {
+        "content": 'Er sagt "hallo"'}
+    assert "HOMEASSISTANT_DISCORD_WEBHOOK_URL=${HOMEASSISTANT_DISCORD_WEBHOOK_URL}" in homeassistant()["environment"]
+    assert "\nHOMEASSISTANT_DISCORD_WEBHOOK_URL=\n" in (ROOT / "setup" / ".env.example").read_text()
+    workflow = (ROOT / ".github" / "workflows" / "homeassistant.yaml").read_text()
+    assert "--env HOMEASSISTANT_DISCORD_WEBHOOK_URL=https://discord.invalid/" in workflow
+
+
+def test_alerts_wait_until_home_assistant_has_settled():
+    """After a restart every device starts unavailable and every unavailable one counts its 10 minutes again."""
+    settled = next(e for _, e in template_entities(package("alerts"))
+                   if e["default_entity_id"] == "binary_sensor.home_assistant_settled")
+    assert settled["state"] == "{{ true }}" and settled["delay_on"] == {"minutes": 15}
+
+
+ALERTS = {"device_unreachable_alert": ("sensor.unreachable_devices", "long_unreachable"),
+          "battery_low_alert": ("sensor.low_batteries", "entities")}
+
+
+def alert_messages(automation_id, before, after):
+    """The messages an alert automation sends when its sensor's list changes from before to after."""
+    item = automation("alerts", automation_id)
+    sensor, attribute = ALERTS[automation_id]
+    assert [(t["entity_id"], t["attribute"]) for t in item["triggers"]] == [(sensor, attribute)]
+    assert {"condition": "state", "entity_id": "binary_sensor.home_assistant_settled", "state": "on"} in item[
+        "conditions"]
+    trigger = {"from_state": {"attributes": {attribute: before}}, "to_state": {"attributes": {attribute: after}}}
+    assert render_alert_template(item["conditions"][-1]["value_template"], trigger=trigger) == "True"
+    variables = {name: yaml.safe_load(render_alert_template(value, trigger=trigger))
+                 for name, value in item["variables"].items()}
+    messages = []
+    for action in item["actions"]:
+        if render_alert_template(action["if"][0]["value_template"], **variables) == "True":
+            call = action["then"][0]
+            assert call["action"] == "rest_command.discord_message"
+            messages.append(render_alert_template(call["data"]["message"], **variables))
+    return messages
+
+
+def test_an_unreachable_device_alerts_and_gives_the_all_clear_by_its_name():
+    assert alert_messages("device_unreachable_alert", ["dekolights"], ["climate", "dekolights"]) == [
+        "📴 Nicht erreichbar: Klima Wohnzimmer"]
+    assert alert_messages("device_unreachable_alert", ["climate", "dekolights"], []) == [
+        "✅ Wieder erreichbar: Klima Wohnzimmer, DekoLights"]
+    assert alert_messages("device_unreachable_alert", ["climate"], ["dekolights"]) == [
+        "📴 Nicht erreichbar: DekoLights", "✅ Wieder erreichbar: Klima Wohnzimmer"]
+
+
+def test_a_low_battery_alerts_with_its_level_and_gives_the_all_clear():
+    assert alert_messages("battery_low_alert", [], ["sensor.buro_button_battery"]) == [
+        "🪫 Batterie schwach: Button (16 %)"]
+    assert alert_messages("battery_low_alert", ["sensor.buro_button_battery"], []) == [
+        "🔋 Batterie wieder in Ordnung: Button"]
+
+
+def test_alerts_ignore_a_sensor_without_its_list():
+    """A sensor that was unavailable has no list; comparing against it would report every device."""
+    for automation_id, (_, attribute) in ALERTS.items():
+        condition = automation("alerts", automation_id)["conditions"][-1]["value_template"]
+        trigger = {"from_state": {"attributes": {}}, "to_state": {"attributes": {attribute: ["x"]}}}
+        assert render_alert_template(condition, trigger=trigger) == "False"
 
 
 # Sonos, replacing Node-RED's "Stop Sonos": the living room Amp's power outlet follows presence, and a button skips.
