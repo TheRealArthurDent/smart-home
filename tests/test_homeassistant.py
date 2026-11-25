@@ -766,3 +766,183 @@ def test_own_ids_are_english_and_names_german():
     ids = own_ids()
     assert ids
     assert [i for i in ids if GERMAN.search(i)] == []
+
+
+# Shutters, replacing Node-RED's "Shutters" tab: a schedule after the sun, a target position and a lock per shutter,
+# manual changes kept, and the terrace door. Heat protection follows later.
+COVERS = {"office": "cover.buro_shutter_office", "kitchen": "cover.kuche_shutter_kitchen",
+          "bedroom": "cover.schlafzimmer_shutter_bedroom", "garden": "cover.wohnzimmer_shutter_garden",
+          "terrace": "cover.wohnzimmer_shutter_terrace"}
+TERRACE_DOOR = "binary_sensor.wohnzimmer_openclose_terrace"
+
+
+def shutter_move():
+    return package("shutters")["script"]["shutter_move"]
+
+
+def shutter_decision(shutter, position, current, target, locked=False, override=False, door_open=False):
+    """What shutter_move does: its wanted position and decision, rendered like Home Assistant would."""
+    script = shutter_move()
+    # Home Assistant passes a field only when the call sets it; its default only fills the UI
+    variables = {"shutter": shutter, "position": position}
+    if override:
+        variables["override"] = True
+    states = {f"input_number.shutter_{shutter}_target": str(target),
+              f"input_boolean.shutter_{shutter}_locked": "on" if locked else "off",
+              TERRACE_DOOR: "on" if door_open else "off"}
+    context = dict(variables, states=lambda entity: states.get(entity, "unknown"), is_state=is_state_of(states),
+                   state_attr=lambda entity, attribute: current if attribute == "current_position" else None)
+    for name in ("cover", "target_helper", "wanted", "decision"):
+        context[name] = render(script["variables"][name], **context)
+        if name == "wanted":
+            context[name] = int(context[name])
+    return context["wanted"], context["decision"]
+
+
+def test_half_open_differs_per_shutter():
+    """Node-RED's half-open positions; open is 100 and closed 0, as with the Shellies."""
+    half = {"office": 40, "kitchen": 40, "bedroom": 40, "garden": 25, "terrace": 40}
+    for shutter, position in half.items():
+        assert shutter_decision(shutter, "half_open", current=100, target=100)[0] == position
+        assert shutter_decision(shutter, "open", current=0, target=0)[0] == 100
+        assert shutter_decision(shutter, "closed", current=100, target=100)[0] == 0
+        assert shutter_decision(shutter, 55, current=100, target=100)[0] == 55
+    assert {name for name in shutter_move()["fields"]["shutter"]["selector"]["select"]["options"]} == set(COVERS)
+    assert render(shutter_move()["variables"]["cover"], shutter="garden") == COVERS["garden"]
+
+
+def test_a_shutter_moved_by_hand_stays_unless_overridden():
+    """Node-RED's "Determine action": locked never moves; already there only stores the target; moved since the
+    last automatic move (more than the Shellies' 2 % off the target) only moves with override."""
+    assert shutter_decision("kitchen", "half_open", current=100, target=100, locked=True, override=True)[1] == "locked"
+    assert shutter_decision("kitchen", "half_open", current=40, target=100)[1] == "there"
+    assert shutter_decision("kitchen", "half_open", current=100, target=100)[1] == "move"
+    assert shutter_decision("kitchen", "half_open", current=99, target=100)[1] == "move"
+    assert shutter_decision("kitchen", "half_open", current=70, target=100)[1] == "moved_by_hand"
+    assert shutter_decision("kitchen", "half_open", current=70, target=100, override=True)[1] == "move"
+    assert shutter_decision("kitchen", "half_open", current=None, target=100, override=True)[1] == "unavailable"
+
+
+def test_the_terrace_shutter_does_not_close_while_the_door_is_open():
+    """Node-RED's "Terrace light on": with the door open, closing only stores the target for when it closes."""
+    assert shutter_decision("terrace", "half_open", current=100, target=100, door_open=True)[1] == "door_open"
+    assert shutter_decision("terrace", "open", current=40, target=40, door_open=True)[1] == "move"
+    assert shutter_decision("garden", "half_open", current=100, target=100, door_open=True)[1] == "move"
+
+
+def test_shutter_move_acts_on_its_decision():
+    script = shutter_move()
+    branches = {option["conditions"]: option["sequence"] for option in script["sequence"][0]["choose"]}
+    move = branches["{{ decision == 'move' }}"]
+    assert move[0] == {"action": "cover.set_cover_position", "target": {"entity_id": "{{ cover }}"},
+                       "data": {"position": "{{ wanted }}"}}
+    store = {"action": "input_number.set_value", "target": {"entity_id": "{{ target_helper }}"},
+             "data": {"value": "{{ wanted }}"}}
+    # The terrace door opens the shutter without changing the target it returns to
+    assert move[1] == {"if": "{{ not keep_target | default(false) }}", "then": [store]}
+    assert branches["{{ decision == 'there' }}"] == move[1:]
+    assert branches["{{ decision == 'door_open' }}"] == [store]
+    assert script["mode"] == "parallel"
+    assert script["fields"]["override"]["default"] is False
+    assert script["fields"]["keep_target"]["default"] is False
+
+
+def shutter_calls(actions, items=None):
+    """(shutter, position, override) of each shutter_move call, through repeat for_each, if and choose."""
+    calls = []
+    for action in actions:
+        if action.get("action") == "script.shutter_move":
+            data = action["data"]
+            shutters = items if data["shutter"] == "{{ repeat.item }}" else [data["shutter"]]
+            calls += [(s, data["position"], data.get("override", False)) for s in shutters]
+        if "repeat" in action:
+            calls += shutter_calls(action["repeat"]["sequence"], action["repeat"]["for_each"])
+        for branch in ("then", "else", "sequence"):
+            calls += shutter_calls(action.get(branch, []), items)
+        for option in action.get("choose", []):
+            calls += shutter_calls(option["sequence"], items)
+    return calls
+
+
+def sun_trigger(trigger):
+    return (trigger["trigger"], trigger.get("entity_id"), trigger.get("attribute"),
+            trigger.get("above"), trigger.get("below"))
+
+
+def test_shutters_half_open_shortly_before_nautical_dusk():
+    """Node-RED: 30 minutes before nautical dusk (sun 12° below the horizon); the sun sinks about 4° in that time."""
+    dusk = automation("shutters", "shutters_dusk")
+    assert [sun_trigger(t) for t in dusk["triggers"]] == [("numeric_state", "sun.sun", "elevation", None, -8)]
+    assert shutter_calls(dusk["actions"]) == [(s, "half_open", True) for s in ("office", "garden", "terrace")]
+
+
+def test_the_kitchen_shutter_half_opens_at_midnight():
+    midnight = automation("shutters", "shutters_midnight")
+    assert midnight["triggers"] == [{"trigger": "time", "at": "00:00:00"}]
+    assert shutter_calls(midnight["actions"]) == [("kitchen", "half_open", True)]
+
+
+def test_shutters_open_in_the_morning_but_not_on_guests_or_sleepers():
+    """At 7:00 and at civil dawn (6° below the horizon); the office only without guests, the bedroom only when
+    nobody is home."""
+    morning = automation("shutters", "shutters_morning")
+    triggers = {t["id"]: t for t in morning["triggers"]}
+    assert triggers["seven"] == {"trigger": "time", "at": "07:00:00", "id": "seven"}
+    assert sun_trigger(triggers["dawn"]) == ("numeric_state", "sun.sun", "elevation", -6, None)
+    assert sorted(shutter_calls(morning["actions"])) == sorted(
+        (s, "open", True) for s in ("kitchen", "garden", "terrace", "office", "bedroom"))
+    text = str(morning["actions"])
+    office = next(a for a in morning["actions"] if "office" in str(a.get("then")))
+    assert office["if"] == [{"condition": "state", "entity_id": "input_boolean.guests", "state": "off"}]
+    bedroom = next(a for a in morning["actions"] if "bedroom" in str(a.get("then")))
+    assert bedroom["if"] == [{"condition": "state", "entity_id": "binary_sensor.someone_home", "state": "off"}]
+    assert "heat" not in text
+
+
+def test_eastern_shutters_open_before_solar_noon():
+    noon = automation("shutters", "shutters_noon")
+    template = noon["triggers"][0]["value_template"]
+    assert "next_noon" in template and "minutes=10" in template
+    assert shutter_calls(noon["actions"]) == [(s, "open", True) for s in ("bedroom", "garden", "kitchen")]
+
+
+def test_the_office_shutter_opens_at_golden_hour():
+    """Unless moved by hand: no override."""
+    afternoon = automation("shutters", "shutters_office_afternoon")
+    assert [sun_trigger(t) for t in afternoon["triggers"]] == [("numeric_state", "sun.sun", "elevation", None, 6)]
+    assert shutter_calls(afternoon["actions"]) == [("office", "open", False)]
+
+
+def test_the_bedroom_shutter_closes_at_nautical_dusk_and_at_ten_unless_mostly_closed():
+    night = automation("shutters", "shutters_bedroom_night")
+    triggers = {t["id"]: t for t in night["triggers"]}
+    assert sun_trigger(triggers["nautical_dusk"]) == ("numeric_state", "sun.sun", "elevation", None, -12)
+    assert triggers["ten"] == {"trigger": "time", "at": "22:00:00", "id": "ten"}
+    assert night["conditions"] == [{"condition": "numeric_state", "entity_id": COVERS["bedroom"],
+                                    "attribute": "current_position", "above": 70}]
+    assert shutter_calls(night["actions"]) == [("bedroom", "closed", True)]
+
+
+def test_the_terrace_door_opens_its_shutter_and_closing_it_returns_the_shutter():
+    opened = automation("shutters", "shutters_terrace_door_opened")
+    assert opened["triggers"] == [{"trigger": "state", "entity_id": TERRACE_DOOR, "to": "on"}]
+    assert shutter_calls(opened["actions"]) == [("terrace", "open", True)]
+    assert opened["actions"][0]["data"]["keep_target"] is True
+    closed = automation("shutters", "shutters_terrace_door_closed")
+    assert closed["triggers"] == [{"trigger": "state", "entity_id": TERRACE_DOOR, "from": "on", "to": "off"}]
+    position = closed["actions"][0]["data"]["position"]
+    assert "input_number.shutter_terrace_target" in position
+    assert shutter_calls(closed["actions"]) == [("terrace", position, True)]
+    assert closed["actions"][0]["data"]["keep_target"] is True
+
+
+def test_the_home_dashboard_moves_and_locks_every_shutter():
+    text = (CONFIG_DIR / "dashboards" / "home.yaml").read_text()
+    for shutter, cover in COVERS.items():
+        assert cover in text and f"input_boolean.shutter_{shutter}_locked" in text, shutter
+    assert "input_boolean.guests" in text
+
+
+def test_every_shutter_has_a_twin_on_testbench():
+    twins = {e["default_entity_id"] for _, e in template_entities(virtual_devices())}
+    assert set(COVERS.values()) | {TERRACE_DOOR} <= twins

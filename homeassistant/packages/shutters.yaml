@@ -1,0 +1,274 @@
+# Shutters, replacing Node-RED's "Shutters" tab (#2); heat protection follows later.
+# Every automatic move goes through script.shutter_move, which keeps Node-RED's rules: a locked shutter
+# (input_boolean.shutter_<name>_locked) never moves, a shutter moved by hand since the last automatic move (more than
+# 2 % off input_number.shutter_<name>_target) only moves with override, and the terrace shutter doesn't close while
+# the terrace door is open. The sun's elevation stands in for Node-RED's solar events: civil dawn and dusk are at -6°,
+# nautical dusk at -12°, the evening golden hour starts at 6°. Open is 100, closed 0, as with the Shellies.
+
+script:
+  shutter_move:
+    alias: Rollladen automatisch bewegen
+    description: Bewegt einen Rollladen, außer er ist gesperrt oder wurde von Hand bewegt (dann nur mit Vorrang).
+    mode: parallel
+    fields:
+      shutter:
+        name: Rollladen
+        required: true
+        selector:
+          select:
+            options:
+              - office
+              - kitchen
+              - bedroom
+              - garden
+              - terrace
+      position:
+        name: Position
+        description: open, half_open, closed oder eine Zahl von 0 (zu) bis 100 (offen)
+        required: true
+        example: half_open
+        selector:
+          text:
+      override:
+        name: Vorrang vor Handbetätigung
+        default: false
+        selector:
+          boolean:
+      keep_target:
+        name: Sollposition behalten
+        description: Bewegt, ohne die Sollposition zu ändern, zu der der Rollladen später zurückkehrt.
+        default: false
+        selector:
+          boolean:
+    variables:
+      cover: >-
+        {{ {'office': 'cover.buro_shutter_office', 'kitchen': 'cover.kuche_shutter_kitchen',
+            'bedroom': 'cover.schlafzimmer_shutter_bedroom', 'garden': 'cover.wohnzimmer_shutter_garden',
+            'terrace': 'cover.wohnzimmer_shutter_terrace'}[shutter] }}
+      target_helper: "input_number.shutter_{{ shutter }}_target"
+      wanted: >-
+        {% set half_open = {'office': 40, 'kitchen': 40, 'bedroom': 40, 'garden': 25, 'terrace': 40}[shutter] %}
+        {{ {'open': 100, 'half_open': half_open, 'closed': 0}.get(position | string, position) | int }}
+      decision: >-
+        {%- set current = state_attr(cover, 'current_position') -%}
+        {%- if is_state('input_boolean.shutter_' ~ shutter ~ '_locked', 'on') -%} locked
+        {%- elif current is none -%} unavailable
+        {%- elif current | int == wanted -%} there
+        {%- elif shutter == 'terrace' and wanted < current | int
+             and is_state('binary_sensor.wohnzimmer_openclose_terrace', 'on') -%} door_open
+        {%- elif override | default(false) or (current | int - states(target_helper) | int(-100)) | abs <= 2 -%} move
+        {%- else -%} moved_by_hand
+        {%- endif -%}
+    sequence:
+      # Locked, unavailable or moved by hand: no branch, the shutter stays where it is
+      - choose:
+          - alias: Bewegen
+            conditions: "{{ decision == 'move' }}"
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: "{{ cover }}"
+                data:
+                  position: "{{ wanted }}"
+              - if: "{{ not keep_target | default(false) }}"
+                then:
+                  - action: input_number.set_value
+                    target:
+                      entity_id: "{{ target_helper }}"
+                    data:
+                      value: "{{ wanted }}"
+          - alias: Schon dort, nur die Sollposition merken
+            conditions: "{{ decision == 'there' }}"
+            sequence:
+              - if: "{{ not keep_target | default(false) }}"
+                then:
+                  - action: input_number.set_value
+                    target:
+                      entity_id: "{{ target_helper }}"
+                    data:
+                      value: "{{ wanted }}"
+          - alias: Terrassentür offen, erst beim Schließen der Tür bewegen
+            conditions: "{{ decision == 'door_open' }}"
+            sequence:
+              - action: input_number.set_value
+                target:
+                  entity_id: "{{ target_helper }}"
+                data:
+                  value: "{{ wanted }}"
+
+automation:
+  - id: shutters_dusk
+    alias: Rollläden halb zu vor der nautischen Dämmerung
+    description: Büro, Garten und Terrasse etwa 30 Minuten vor der nautischen Dämmerung.
+    mode: single
+    triggers:
+      # The sun sinks about 4° in the 30 minutes before nautical dusk (-12°)
+      - trigger: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        below: -8
+    actions:
+      - repeat:
+          for_each:
+            - office
+            - garden
+            - terrace
+          sequence:
+            - action: script.shutter_move
+              data:
+                shutter: "{{ repeat.item }}"
+                position: half_open
+                override: true
+
+  - id: shutters_midnight
+    alias: Rollladen Küche halb zu um Mitternacht
+    mode: single
+    triggers:
+      - trigger: time
+        at: "00:00:00"
+    actions:
+      - action: script.shutter_move
+        data:
+          shutter: kitchen
+          position: half_open
+          override: true
+
+  - id: shutters_morning
+    alias: Rollläden morgens auf
+    description: Um 7 Uhr und zur Morgendämmerung; Büro nur ohne Gäste, Schlafzimmer nur, wenn keiner da ist.
+    mode: single
+    triggers:
+      - trigger: time
+        at: "07:00:00"
+        id: seven
+      - trigger: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        above: -6
+        id: dawn
+    actions:
+      - repeat:
+          for_each:
+            - kitchen
+            - garden
+            - terrace
+          sequence:
+            - action: script.shutter_move
+              data:
+                shutter: "{{ repeat.item }}"
+                position: open
+                override: true
+      - if:
+          - condition: state
+            entity_id: input_boolean.guests
+            state: "off"
+        then:
+          - action: script.shutter_move
+            data:
+              shutter: office
+              position: open
+              override: true
+      - if:
+          - condition: state
+            entity_id: binary_sensor.someone_home
+            state: "off"
+        then:
+          - action: script.shutter_move
+            data:
+              shutter: bedroom
+              position: open
+              override: true
+
+  - id: shutters_noon
+    alias: Rollläden im Osten auf vor dem Sonnenhöchststand
+    description: Schlafzimmer, Garten und Küche 10 Minuten vor dem Sonnenhöchststand.
+    mode: single
+    triggers:
+      # next_noon moves to tomorrow at noon, so this is true from 10 minutes before until noon
+      - trigger: template
+        value_template: >-
+          {% set noon = state_attr('sun.sun', 'next_noon') | as_datetime(none) %}
+          {{ noon is not none and now() >= noon - timedelta(minutes=10) }}
+    actions:
+      - repeat:
+          for_each:
+            - bedroom
+            - garden
+            - kitchen
+          sequence:
+            - action: script.shutter_move
+              data:
+                shutter: "{{ repeat.item }}"
+                position: open
+                override: true
+
+  - id: shutters_office_afternoon
+    alias: Rollladen Büro auf zur goldenen Stunde
+    description: Zu Beginn der goldenen Stunde am Abend, außer er wurde von Hand bewegt.
+    mode: single
+    triggers:
+      - trigger: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        below: 6
+    actions:
+      - action: script.shutter_move
+        data:
+          shutter: office
+          position: open
+
+  - id: shutters_bedroom_night
+    alias: Rollladen Schlafzimmer zu zur nautischen Dämmerung und um 22 Uhr
+    description: Nur, wenn er weitgehend offen ist.
+    mode: single
+    triggers:
+      - trigger: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        below: -12
+        id: nautical_dusk
+      - trigger: time
+        at: "22:00:00"
+        id: ten
+    conditions:
+      - condition: numeric_state
+        entity_id: cover.schlafzimmer_shutter_bedroom
+        attribute: current_position
+        above: 70
+    actions:
+      - action: script.shutter_move
+        data:
+          shutter: bedroom
+          position: closed
+          override: true
+
+  - id: shutters_terrace_door_opened
+    alias: Terrassentür auf öffnet den Rollladen
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.wohnzimmer_openclose_terrace
+        to: "on"
+    actions:
+      - action: script.shutter_move
+        data:
+          shutter: terrace
+          position: open
+          override: true
+          keep_target: true
+
+  - id: shutters_terrace_door_closed
+    alias: Terrassentür zu bringt den Rollladen auf die Sollposition
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.wohnzimmer_openclose_terrace
+        from: "on"
+        to: "off"
+    actions:
+      - action: script.shutter_move
+        data:
+          shutter: terrace
+          position: "{{ states('input_number.shutter_terrace_target') | int(100) }}"
+          override: true
+          keep_target: true
