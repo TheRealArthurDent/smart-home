@@ -553,6 +553,10 @@ def test_wake_up_takes_the_alarm_of_workdays_or_of_weekends_and_holidays():
                           f"input_boolean.wake_up_{day}": "on" if alarm else "off"}
                 fires = render(condition, trigger={"id": day}, is_state=is_state_of(states)) == "True"
                 assert fires == (alarm and workday == (day == "workday")), (workday, day, alarm)
+    # Without the Workday sensor (not set up, or under another entity id) nobody is woken by mistake
+    for day in ("workday", "weekend"):
+        states = {f"input_boolean.wake_up_{day}": "on"}
+        assert render(condition, trigger={"id": day}, is_state=is_state_of(states)) == "False", day
 
 
 def test_skipping_a_wake_up_resets_the_skip_and_keeps_the_bedroom_shutter_down():

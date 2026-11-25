@@ -29,8 +29,9 @@ automation:
     conditions:
       - condition: template
         value_template: >-
+          {# A missing Workday sensor matches neither state, so it wakes nobody instead of everybody #}
           {{ is_state('input_boolean.wake_up_' ~ trigger.id, 'on')
-             and (trigger.id == 'workday') == is_state('binary_sensor.workday_sensor', 'on') }}
+             and is_state('binary_sensor.workday_sensor', 'on' if trigger.id == 'workday' else 'off') }}
     actions:
       - if:
           - condition: state
