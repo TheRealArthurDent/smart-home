@@ -1,7 +1,8 @@
 # Shoe heating, replacing Node-RED's "Shoe ventilation" (#2).
 # Plugging the plug in heats for the shoe heating duration, but not into night rest: if more than 20 minutes are
 # left until then, it heats until night rest and the rest the next day from the weekend alarm time;
-# otherwise all of it the next day. The timer and the rest survive restarts.
+# otherwise all of it the next day. Night rest lasts until the weekend alarm time, so plugging in at night heats
+# from then on. The timer and the rest survive restarts.
 
 input_number:
   shoe_heating_rest:
@@ -29,9 +30,13 @@ automation:
     actions:
       - variables:
           heating_seconds: "{{ (states('input_number.shoe_heating_duration') | float(0) * 3600) | int }}"
-          # Negative once night rest has begun
+          # Negative while night rest lasts: from its start in the evening until the weekend alarm time
           seconds_until_night_rest: >-
-            {{ (today_at(states('input_datetime.night_rest')) - now()).total_seconds() | int }}
+            {% if now() < today_at(states('input_datetime.wake_up_time_weekend')) %}
+              -1
+            {% else %}
+              {{ (today_at(states('input_datetime.night_rest')) - now()).total_seconds() | int }}
+            {% endif %}
       - choose:
           - alias: Vor der Nachtruhe fertig, in einem Rutsch heizen
             conditions: "{{ heating_seconds <= seconds_until_night_rest }}"

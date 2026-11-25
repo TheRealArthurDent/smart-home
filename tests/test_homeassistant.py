@@ -553,6 +553,10 @@ def test_wake_up_takes_the_alarm_of_workdays_or_of_weekends_and_holidays():
                           f"input_boolean.wake_up_{day}": "on" if alarm else "off"}
                 fires = render(condition, trigger={"id": day}, is_state=is_state_of(states)) == "True"
                 assert fires == (alarm and workday == (day == "workday")), (workday, day, alarm)
+    # Without the Workday sensor (not set up, or under another entity id) nobody is woken by mistake
+    for day in ("workday", "weekend"):
+        states = {f"input_boolean.wake_up_{day}": "on"}
+        assert render(condition, trigger={"id": day}, is_state=is_state_of(states)) == "False", day
 
 
 def test_skipping_a_wake_up_resets_the_skip_and_keeps_the_bedroom_shutter_down():
@@ -634,11 +638,12 @@ def test_the_day_switch_and_switching_off_stop_the_wake_up_without_moving_the_sh
 SHOES = "switch.bad_on_off_schuhheizung"
 
 
-def shoe_plan(now, hours=8.0, night="22:00:00"):
+def shoe_plan(now, hours=8.0, night="22:00:00", wake="10:00:00"):
     """Seconds the shoe heating runs now and the next day, by the branch the automation takes."""
     actions = automation("shoe_heating", "shoe_heating_start")["actions"]
     clock = datetime.datetime(2026, 11, 25, *(int(x) for x in now.split(":")))
-    states = {"input_number.shoe_heating_duration": str(hours), "input_datetime.night_rest": night}
+    states = {"input_number.shoe_heating_duration": str(hours), "input_datetime.night_rest": night,
+              "input_datetime.wake_up_time_weekend": wake}
     functions = {"states": states.get, "now": lambda: clock,
                  "today_at": lambda time: datetime.datetime.combine(clock.date(), datetime.time.fromisoformat(time))}
     values = {name: float(render(template, **functions)) for name, template in actions[0]["variables"].items()}
@@ -659,14 +664,18 @@ def test_shoe_heating_starts_when_the_plug_is_plugged_in():
 
 def test_shoe_heating_runs_before_night_rest_and_finishes_the_next_day():
     """Node-RED: in one go if it ends before night rest; past night rest, all of it the next day from the weekend
-    alarm time; otherwise until night rest if at least 20 minutes are left, the rest the next day."""
+    alarm time; otherwise until night rest if at least 20 minutes are left, the rest the next day. Night rest lasts
+    until the weekend alarm time (Mika, 2026-11-25), so plugging in at night heats from that time in the morning."""
     hour = 3600
-    assert shoe_plan("08:00") == {"now": 8 * hour, "later": 0}
+    assert shoe_plan("10:30") == {"now": 8 * hour, "later": 0}
     assert shoe_plan("14:00") == {"now": 8 * hour, "later": 0}
     assert shoe_plan("18:00") == {"now": 4 * hour, "later": 4 * hour}
     assert shoe_plan("21:30") == {"now": 1800, "later": 8 * hour - 1800}
     assert shoe_plan("21:50") == {"now": 0, "later": 8 * hour}
     assert shoe_plan("23:00") == {"now": 0, "later": 8 * hour}
+    assert shoe_plan("01:00") == {"now": 0, "later": 8 * hour}
+    assert shoe_plan("08:00") == {"now": 0, "later": 8 * hour}
+    assert shoe_plan("08:00", wake="07:30:00") == {"now": 8 * hour, "later": 0}
     assert shoe_plan("10:00", hours=0.5) == {"now": 1800, "later": 0}
 
 
