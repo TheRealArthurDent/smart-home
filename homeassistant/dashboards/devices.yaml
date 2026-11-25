@@ -45,355 +45,355 @@ views:
           - type: markdown
             content: Alle Geräte sind erreichbar.
             visibility:
-              - condition: state
+              - condition: numeric_state
                 entity: sensor.unreachable_devices
-                state: '0'
+                below: 1
           - type: tile
             entity: light.wohnzimmer_hinterm_sofa
-            name: Hinterm Sofa · Wohnzimmer
+            name: Hinterm Sofa
             visibility:
               - condition: state
                 entity: light.wohnzimmer_hinterm_sofa
                 state: unavailable
           - type: tile
             entity: sensor.wohnzimmer_wohnzimmer_2
-            name: Klima Wohnzimmer · Wohnzimmer
+            name: Klima Wohnzimmer
             visibility:
               - condition: state
                 entity: sensor.wohnzimmer_wohnzimmer_2
                 state: unavailable
           - type: tile
             entity: sensor.wohnzimmer_lichtsensor_wohnzimmer
-            name: Lichtsensor Wohnzimmer · Wohnzimmer
+            name: Lichtsensor Wohnzimmer
             visibility:
               - condition: state
                 entity: sensor.wohnzimmer_lichtsensor_wohnzimmer
                 state: unavailable
           - type: tile
             entity: light.wohnzimmer_pilz
-            name: Pilz · Wohnzimmer
+            name: Pilz
             visibility:
               - condition: state
                 entity: light.wohnzimmer_pilz
                 state: unavailable
           - type: tile
             entity: cover.wohnzimmer_shutter_garden
-            name: Rollladen Garten · Wohnzimmer
+            name: Rollladen Garten
             visibility:
               - condition: state
                 entity: cover.wohnzimmer_shutter_garden
                 state: unavailable
           - type: tile
             entity: cover.wohnzimmer_shutter_terrace
-            name: Rollladen Terrasse · Wohnzimmer
+            name: Rollladen Terrasse
             visibility:
               - condition: state
                 entity: cover.wohnzimmer_shutter_terrace
                 state: unavailable
           - type: tile
             entity: sensor.wohnzimmer_switch_on_off_dekolights_battery
-            name: Schalter Dekolichter · Wohnzimmer
+            name: Schalter Dekolichter
             visibility:
               - condition: state
                 entity: sensor.wohnzimmer_switch_on_off_dekolights_battery
                 state: unavailable
           - type: tile
             entity: media_player.wohnzimmer_wohnzimmer
-            name: Sonos Wohnzimmer · Wohnzimmer
+            name: Sonos Wohnzimmer
             visibility:
               - condition: state
                 entity: media_player.wohnzimmer_wohnzimmer
                 state: unavailable
           - type: tile
             entity: switch.wohnzimmer_on_off_dekolicht_ei
-            name: Steckdose Dekolicht Ei · Wohnzimmer
+            name: Steckdose Dekolicht Ei
             visibility:
               - condition: state
                 entity: switch.wohnzimmer_on_off_dekolicht_ei
                 state: unavailable
           - type: tile
             entity: switch.wohnzimmer_on_off_sonos
-            name: Steckdose Sonos · Wohnzimmer
+            name: Steckdose Sonos
             visibility:
               - condition: state
                 entity: switch.wohnzimmer_on_off_sonos
                 state: unavailable
           - type: tile
             entity: switch.wohnzimmer_on_off_stern_1
-            name: Steckdose Stern 1 · Wohnzimmer
+            name: Steckdose Stern 1
             visibility:
               - condition: state
                 entity: switch.wohnzimmer_on_off_stern_1
                 state: unavailable
           - type: tile
             entity: switch.wohnzimmer_on_off_stern_2
-            name: Steckdose Stern 2 · Wohnzimmer
+            name: Steckdose Stern 2
             visibility:
               - condition: state
                 entity: switch.wohnzimmer_on_off_stern_2
                 state: unavailable
           - type: tile
             entity: sensor.wohnzimmer_button_on_off_dekolight_battery
-            name: Taster Dekolicht · Wohnzimmer
+            name: Taster Dekolicht
             visibility:
               - condition: state
                 entity: sensor.wohnzimmer_button_on_off_dekolight_battery
                 state: unavailable
           - type: tile
             entity: sensor.wohnzimmer_button_skip_song_battery
-            name: Taster Lied überspringen · Wohnzimmer
+            name: Taster Lied überspringen
             visibility:
               - condition: state
                 entity: sensor.wohnzimmer_button_skip_song_battery
                 state: unavailable
           - type: tile
             entity: binary_sensor.wohnzimmer_openclose_terrace
-            name: Terrassentür · Wohnzimmer
+            name: Terrassentür
             visibility:
               - condition: state
                 entity: binary_sensor.wohnzimmer_openclose_terrace
                 state: unavailable
           - type: tile
             entity: cover.kuche_shutter_kitchen
-            name: Rollladen Küche · Küche
+            name: Rollladen Küche
             visibility:
               - condition: state
                 entity: cover.kuche_shutter_kitchen
                 state: unavailable
           - type: tile
             entity: light.kuche_hue_gu10_kitchen_1
-            name: Spot Küche 1 · Küche
+            name: Spot Küche 1
             visibility:
               - condition: state
                 entity: light.kuche_hue_gu10_kitchen_1
                 state: unavailable
           - type: tile
             entity: light.kuche_hue_gu10_kitchen_2
-            name: Spot Küche 2 · Küche
+            name: Spot Küche 2
             visibility:
               - condition: state
                 entity: light.kuche_hue_gu10_kitchen_2
                 state: unavailable
           - type: tile
             entity: light.kuche_hue_gu10_kitchen_3
-            name: Spot Küche 3 · Küche
+            name: Spot Küche 3
             visibility:
               - condition: state
                 entity: light.kuche_hue_gu10_kitchen_3
                 state: unavailable
           - type: tile
             entity: light.kuche_hue_gu10_kitchen_4
-            name: Spot Küche 4 · Küche
+            name: Spot Küche 4
             visibility:
               - condition: state
                 entity: light.kuche_hue_gu10_kitchen_4
                 state: unavailable
           - type: tile
             entity: light.kuche_hue_gu10_kitchen_5
-            name: Spot Küche 5 · Küche
+            name: Spot Küche 5
             visibility:
               - condition: state
                 entity: light.kuche_hue_gu10_kitchen_5
                 state: unavailable
           - type: tile
             entity: light.kuche_hue_gu10_kitchen_6
-            name: Spot Küche 6 · Küche
+            name: Spot Küche 6
             visibility:
               - condition: state
                 entity: light.kuche_hue_gu10_kitchen_6
                 state: unavailable
           - type: tile
             entity: sensor.buro_buro
-            name: Klima Büro · Büro
+            name: Klima Büro
             visibility:
               - condition: state
                 entity: sensor.buro_buro
                 state: unavailable
           - type: tile
             entity: sensor.buro_lichtsensor_buro
-            name: Lichtsensor Büro · Büro
+            name: Lichtsensor Büro
             visibility:
               - condition: state
                 entity: sensor.buro_lichtsensor_buro
                 state: unavailable
           - type: tile
             entity: cover.buro_shutter_office
-            name: Rollladen Büro · Büro
+            name: Rollladen Büro
             visibility:
               - condition: state
                 entity: cover.buro_shutter_office
                 state: unavailable
           - type: tile
             entity: sensor.buro_switch_eckschreibtisch_battery
-            name: Schalter Eckschreibtisch · Büro
+            name: Schalter Eckschreibtisch
             visibility:
               - condition: state
                 entity: sensor.buro_switch_eckschreibtisch_battery
                 state: unavailable
           - type: tile
             entity: sensor.buro_button_desk_office_battery
-            name: Schalter Schreibtisch Büro · Büro
+            name: Schalter Schreibtisch Büro
             visibility:
               - condition: state
                 entity: sensor.buro_button_desk_office_battery
                 state: unavailable
           - type: tile
             entity: media_player.buro_buro
-            name: Sonos Büro · Büro
+            name: Sonos Büro
             visibility:
               - condition: state
                 entity: media_player.buro_buro
                 state: unavailable
           - type: tile
             entity: switch.buro_on_off_eckschreibtisch_licht
-            name: Steckdose Eckschreibtisch · Büro
+            name: Steckdose Eckschreibtisch
             visibility:
               - condition: state
                 entity: switch.buro_on_off_eckschreibtisch_licht
                 state: unavailable
           - type: tile
             entity: switch.buro_on_off_homeoffice
-            name: Steckdose Homeoffice · Büro
+            name: Steckdose Homeoffice
             visibility:
               - condition: state
                 entity: switch.buro_on_off_homeoffice
                 state: unavailable
           - type: tile
             entity: sensor.buro_button_shutter_office_battery
-            name: Taster Rollladen Büro · Büro
+            name: Taster Rollladen Büro
             visibility:
               - condition: state
                 entity: sensor.buro_button_shutter_office_battery
                 state: unavailable
           - type: tile
             entity: light.schlafzimmer_ikea_death_star
-            name: Death Star · Schlafzimmer
+            name: Death Star
             visibility:
               - condition: state
                 entity: light.schlafzimmer_ikea_death_star
                 state: unavailable
           - type: tile
             entity: light.schlafzimmer_hue_spot
-            name: Hue Spot · Schlafzimmer
+            name: Hue Spot
             visibility:
               - condition: state
                 entity: light.schlafzimmer_hue_spot
                 state: unavailable
           - type: tile
             entity: sensor.schlafzimmer_schlafzimmer
-            name: Klima Schlafzimmer · Schlafzimmer
+            name: Klima Schlafzimmer
             visibility:
               - condition: state
                 entity: sensor.schlafzimmer_schlafzimmer
                 state: unavailable
           - type: tile
             entity: sensor.schlafzimmer_schlafzimmer2
-            name: Klima Schlafzimmer 2 · Schlafzimmer
+            name: Klima Schlafzimmer 2
             visibility:
               - condition: state
                 entity: sensor.schlafzimmer_schlafzimmer2
                 state: unavailable
           - type: tile
             entity: light.schlafzimmer_ikea_schlafzimmer_ecke
-            name: Lampe Ecke · Schlafzimmer
+            name: Lampe Ecke
             visibility:
               - condition: state
                 entity: light.schlafzimmer_ikea_schlafzimmer_ecke
                 state: unavailable
           - type: tile
             entity: switch.schlafzimmer_light_bedroom
-            name: Licht Schlafzimmer · Schlafzimmer
+            name: Licht Schlafzimmer
             visibility:
               - condition: state
                 entity: switch.schlafzimmer_light_bedroom
                 state: unavailable
           - type: tile
             entity: cover.schlafzimmer_shutter_bedroom
-            name: Rollladen Schlafzimmer · Schlafzimmer
+            name: Rollladen Schlafzimmer
             visibility:
               - condition: state
                 entity: cover.schlafzimmer_shutter_bedroom
                 state: unavailable
           - type: tile
             entity: sensor.schlafzimmer_switch_change_clothing_bed_battery
-            name: Schalter Umziehen (Bett) · Schlafzimmer
+            name: Schalter Umziehen (Bett)
             visibility:
               - condition: state
                 entity: sensor.schlafzimmer_switch_change_clothing_bed_battery
                 state: unavailable
           - type: tile
             entity: sensor.bad_dimmer_change_clothing_battery
-            name: Dimmer Umziehen · Bad
+            name: Dimmer Umziehen
             visibility:
               - condition: state
                 entity: sensor.bad_dimmer_change_clothing_battery
                 state: unavailable
           - type: tile
             entity: sensor.bad_bath
-            name: Klima Bad · Bad
+            name: Klima Bad
             visibility:
               - condition: state
                 entity: sensor.bad_bath
                 state: unavailable
           - type: tile
             entity: media_player.bad_bad
-            name: Sonos Bad · Bad
+            name: Sonos Bad
             visibility:
               - condition: state
                 entity: media_player.bad_bad
                 state: unavailable
           - type: tile
             entity: sensor.flur_switch_day_night_corridor_battery
-            name: Schalter Tag/Nacht · Flur
+            name: Schalter Tag/Nacht
             visibility:
               - condition: state
                 entity: sensor.flur_switch_day_night_corridor_battery
                 state: unavailable
           - type: tile
             entity: binary_sensor.abstellkammer_bewegung_abstellkammer
-            name: Bewegungsmelder · Abstellkammer
+            name: Bewegungsmelder
             visibility:
               - condition: state
                 entity: binary_sensor.abstellkammer_bewegung_abstellkammer
                 state: unavailable
           - type: tile
             entity: switch.abstellkammer_light_storeroom_output_0
-            name: Licht Abstellkammer · Abstellkammer
+            name: Licht Abstellkammer
             visibility:
               - condition: state
                 entity: switch.abstellkammer_light_storeroom_output_0
                 state: unavailable
           - type: tile
             entity: switch.light_storeroom_output_1
-            name: Licht Abstellkammer 2 · Abstellkammer
+            name: Licht Abstellkammer 2
             visibility:
               - condition: state
                 entity: switch.light_storeroom_output_1
                 state: unavailable
           - type: tile
             entity: binary_sensor.abstellkammer_water_leakage_sensor
-            name: Wassermelder · Abstellkammer
+            name: Wassermelder
             visibility:
               - condition: state
                 entity: binary_sensor.abstellkammer_water_leakage_sensor
                 state: unavailable
           - type: tile
             entity: sensor.garten_aussentemperatur
-            name: Außentemperatur · Garten
+            name: Außentemperatur
             visibility:
               - condition: state
                 entity: sensor.garten_aussentemperatur
                 state: unavailable
           - type: tile
             entity: sensor.garten_aussentemperatur2
-            name: Außentemperatur 2 · Garten
+            name: Außentemperatur 2
             visibility:
               - condition: state
                 entity: sensor.garten_aussentemperatur2
                 state: unavailable
           - type: tile
             entity: light.garten_terrasse
-            name: Terrasse · Garten
+            name: Terrasse
             visibility:
               - condition: state
                 entity: light.garten_terrasse
@@ -448,152 +448,152 @@ views:
           - type: markdown
             content: Keine Batterie unter 20 %.
             visibility:
-              - condition: state
+              - condition: numeric_state
                 entity: sensor.low_batteries
-                state: '0'
+                below: 1
           - type: tile
             entity: sensor.wohnzimmer_wohnzimmer_battery
-            name: Klima Wohnzimmer · Wohnzimmer
+            name: Klima Wohnzimmer
             visibility:
               - condition: numeric_state
                 entity: sensor.wohnzimmer_wohnzimmer_battery
                 below: 20
           - type: tile
             entity: sensor.wohnzimmer_lichtsensor_wohnzimmer_battery
-            name: Lichtsensor Wohnzimmer · Wohnzimmer
+            name: Lichtsensor Wohnzimmer
             visibility:
               - condition: numeric_state
                 entity: sensor.wohnzimmer_lichtsensor_wohnzimmer_battery
                 below: 20
           - type: tile
             entity: sensor.wohnzimmer_switch_on_off_dekolights_battery
-            name: Schalter Dekolichter · Wohnzimmer
+            name: Schalter Dekolichter
             visibility:
               - condition: numeric_state
                 entity: sensor.wohnzimmer_switch_on_off_dekolights_battery
                 below: 20
           - type: tile
             entity: sensor.wohnzimmer_button_on_off_dekolight_battery
-            name: Taster Dekolicht · Wohnzimmer
+            name: Taster Dekolicht
             visibility:
               - condition: numeric_state
                 entity: sensor.wohnzimmer_button_on_off_dekolight_battery
                 below: 20
           - type: tile
             entity: sensor.wohnzimmer_button_skip_song_battery
-            name: Taster Lied überspringen · Wohnzimmer
+            name: Taster Lied überspringen
             visibility:
               - condition: numeric_state
                 entity: sensor.wohnzimmer_button_skip_song_battery
                 below: 20
           - type: tile
             entity: sensor.wohnzimmer_openclose_terrace_battery
-            name: Terrassentür · Wohnzimmer
+            name: Terrassentür
             visibility:
               - condition: numeric_state
                 entity: sensor.wohnzimmer_openclose_terrace_battery
                 below: 20
           - type: tile
             entity: sensor.buro_buro_battery
-            name: Klima Büro · Büro
+            name: Klima Büro
             visibility:
               - condition: numeric_state
                 entity: sensor.buro_buro_battery
                 below: 20
           - type: tile
             entity: sensor.buro_lichtsensor_buro_battery
-            name: Lichtsensor Büro · Büro
+            name: Lichtsensor Büro
             visibility:
               - condition: numeric_state
                 entity: sensor.buro_lichtsensor_buro_battery
                 below: 20
           - type: tile
             entity: sensor.buro_switch_eckschreibtisch_battery
-            name: Schalter Eckschreibtisch · Büro
+            name: Schalter Eckschreibtisch
             visibility:
               - condition: numeric_state
                 entity: sensor.buro_switch_eckschreibtisch_battery
                 below: 20
           - type: tile
             entity: sensor.buro_button_desk_office_battery
-            name: Schalter Schreibtisch Büro · Büro
+            name: Schalter Schreibtisch Büro
             visibility:
               - condition: numeric_state
                 entity: sensor.buro_button_desk_office_battery
                 below: 20
           - type: tile
             entity: sensor.buro_button_shutter_office_battery
-            name: Taster Rollladen Büro · Büro
+            name: Taster Rollladen Büro
             visibility:
               - condition: numeric_state
                 entity: sensor.buro_button_shutter_office_battery
                 below: 20
           - type: tile
             entity: sensor.schlafzimmer_schlafzimmer_battery
-            name: Klima Schlafzimmer · Schlafzimmer
+            name: Klima Schlafzimmer
             visibility:
               - condition: numeric_state
                 entity: sensor.schlafzimmer_schlafzimmer_battery
                 below: 20
           - type: tile
             entity: sensor.schlafzimmer_schlafzimmer2_battery
-            name: Klima Schlafzimmer 2 · Schlafzimmer
+            name: Klima Schlafzimmer 2
             visibility:
               - condition: numeric_state
                 entity: sensor.schlafzimmer_schlafzimmer2_battery
                 below: 20
           - type: tile
             entity: sensor.schlafzimmer_switch_change_clothing_bed_battery
-            name: Schalter Umziehen (Bett) · Schlafzimmer
+            name: Schalter Umziehen (Bett)
             visibility:
               - condition: numeric_state
                 entity: sensor.schlafzimmer_switch_change_clothing_bed_battery
                 below: 20
           - type: tile
             entity: sensor.bad_dimmer_change_clothing_battery
-            name: Dimmer Umziehen · Bad
+            name: Dimmer Umziehen
             visibility:
               - condition: numeric_state
                 entity: sensor.bad_dimmer_change_clothing_battery
                 below: 20
           - type: tile
             entity: sensor.bad_bath_battery
-            name: Klima Bad · Bad
+            name: Klima Bad
             visibility:
               - condition: numeric_state
                 entity: sensor.bad_bath_battery
                 below: 20
           - type: tile
             entity: sensor.flur_switch_day_night_corridor_battery
-            name: Schalter Tag/Nacht · Flur
+            name: Schalter Tag/Nacht
             visibility:
               - condition: numeric_state
                 entity: sensor.flur_switch_day_night_corridor_battery
                 below: 20
           - type: tile
             entity: sensor.abstellkammer_bewegung_abstellkammer_battery
-            name: Bewegungsmelder · Abstellkammer
+            name: Bewegungsmelder
             visibility:
               - condition: numeric_state
                 entity: sensor.abstellkammer_bewegung_abstellkammer_battery
                 below: 20
           - type: tile
             entity: sensor.abstellkammer_water_leakage_sensor_battery
-            name: Wassermelder · Abstellkammer
+            name: Wassermelder
             visibility:
               - condition: numeric_state
                 entity: sensor.abstellkammer_water_leakage_sensor_battery
                 below: 20
           - type: tile
             entity: sensor.garten_aussentemperatur_battery
-            name: Außentemperatur · Garten
+            name: Außentemperatur
             visibility:
               - condition: numeric_state
                 entity: sensor.garten_aussentemperatur_battery
                 below: 20
           - type: tile
             entity: sensor.garten_aussentemperatur2_battery
-            name: Außentemperatur 2 · Garten
+            name: Außentemperatur 2
             visibility:
               - condition: numeric_state
                 entity: sensor.garten_aussentemperatur2_battery
@@ -606,9 +606,9 @@ views:
           - type: markdown
             content: Kein Shelly meldet Überhitzung, Überlast, Überstrom oder Überspannung.
             visibility:
-              - condition: state
+              - condition: numeric_state
                 entity: sensor.device_warnings
-                state: '0'
+                below: 1
           - type: markdown
             content: |-
               {% for entity in integration_entities('shelly') | select('match', 'binary_sensor[.]')
@@ -626,66 +626,87 @@ views:
           - type: heading
             heading: Alle Batterien
             icon: mdi:battery
+          - type: heading
+            heading: Wohnzimmer
+            heading_style: subtitle
           - type: tile
             entity: sensor.wohnzimmer_wohnzimmer_battery
-            name: Klima Wohnzimmer · Wohnzimmer
+            name: Klima Wohnzimmer
           - type: tile
             entity: sensor.wohnzimmer_lichtsensor_wohnzimmer_battery
-            name: Lichtsensor Wohnzimmer · Wohnzimmer
+            name: Lichtsensor Wohnzimmer
           - type: tile
             entity: sensor.wohnzimmer_switch_on_off_dekolights_battery
-            name: Schalter Dekolichter · Wohnzimmer
+            name: Schalter Dekolichter
           - type: tile
             entity: sensor.wohnzimmer_button_on_off_dekolight_battery
-            name: Taster Dekolicht · Wohnzimmer
+            name: Taster Dekolicht
           - type: tile
             entity: sensor.wohnzimmer_button_skip_song_battery
-            name: Taster Lied überspringen · Wohnzimmer
+            name: Taster Lied überspringen
           - type: tile
             entity: sensor.wohnzimmer_openclose_terrace_battery
-            name: Terrassentür · Wohnzimmer
+            name: Terrassentür
+          - type: heading
+            heading: Büro
+            heading_style: subtitle
           - type: tile
             entity: sensor.buro_buro_battery
-            name: Klima Büro · Büro
+            name: Klima Büro
           - type: tile
             entity: sensor.buro_lichtsensor_buro_battery
-            name: Lichtsensor Büro · Büro
+            name: Lichtsensor Büro
           - type: tile
             entity: sensor.buro_switch_eckschreibtisch_battery
-            name: Schalter Eckschreibtisch · Büro
+            name: Schalter Eckschreibtisch
           - type: tile
             entity: sensor.buro_button_desk_office_battery
-            name: Schalter Schreibtisch Büro · Büro
+            name: Schalter Schreibtisch Büro
           - type: tile
             entity: sensor.buro_button_shutter_office_battery
-            name: Taster Rollladen Büro · Büro
+            name: Taster Rollladen Büro
+          - type: heading
+            heading: Schlafzimmer
+            heading_style: subtitle
           - type: tile
             entity: sensor.schlafzimmer_schlafzimmer_battery
-            name: Klima Schlafzimmer · Schlafzimmer
+            name: Klima Schlafzimmer
           - type: tile
             entity: sensor.schlafzimmer_schlafzimmer2_battery
-            name: Klima Schlafzimmer 2 · Schlafzimmer
+            name: Klima Schlafzimmer 2
           - type: tile
             entity: sensor.schlafzimmer_switch_change_clothing_bed_battery
-            name: Schalter Umziehen (Bett) · Schlafzimmer
+            name: Schalter Umziehen (Bett)
+          - type: heading
+            heading: Bad
+            heading_style: subtitle
           - type: tile
             entity: sensor.bad_dimmer_change_clothing_battery
-            name: Dimmer Umziehen · Bad
+            name: Dimmer Umziehen
           - type: tile
             entity: sensor.bad_bath_battery
-            name: Klima Bad · Bad
+            name: Klima Bad
+          - type: heading
+            heading: Flur
+            heading_style: subtitle
           - type: tile
             entity: sensor.flur_switch_day_night_corridor_battery
-            name: Schalter Tag/Nacht · Flur
+            name: Schalter Tag/Nacht
+          - type: heading
+            heading: Abstellkammer
+            heading_style: subtitle
           - type: tile
             entity: sensor.abstellkammer_bewegung_abstellkammer_battery
-            name: Bewegungsmelder · Abstellkammer
+            name: Bewegungsmelder
           - type: tile
             entity: sensor.abstellkammer_water_leakage_sensor_battery
-            name: Wassermelder · Abstellkammer
+            name: Wassermelder
+          - type: heading
+            heading: Garten
+            heading_style: subtitle
           - type: tile
             entity: sensor.garten_aussentemperatur_battery
-            name: Außentemperatur · Garten
+            name: Außentemperatur
           - type: tile
             entity: sensor.garten_aussentemperatur2_battery
-            name: Außentemperatur 2 · Garten
+            name: Außentemperatur 2
