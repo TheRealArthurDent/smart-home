@@ -1,0 +1,12 @@
+# Sonos (#2), on raspi only: the integration talks to the real speakers, which testbench shares the network with
+# (testbench gets twins from homeassistant-virtual/). Home Assistant runs in bridge networks, where SSDP discovery
+# doesn't reach it, so the speakers are listed by address. They push their state to advertise_addr:1400, the host's
+# address, which the smart_home role writes into the file Compose reads next to the stack; Compose forwards the port
+# to the container.
+sonos:
+  media_player:
+    advertise_addr: !env_var SONOS_ADVERTISE_ADDR
+    hosts:
+      - 192.168.1.88 # Wohnzimmer
+      - 192.168.1.61 # Büro
+      - 192.168.1.67 # Bad

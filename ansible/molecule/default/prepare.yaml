@@ -86,7 +86,8 @@
         owner: root
         group: root
         mode: '0755'
-      loop: [grafana-provisioning/alerting, setup/iobroker, homeassistant/packages, homeassistant-virtual]
+      loop: [grafana-provisioning/alerting, setup/iobroker, homeassistant/packages, homeassistant-virtual,
+             homeassistant-real]
 
     - name: Plant files the repo no longer has
       ansible.builtin.copy:
@@ -101,6 +102,8 @@
         - homeassistant/packages/obsolete.yaml
         # Virtual devices on a host that doesn't want them (raspi), e.g. after the variable was set by mistake
         - homeassistant-virtual/devices.yaml
+        # A real device's integration the repo dropped
+        - homeassistant-real/obsolete.yaml
 
     - name: Remember the password file setup.sh wrote
       ansible.builtin.slurp:

@@ -1,0 +1,4 @@
+# Integrations of real devices that testbench must not reach, on raspi only (homeassistant-real/ in the repo). The
+# smart_home role fills the included directory where smart_home_homeassistant_virtual_devices is off and keeps it
+# empty where the twins are, so this package is empty on testbench.
+!include_dir_merge_named ../real

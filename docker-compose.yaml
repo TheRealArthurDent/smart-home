@@ -54,6 +54,8 @@ services:
       - ./homeassistant/dashboards:/config/dashboards:ro
       # Virtual twins of the devices on testbench, empty elsewhere (smart_home_homeassistant_virtual_devices)
       - ./homeassistant-virtual:/config/virtual:ro
+      # Integrations of the real devices on raspi, empty where the twins are
+      - ./homeassistant-real:/config/real:ro
     environment:
       - TZ=Europe/Berlin
       # Discord webhook of its alerts (packages/alerts.yaml)

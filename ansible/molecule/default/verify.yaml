@@ -33,6 +33,8 @@
         - "{{ compose_dir }}/homeassistant/configuration.yaml"
         - "{{ compose_dir }}/homeassistant/packages/README.md"
         - "{{ compose_dir }}/homeassistant/packages/sonos.yaml"
+        # raspi-trixie has no virtual devices, so it gets the integrations of the real ones
+        - "{{ compose_dir }}/homeassistant-real/sonos.yaml"
         - "{{ smart_home_dir }}/mosquitto/mosquitto.conf"
         - "{{ smart_home_dir }}/telegraf/telegraf.conf"
         - "{{ smart_home_dir }}/telegraf/cpu_temp.sh"
@@ -165,6 +167,7 @@
         - homeassistant/packages/obsolete.yaml
         # Twins would shadow raspi's real devices
         - homeassistant-virtual/devices.yaml
+        - homeassistant-real/obsolete.yaml
 
     # Grafana provisions every file it finds, so a leftover contact point keeps breaking its start.
     - name: Check files the repo dropped are removed from the host
