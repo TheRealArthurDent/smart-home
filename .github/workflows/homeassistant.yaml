@@ -47,6 +47,7 @@ jobs:
             fi
             docker run --rm \
               --env SONOS_ADVERTISE_ADDR=192.0.2.1 \
+              --env HOMEASSISTANT_DISCORD_WEBHOOK_URL=https://discord.invalid/api/webhooks/1/test \
               --volume "$config:/config" \
               --entrypoint python3 \
               "$image" -m homeassistant --script check_config --config /config 2>&1 | tee "check-config-$virtual.log"
