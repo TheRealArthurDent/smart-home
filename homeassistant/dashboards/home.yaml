@@ -1,5 +1,6 @@
 # Everyday controls, replacing the bedroom and settings views of ioBroker's lovelace UI (#2) with built-in cards
-# only. The workday alarm joins once Home Assistant wakes on workdays too; until then it is set in ioBroker.
+# only, plus the shutters. The workday alarm joins once Home Assistant wakes on workdays too; until then it is set
+# in ioBroker.
 title: Zuhause
 views:
   - title: Schlafzimmer
@@ -74,3 +75,55 @@ views:
           - type: divider
           - entity: input_number.shoe_heating_duration
             name: Dauer
+  - title: Rollläden
+    path: rolllaeden
+    icon: mdi:window-shutter
+    cards:
+      - type: tile
+        entity: cover.buro_shutter_office
+        name: Büro
+        features:
+          - type: cover-open-close
+          - type: cover-position
+      - type: tile
+        entity: cover.kuche_shutter_kitchen
+        name: Küche
+        features:
+          - type: cover-open-close
+          - type: cover-position
+      - type: tile
+        entity: cover.schlafzimmer_shutter_bedroom
+        name: Schlafzimmer
+        features:
+          - type: cover-open-close
+          - type: cover-position
+      - type: tile
+        entity: cover.wohnzimmer_shutter_garden
+        name: Garten
+        features:
+          - type: cover-open-close
+          - type: cover-position
+      - type: tile
+        entity: cover.wohnzimmer_shutter_terrace
+        name: Terrasse
+        features:
+          - type: cover-open-close
+          - type: cover-position
+      - type: entities
+        title: Nicht automatisch bewegen
+        show_header_toggle: false
+        state_color: true
+        entities:
+          - entity: input_boolean.shutter_office_locked
+            name: Büro
+          - entity: input_boolean.shutter_kitchen_locked
+            name: Küche
+          - entity: input_boolean.shutter_bedroom_locked
+            name: Schlafzimmer
+          - entity: input_boolean.shutter_garden_locked
+            name: Garten
+          - entity: input_boolean.shutter_terrace_locked
+            name: Terrasse
+          - type: divider
+          - entity: input_boolean.guests
+            name: Gäste da, Büro bleibt morgens zu

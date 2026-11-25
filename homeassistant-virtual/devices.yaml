@@ -32,10 +32,41 @@ input_boolean:
   virtual_schlafzimmer_light_bedroom_eingang_0:
     name: Wandschalter Schlafzimmer (virtuell)
     icon: mdi:gesture-tap
+  virtual_wohnzimmer_openclose_terrace:
+    name: Terrassentür offen (virtuell)
+    icon: mdi:door-open
 
 input_number:
   virtual_schlafzimmer_shutter_bedroom_position:
     name: Rollladen Schlafzimmer, Position (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: slider
+    unit_of_measurement: "%"
+  virtual_buro_shutter_office_position:
+    name: Rollladen Büro, Position (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: slider
+    unit_of_measurement: "%"
+  virtual_kuche_shutter_kitchen_position:
+    name: Rollladen Küche, Position (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: slider
+    unit_of_measurement: "%"
+  virtual_wohnzimmer_shutter_garden_position:
+    name: Rollladen Garten, Position (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: slider
+    unit_of_measurement: "%"
+  virtual_wohnzimmer_shutter_terrace_position:
+    name: Rollladen Terrasse, Position (virtuell)
     min: 0
     max: 100
     step: 1
@@ -220,6 +251,98 @@ template:
               entity_id: input_number.virtual_schlafzimmer_shutter_bedroom_position
             data:
               value: "{{ position }}"
+      - name: Rollladen Büro
+        unique_id: virtual_buro_shutter_office
+        default_entity_id: cover.buro_shutter_office
+        device_class: shutter
+        position: "{{ states('input_number.virtual_buro_shutter_office_position') | int(0) }}"
+        open_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_buro_shutter_office_position
+            data:
+              value: 100
+        close_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_buro_shutter_office_position
+            data:
+              value: 0
+        set_cover_position:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_buro_shutter_office_position
+            data:
+              value: "{{ position }}"
+      - name: Rollladen Küche
+        unique_id: virtual_kuche_shutter_kitchen
+        default_entity_id: cover.kuche_shutter_kitchen
+        device_class: shutter
+        position: "{{ states('input_number.virtual_kuche_shutter_kitchen_position') | int(0) }}"
+        open_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_kuche_shutter_kitchen_position
+            data:
+              value: 100
+        close_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_kuche_shutter_kitchen_position
+            data:
+              value: 0
+        set_cover_position:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_kuche_shutter_kitchen_position
+            data:
+              value: "{{ position }}"
+      - name: Rollladen Garten
+        unique_id: virtual_wohnzimmer_shutter_garden
+        default_entity_id: cover.wohnzimmer_shutter_garden
+        device_class: shutter
+        position: "{{ states('input_number.virtual_wohnzimmer_shutter_garden_position') | int(0) }}"
+        open_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_wohnzimmer_shutter_garden_position
+            data:
+              value: 100
+        close_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_wohnzimmer_shutter_garden_position
+            data:
+              value: 0
+        set_cover_position:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_wohnzimmer_shutter_garden_position
+            data:
+              value: "{{ position }}"
+      - name: Rollladen Terrasse
+        unique_id: virtual_wohnzimmer_shutter_terrace
+        default_entity_id: cover.wohnzimmer_shutter_terrace
+        device_class: shutter
+        position: "{{ states('input_number.virtual_wohnzimmer_shutter_terrace_position') | int(0) }}"
+        open_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_wohnzimmer_shutter_terrace_position
+            data:
+              value: 100
+        close_cover:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_wohnzimmer_shutter_terrace_position
+            data:
+              value: 0
+        set_cover_position:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.virtual_wohnzimmer_shutter_terrace_position
+            data:
+              value: "{{ position }}"
   - binary_sensor:
       - name: Bewegung Abstellkammer
         unique_id: virtual_abstellkammer_bewegung_abstellkammer
@@ -230,6 +353,11 @@ template:
         unique_id: virtual_schlafzimmer_light_bedroom_eingang_0
         default_entity_id: binary_sensor.schlafzimmer_light_bedroom_eingang_0
         state: "{{ is_state('input_boolean.virtual_schlafzimmer_light_bedroom_eingang_0', 'on') }}"
+      - name: Terrassentür
+        unique_id: virtual_wohnzimmer_openclose_terrace
+        default_entity_id: binary_sensor.wohnzimmer_openclose_terrace
+        state: "{{ is_state('input_boolean.virtual_wohnzimmer_openclose_terrace', 'on') }}"
+        device_class: door
 
 script:
   virtual_button_press:
