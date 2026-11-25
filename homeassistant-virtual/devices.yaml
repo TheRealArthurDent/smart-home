@@ -24,6 +24,8 @@ input_boolean:
     name: Homeoffice (virtuell)
   virtual_bad_on_off_schuhheizung:
     name: Schuhheizung (virtuell)
+  virtual_wohnzimmer_on_off_sonos:
+    name: On/Off Sonos (virtuell)
   virtual_bad_on_off_schuhheizung_plugged_in:
     name: Schuhheizung eingesteckt (virtuell)
     icon: mdi:power-plug
@@ -227,6 +229,18 @@ template:
           - action: input_boolean.turn_off
             target:
               entity_id: input_boolean.virtual_buro_on_off_homeoffice
+      - name: On/Off Sonos
+        unique_id: virtual_wohnzimmer_on_off_sonos
+        default_entity_id: switch.wohnzimmer_on_off_sonos
+        state: "{{ is_state('input_boolean.virtual_wohnzimmer_on_off_sonos', 'on') }}"
+        turn_on:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_on_off_sonos
+        turn_off:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.virtual_wohnzimmer_on_off_sonos
       - name: Schuhheizung
         unique_id: virtual_bad_on_off_schuhheizung
         default_entity_id: switch.bad_on_off_schuhheizung

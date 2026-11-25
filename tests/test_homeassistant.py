@@ -1147,3 +1147,36 @@ def test_the_devices_dashboard_holds_no_personal_devices():
     """Phones and their trackers carry their owners' names."""
     text = "".join((CONFIG_DIR / folder / "devices.yaml").read_text() for folder in ("dashboards", "packages"))
     assert "device_tracker." not in text and "mobile_app" not in text
+
+
+# Sonos, replacing Node-RED's "Stop Sonos": the living room Amp's power outlet follows presence, and a button skips.
+SONOS_SPEAKERS = ["media_player.wohnzimmer_wohnzimmer", "media_player.buro_buro", "media_player.bad_bad"]
+SONOS_OUTLET = "switch.wohnzimmer_on_off_sonos"
+
+
+def test_arriving_powers_the_sonos_amp():
+    on = automation("sonos", "sonos_power_on")
+    assert [(t["entity_id"], t["to"]) for t in on["triggers"]] == [("binary_sensor.someone_home", "on")]
+    assert on["actions"] == [{"action": "switch.turn_on", "target": {"entity_id": SONOS_OUTLET}}]
+
+
+def test_sonos_stop_and_power_off_15_minutes_after_everyone_left():
+    """Also after a restart while nobody is home, since a trigger's for: doesn't survive one. The speakers stop before
+    the amp loses its power."""
+    off = automation("sonos", "sonos_off_when_away")
+    away = next(t for t in off["triggers"] if t["trigger"] == "state")
+    assert (away["entity_id"], away["to"], away["for"]) == ("binary_sensor.someone_home", "off", {"minutes": 15})
+    assert {"trigger": "homeassistant", "event": "start"} in off["triggers"]
+    assert off["conditions"] == [{"condition": "state", "entity_id": "binary_sensor.someone_home", "state": "off"}]
+    stop, power = off["actions"]
+    assert stop == {"action": "media_player.media_stop", "continue_on_error": True,
+                    "target": {"entity_id": SONOS_SPEAKERS}}
+    assert power == {"action": "switch.turn_off", "target": {"entity_id": SONOS_OUTLET}}
+
+
+def test_the_skip_button_plays_the_next_track_in_the_living_room():
+    skip = automation("sonos", "sonos_skip_track")
+    assert [t["event_type"] for t in skip["triggers"]] == ["deconz_event"]
+    assert skip["triggers"][0]["event_data"] == {"unique_id": "84:ba:20:ff:fe:ca:e8:ba", "event": 1002}
+    assert skip["actions"] == [{"action": "media_player.media_next_track",
+                                "target": {"entity_id": "media_player.wohnzimmer_wohnzimmer"}}]

@@ -1,6 +1,7 @@
-# Sonos (#2). Home Assistant runs in bridge networks, where SSDP discovery doesn't reach it, so the speakers are listed
-# by address. They push their state to advertise_addr:1400, the host's address, which the smart_home role writes into
-# homeassistant.env; Compose forwards the port to the container.
+# Sonos (#2), with the automations of Node-RED's "Stop Sonos" tab. Home Assistant runs in bridge networks, where SSDP
+# discovery doesn't reach it, so the speakers are listed by address. They push their state to advertise_addr:1400,
+# the host's address, which the smart_home role writes into homeassistant.env; Compose forwards the port to the
+# container.
 sonos:
   media_player:
     advertise_addr: !env_var SONOS_ADVERTISE_ADDR
@@ -8,3 +9,60 @@ sonos:
       - 192.168.1.88 # Wohnzimmer
       - 192.168.1.61 # Büro
       - 192.168.1.67 # Bad
+
+automation:
+  - id: sonos_power_on
+    alias: Sonos-Verstärker an, wenn jemand heimkommt
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.someone_home
+        to: "on"
+    actions:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.wohnzimmer_on_off_sonos
+
+  - id: sonos_off_when_away
+    alias: Sonos aus, 15 Minuten nachdem alle gegangen sind
+    description: Stoppt alle Sonos und schaltet den Verstärker im Wohnzimmer aus.
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.someone_home
+        to: "off"
+        for:
+          minutes: 15
+      # The for: above doesn't survive a restart
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.someone_home
+        state: "off"
+    actions:
+      # A speaker that is off or unreachable must not keep the amp on
+      - action: media_player.media_stop
+        continue_on_error: true
+        target:
+          entity_id:
+            - media_player.wohnzimmer_wohnzimmer
+            - media_player.buro_buro
+            - media_player.bad_bad
+      - action: switch.turn_off
+        target:
+          entity_id: switch.wohnzimmer_on_off_sonos
+
+  - id: sonos_skip_track
+    alias: Taste im Wohnzimmer springt zum nächsten Titel
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "84:ba:20:ff:fe:ca:e8:ba"
+          event: 1002
+    actions:
+      - action: media_player.media_next_track
+        target:
+          entity_id: media_player.wohnzimmer_wohnzimmer
