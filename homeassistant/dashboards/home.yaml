@@ -10,7 +10,7 @@ views:
       - type: conditional
         conditions:
           - condition: state
-            entity: timer.aufwachlicht
+            entity: timer.wake_up_light
             state: active
         card:
           type: button
@@ -20,29 +20,29 @@ views:
             action: perform-action
             perform_action: timer.cancel
             target:
-              entity_id: timer.aufwachlicht
+              entity_id: timer.wake_up_light
       - type: entities
         title: Wecker
         show_header_toggle: false
         state_color: true
         entities:
-          - entity: input_boolean.wecker_wochenende
+          - entity: input_boolean.wake_up_weekend
             name: Wochenende und Feiertage
             icon: mdi:alarm
           - type: conditional
             conditions:
-              - entity: input_boolean.wecker_wochenende
+              - entity: input_boolean.wake_up_weekend
                 state: "on"
             row:
-              entity: input_datetime.weckzeit_wochenende
+              entity: input_datetime.wake_up_time_weekend
               name: Weckzeit
-          - entity: input_datetime.nachtruhe
+          - entity: input_datetime.night_rest
             name: Nachtruhe ab
           - type: divider
-          - entity: input_boolean.wecken_aussetzen
+          - entity: input_boolean.skip_next_wake_up
             name: Nächstes Wecken aussetzen
             icon: mdi:sleep
-          - entity: input_boolean.rollladen_schlafzimmer_sperre
+          - entity: input_boolean.shutter_bedroom_locked
             name: Rollladen nicht automatisch bewegen
             icon: mdi:window-shutter
       - type: tile
@@ -67,10 +67,10 @@ views:
         entities:
           - entity: switch.bad_on_off_schuhheizung
             name: Steckdose
-          - entity: timer.schuhheizung
+          - entity: timer.shoe_heating
             name: Läuft noch
-          - entity: input_number.schuhheizung_rest
+          - entity: input_number.shoe_heating_rest
             name: Rest am nächsten Tag
           - type: divider
-          - entity: input_number.dauer_schuhheizung
+          - entity: input_number.shoe_heating_duration
             name: Dauer

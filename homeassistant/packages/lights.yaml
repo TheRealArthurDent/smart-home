@@ -4,22 +4,22 @@
 # 2002 = "off" pressed (x001 held, x003 released after holding).
 
 automation:
-  - id: deko_an
-    alias: Decoration lights on in the evening while someone is home
+  - id: decoration_lights_on
+    alias: Dekobeleuchtung abends an, solange jemand zu Hause ist
     mode: single
     triggers:
       - trigger: state
-        entity_id: input_boolean.abend
+        entity_id: input_boolean.evening
         to: "on"
       - trigger: state
-        entity_id: binary_sensor.jemand_zuhause
+        entity_id: binary_sensor.someone_home
         to: "on"
     conditions:
       - condition: state
-        entity_id: input_boolean.abend
+        entity_id: input_boolean.evening
         state: "on"
       - condition: state
-        entity_id: binary_sensor.jemand_zuhause
+        entity_id: binary_sensor.someone_home
         state: "on"
     actions:
       - action: light.turn_on
@@ -28,15 +28,15 @@ automation:
             - light.wohnzimmer_dekolights
             - light.wohnzimmer_weihnachtssterne
 
-  - id: deko_aus
-    alias: Decoration lights off when the evening ends or everyone has left
+  - id: decoration_lights_off
+    alias: Dekobeleuchtung aus, wenn der Abend endet oder alle weg sind
     mode: single
     triggers:
       - trigger: state
-        entity_id: input_boolean.abend
+        entity_id: input_boolean.evening
         to: "off"
       - trigger: state
-        entity_id: binary_sensor.jemand_zuhause
+        entity_id: binary_sensor.someone_home
         to: "off"
     actions:
       - action: light.turn_off
@@ -45,8 +45,8 @@ automation:
             - light.wohnzimmer_dekolights
             - light.wohnzimmer_weihnachtssterne
 
-  - id: deko_taster
-    alias: Decoration lights button
+  - id: decoration_lights_button
+    alias: Taster für die Dekobeleuchtung
     mode: queued
     triggers:
       - trigger: event
@@ -63,8 +63,8 @@ automation:
             - light.wohnzimmer_dekolights
             - light.wohnzimmer_weihnachtssterne
 
-  - id: deko_schalter
-    alias: Decoration lights switch toggles
+  - id: decoration_lights_switch
+    alias: Schalter schaltet die Dekobeleuchtung um
     mode: queued
     triggers:
       - trigger: event
@@ -82,8 +82,8 @@ automation:
             - light.wohnzimmer_dekolights
             - light.wohnzimmer_weihnachtssterne
 
-  - id: weihnachtssterne_morgens
-    alias: Christmas stars on winter mornings
+  - id: christmas_stars_morning
+    alias: Weihnachtssterne an Wintermorgen
     mode: single
     triggers:
       - trigger: time
@@ -98,8 +98,8 @@ automation:
         target:
           entity_id: light.wohnzimmer_weihnachtssterne
 
-  - id: weihnachtssterne_nachmittags
-    alias: Christmas stars on winter afternoons while someone is home
+  - id: christmas_stars_afternoon
+    alias: Weihnachtssterne an Winternachmittagen, solange jemand zu Hause ist
     mode: single
     triggers:
       - trigger: time
@@ -108,15 +108,15 @@ automation:
       - condition: template
         value_template: "{{ now().month in (11, 12, 1) }}"
       - condition: state
-        entity_id: binary_sensor.jemand_zuhause
+        entity_id: binary_sensor.someone_home
         state: "on"
     actions:
       - action: light.turn_on
         target:
           entity_id: light.wohnzimmer_weihnachtssterne
 
-  - id: abstellkammer_licht
-    alias: Storeroom light follows the motion sensor
+  - id: storeroom_light
+    alias: Licht in der Abstellkammer folgt dem Bewegungsmelder
     mode: restart
     triggers:
       - trigger: state
@@ -150,8 +150,8 @@ automation:
             target:
               entity_id: switch.abstellkammer_light_storeroom_output_0
 
-  - id: schlafzimmer_wandschalter
-    alias: Bedroom wall switch switches the wake-up light
+  - id: bedroom_wall_switch
+    alias: Wandschalter im Schlafzimmer schaltet das Aufwachlicht
     mode: queued
     triggers:
       - trigger: state
@@ -176,10 +176,10 @@ automation:
           # Switching off by hand ends a running wake-up dimming
           - action: timer.cancel
             target:
-              entity_id: timer.aufwachlicht
+              entity_id: timer.wake_up_light
 
-  - id: homeoffice_schalter
-    alias: Home office switch
+  - id: home_office_switch
+    alias: Schalter für das Homeoffice
     mode: queued
     triggers:
       - trigger: event
@@ -194,8 +194,8 @@ automation:
         target:
           entity_id: switch.buro_on_off_homeoffice
 
-  - id: eckschreibtisch_schalter
-    alias: Corner desk light switch
+  - id: corner_desk_switch
+    alias: Schalter für das Licht am Eckschreibtisch
     mode: queued
     triggers:
       - trigger: event

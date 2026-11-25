@@ -2,56 +2,56 @@
 # 30 minutes before the alarm time the wake-up light dims up in 30 minutes, holds until sunrise (at least 30
 # minutes), then goes off and the bedroom shutter opens in two steps. Weekends and holidays take the weekend alarm;
 # workdays the workday alarm, which Node-RED still runs for now. Holidays come from the Workday integration, set up
-# in the UI (Germany, Bavaria, with the Catholic holidays). timer.aufwachlicht (helpers.yaml) runs while the light
+# in the UI (Germany, Bavaria, with the Catholic holidays). timer.wake_up_light (helpers.yaml) runs while the light
 # is on.
 
 timer:
-  wecken_rollladen:
-    name: Wake-up, bedroom shutter half open
+  wake_up_shutter:
+    name: Wecken, Rollladen Schlafzimmer halb offen
     restore: true
 
 automation:
-  - id: wecken_start
-    alias: Wake-up starts 30 minutes before the alarm
+  - id: wake_up_start
+    alias: Wecken beginnt 30 Minuten vor der Weckzeit
     mode: single
     # Weekends and holidays only, while Node-RED still wakes on workdays. Its workday twin, once Node-RED stops:
     #   - trigger: time
     #     at:
-    #       entity_id: input_datetime.weckzeit_werktag
+    #       entity_id: input_datetime.wake_up_time_workday
     #       offset: "-00:30:00"
-    #     id: werktag
+    #     id: workday
     triggers:
       - trigger: time
         at:
-          entity_id: input_datetime.weckzeit_wochenende
+          entity_id: input_datetime.wake_up_time_weekend
           offset: "-00:30:00"
-        id: wochenende
+        id: weekend
     conditions:
       - condition: template
         value_template: >-
-          {{ is_state('input_boolean.wecker_' ~ trigger.id, 'on')
-             and (trigger.id == 'werktag') == is_state('binary_sensor.workday_sensor', 'on') }}
+          {{ is_state('input_boolean.wake_up_' ~ trigger.id, 'on')
+             and (trigger.id == 'workday') == is_state('binary_sensor.workday_sensor', 'on') }}
     actions:
       - if:
           - condition: state
-            entity_id: input_boolean.wecken_aussetzen
+            entity_id: input_boolean.skip_next_wake_up
             state: "on"
         then:
           - action: input_boolean.turn_off
             target:
-              entity_id: input_boolean.wecken_aussetzen
+              entity_id: input_boolean.skip_next_wake_up
           # Keep the bedroom dark: no automatic shutter moves until they are allowed again
           - action: input_boolean.turn_on
             target:
-              entity_id: input_boolean.rollladen_schlafzimmer_sperre
-          - stop: Wake-up skipped once
+              entity_id: input_boolean.shutter_bedroom_locked
+          - stop: Wecken einmal ausgesetzt
       # Opened already, or nobody to wake up
       - condition: numeric_state
         entity_id: cover.schlafzimmer_shutter_bedroom
         attribute: current_position
         below: 50
       - condition: state
-        entity_id: binary_sensor.jemand_zuhause
+        entity_id: binary_sensor.someone_home
         state: "on"
       - variables:
           # Until sunrise less the dimming, at least 30 minutes; once the sun is up, next_rising is tomorrow's
@@ -74,24 +74,24 @@ automation:
           transition: 1800
       - action: timer.start
         target:
-          entity_id: timer.aufwachlicht
+          entity_id: timer.wake_up_light
         data:
           duration: "{{ (30 + hold_minutes | int) * 60 }}"
 
-  - id: wecken_ende
-    alias: Wake-up ends and opens the bedroom shutter
+  - id: wake_up_end
+    alias: Wecken endet und öffnet den Rollladen im Schlafzimmer
     mode: single
     triggers:
       - trigger: event
         event_type: timer.finished
         event_data:
-          entity_id: timer.aufwachlicht
+          entity_id: timer.wake_up_light
     actions:
       - action: light.turn_off
         target:
           entity_id: light.schlafzimmer_aufwachlicht
       - condition: state
-        entity_id: input_boolean.rollladen_schlafzimmer_sperre
+        entity_id: input_boolean.shutter_bedroom_locked
         state: "off"
       - condition: numeric_state
         entity_id: cover.schlafzimmer_shutter_bedroom
@@ -105,32 +105,32 @@ automation:
           position: 40
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_schlafzimmer_soll
+          entity_id: input_number.shutter_bedroom_target
         data:
           value: 40
       - action: timer.start
         target:
-          entity_id: timer.wecken_rollladen
+          entity_id: timer.wake_up_shutter
         data:
           duration: "01:00:00"
 
-  - id: wecken_rollladen_auf
-    alias: Wake-up opens the bedroom shutter fully an hour later
+  - id: wake_up_shutter_open
+    alias: Wecken öffnet den Rollladen im Schlafzimmer eine Stunde später ganz
     mode: single
     triggers:
       - trigger: event
         event_type: timer.finished
         event_data:
-          entity_id: timer.wecken_rollladen
+          entity_id: timer.wake_up_shutter
     conditions:
       - condition: state
-        entity_id: input_boolean.rollladen_schlafzimmer_sperre
+        entity_id: input_boolean.shutter_bedroom_locked
         state: "off"
       # Unless it was moved by hand meanwhile
       - condition: template
         value_template: >-
           {{ (state_attr('cover.schlafzimmer_shutter_bedroom', 'current_position') | int(-100)
-              - states('input_number.rollladen_schlafzimmer_soll') | int(0)) | abs <= 2 }}
+              - states('input_number.shutter_bedroom_target') | int(0)) | abs <= 2 }}
     actions:
       - action: cover.set_cover_position
         target:
@@ -139,14 +139,13 @@ automation:
           position: 100
       - action: input_number.set_value
         target:
-          entity_id: input_number.rollladen_schlafzimmer_soll
+          entity_id: input_number.shutter_bedroom_target
         data:
           value: 100
 
-  - id: wecken_abbrechen
-    alias: Day switch stops the wake-up
-    description: >-
-      The "day" button of the day/night switch in the corridor ends a running wake-up; the shutter stays as it is.
+  - id: wake_up_stop
+    alias: Tag-Taste beendet das Wecken
+    description: Die Taste „Tag“ des Tag/Nacht-Schalters im Flur beendet ein laufendes Wecken, ohne den Rollladen.
     mode: single
     triggers:
       - trigger: event
@@ -159,16 +158,16 @@ automation:
     actions:
       - action: timer.cancel
         target:
-          entity_id: timer.aufwachlicht
+          entity_id: timer.wake_up_light
 
-  - id: wecken_abgebrochen
-    alias: Stopped wake-up switches the light off
+  - id: wake_up_stopped
+    alias: Abgebrochenes Wecken schaltet das Licht aus
     mode: single
     triggers:
       - trigger: event
         event_type: timer.cancelled
         event_data:
-          entity_id: timer.aufwachlicht
+          entity_id: timer.wake_up_light
     actions:
       - action: light.turn_off
         target:

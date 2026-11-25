@@ -4,8 +4,8 @@
 # otherwise all of it the next day. The timer and the rest survive restarts.
 
 input_number:
-  schuhheizung_rest:
-    name: Shoe heating left for the next day
+  shoe_heating_rest:
+    name: Schuhheizung, Rest für den nächsten Tag
     min: 0
     max: 1440
     step: 1
@@ -14,13 +14,13 @@ input_number:
     icon: mdi:shoe-formal
 
 timer:
-  schuhheizung:
-    name: Shoe heating
+  shoe_heating:
+    name: Schuhheizung
     restore: true
 
 automation:
-  - id: schuhheizung_start
-    alias: Shoe heating starts when plugged in
+  - id: shoe_heating_start
+    alias: Schuhheizung startet beim Einstecken
     mode: restart
     triggers:
       - trigger: state
@@ -28,12 +28,12 @@ automation:
         from: unavailable
     actions:
       - variables:
-          heating_seconds: "{{ (states('input_number.dauer_schuhheizung') | float(0) * 3600) | int }}"
+          heating_seconds: "{{ (states('input_number.shoe_heating_duration') | float(0) * 3600) | int }}"
           # Negative once night rest has begun
           seconds_until_night_rest: >-
-            {{ (today_at(states('input_datetime.nachtruhe')) - now()).total_seconds() | int }}
+            {{ (today_at(states('input_datetime.night_rest')) - now()).total_seconds() | int }}
       - choose:
-          - alias: Done before night rest, heat in one go
+          - alias: Vor der Nachtruhe fertig, in einem Rutsch heizen
             conditions: "{{ heating_seconds <= seconds_until_night_rest }}"
             sequence:
               - action: switch.turn_on
@@ -41,15 +41,15 @@ automation:
                   entity_id: switch.bad_on_off_schuhheizung
               - action: timer.start
                 target:
-                  entity_id: timer.schuhheizung
+                  entity_id: timer.shoe_heating
                 data:
                   duration: "{{ heating_seconds }}"
               - action: input_number.set_value
                 target:
-                  entity_id: input_number.schuhheizung_rest
+                  entity_id: input_number.shoe_heating_rest
                 data:
                   value: 0
-          - alias: More than 20 minutes until night rest, heat until then and the rest the next day
+          - alias: Mehr als 20 Minuten bis zur Nachtruhe, bis dahin heizen und den Rest am nächsten Tag
             conditions: "{{ seconds_until_night_rest > 20 * 60 }}"
             sequence:
               - action: switch.turn_on
@@ -57,37 +57,37 @@ automation:
                   entity_id: switch.bad_on_off_schuhheizung
               - action: timer.start
                 target:
-                  entity_id: timer.schuhheizung
+                  entity_id: timer.shoe_heating
                 data:
                   duration: "{{ seconds_until_night_rest }}"
               - action: input_number.set_value
                 target:
-                  entity_id: input_number.schuhheizung_rest
+                  entity_id: input_number.shoe_heating_rest
                 data:
                   value: "{{ ((heating_seconds - seconds_until_night_rest) / 60) | round(0, 'ceil') }}"
         # Too late today: all of it the next day
         default:
           - action: timer.cancel
             target:
-              entity_id: timer.schuhheizung
+              entity_id: timer.shoe_heating
           - action: switch.turn_off
             target:
               entity_id: switch.bad_on_off_schuhheizung
           - action: input_number.set_value
             target:
-              entity_id: input_number.schuhheizung_rest
+              entity_id: input_number.shoe_heating_rest
             data:
               value: "{{ (heating_seconds / 60) | round(0, 'ceil') }}"
 
-  - id: schuhheizung_naechster_tag
-    alias: Shoe heating finishes the next day
+  - id: shoe_heating_next_day
+    alias: Schuhheizung heizt am nächsten Tag zu Ende
     mode: single
     triggers:
       - trigger: time
-        at: input_datetime.weckzeit_wochenende
+        at: input_datetime.wake_up_time_weekend
     conditions:
       - condition: numeric_state
-        entity_id: input_number.schuhheizung_rest
+        entity_id: input_number.shoe_heating_rest
         above: 0
     actions:
       - action: switch.turn_on
@@ -95,23 +95,23 @@ automation:
           entity_id: switch.bad_on_off_schuhheizung
       - action: timer.start
         target:
-          entity_id: timer.schuhheizung
+          entity_id: timer.shoe_heating
         data:
-          duration: "{{ states('input_number.schuhheizung_rest') | int(0) * 60 }}"
+          duration: "{{ states('input_number.shoe_heating_rest') | int(0) * 60 }}"
       - action: input_number.set_value
         target:
-          entity_id: input_number.schuhheizung_rest
+          entity_id: input_number.shoe_heating_rest
         data:
           value: 0
 
-  - id: schuhheizung_aus
-    alias: Shoe heating stops
+  - id: shoe_heating_off
+    alias: Schuhheizung aus
     mode: single
     triggers:
       - trigger: event
         event_type: timer.finished
         event_data:
-          entity_id: timer.schuhheizung
+          entity_id: timer.shoe_heating
     actions:
       # Also when it was unplugged meanwhile
       - action: switch.turn_off

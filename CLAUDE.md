@@ -120,7 +120,10 @@ run on every PR (no `paths` filter), or `tests/test_rulesets.py` fails.
   (READMEs, `doc/`, CLAUDE.md, skills) gets no tests.
 - YAML files use the `.yaml` extension, not `.yml`, unless a tool requires a fixed name.
 - Everything in the repo is written in English (code, comments, docs, commit messages), even when the user
-  chats in German.
+  chats in German. One exception: what Home Assistant shows (names, aliases, descriptions, dashboard titles in
+  `homeassistant/` and `homeassistant-virtual/`) is German, since Home Assistant can't translate names from YAML.
+  The ids behind them (helpers, timers, automations, trigger ids) stay English; `tests/test_homeassistant.py`
+  checks them.
 
 ## Working with the user
 
