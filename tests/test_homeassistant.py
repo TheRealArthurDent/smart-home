@@ -7,6 +7,7 @@ read-only, so the UI can't change it behind the repo's back.
 
 import datetime
 import json
+import math
 import re
 from pathlib import Path
 
@@ -65,6 +66,7 @@ def test_ui_state_lives_in_a_volume_and_the_repo_config_is_read_only():
         "./homeassistant/configuration.yaml:/config/configuration.yaml:ro",
         "./homeassistant/packages:/config/packages:ro",
         "./homeassistant/dashboards:/config/dashboards:ro",
+        "./homeassistant/custom_templates:/config/custom_templates:ro",
         "./homeassistant-virtual:/config/virtual:ro",
         "./homeassistant-real:/config/real:ro",
     ]
@@ -1437,3 +1439,70 @@ def test_the_outside_temperature_goes_to_mqtt_retained():
         "topic": "climate/outside/temperature", "payload": f"{{{{ states('{OUTSIDE_TEMPERATURE}') }}}}",
         "qos": 1, "retain": True}}]
     assert publish["mode"] == "queued"
+
+
+# Every device measuring temperature and humidity: (temperature, humidity). The LUMI sensors report humidity on the
+# plain id and temperature on _2, the others the other way round.
+CLIMATE_SENSORS = {
+    "living_room": ("sensor.wohnzimmer_wohnzimmer_2", "sensor.wohnzimmer_wohnzimmer"),
+    "bedroom": ("sensor.schlafzimmer_schlafzimmer_2", "sensor.schlafzimmer_schlafzimmer"),
+    "bedroom_2": ("sensor.schlafzimmer_schlafzimmer2", "sensor.schlafzimmer_schlafzimmer2_2"),
+    "office": ("sensor.buro_buro_2", "sensor.buro_buro"),
+    "bathroom": ("sensor.bad_bath_2", "sensor.bad_bath"),
+    "outside": ("sensor.garten_aussentemperatur_2", "sensor.garten_aussentemperatur"),
+    "outside_2": ("sensor.garten_aussentemperatur2", "sensor.garten_aussentemperatur2_2"),
+}
+
+
+def dew_points():
+    return {sensor["unique_id"]: sensor for block in package("climate")["template"]
+            for sensor in block.get("sensor", [])}
+
+
+def test_every_climate_sensor_gets_a_dew_point():
+    sensors = dew_points()
+    assert set(sensors) == {f"dew_point_{place}" for place in CLIMATE_SENSORS}
+    for place, (temperature, humidity) in CLIMATE_SENSORS.items():
+        sensor = sensors[f"dew_point_{place}"]
+        assert sensor["default_entity_id"] == f"sensor.dew_point_{place}"
+        assert sensor["name"].startswith("Taupunkt ")
+        assert (sensor["device_class"], sensor["unit_of_measurement"], sensor["state_class"]) == (
+            "temperature", "°C", "measurement")
+        # One formula for all of them, in custom_templates/
+        assert sensor["state"] == ("{% from 'climate.jinja' import dew_point -%} "
+                                   f"{{{{ dew_point('{temperature}', '{humidity}') }}}}")
+        # Unavailable while either value is missing, instead of a dew point of 0 °C
+        assert sensor["availability"] == (f"{{{{ states('{temperature}') | is_number"
+                                          f" and states('{humidity}') | float(0) > 0 }}}}")
+
+
+def test_the_dew_point_follows_the_magnus_formula():
+    for celsius, relative, expected in [(20, 50, "9.3"), (25, 60, "16.7"), (0, 100, "0.0"), (-5, 80, "-7.9")]:
+        # A new environment each time: Jinja caches an import, with the states it saw first
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(CONFIG_DIR / "custom_templates"))
+        env.filters["float"] = to_float
+        env.globals.update(log=math.log, states={"sensor.t": str(celsius), "sensor.h": str(relative)}.get)
+        template = env.from_string("{% from 'climate.jinja' import dew_point %}{{ dew_point('sensor.t', 'sensor.h') }}")
+        assert template.render().strip() == expected, (celsius, relative)
+
+
+def test_holding_the_decoration_lights_button_lets_deconz_dim():
+    """Node-RED stepped the brightness by 1 every 20 ms, which lagged. deCONZ dims by itself: one bri_inc with a
+    transition when the button is held, bri_inc 0 (stop) when it is released. "on" is quoted: YAML reads a bare on as
+    true, which deCONZ would not take as its on field."""
+    dim = automation("lights", "decoration_lights_hold_dim")
+    assert dim["triggers"] == [{"trigger": "event", "event_type": "deconz_event",
+                                "event_data": {"unique_id": "5c:c7:c1:ff:fe:83:4b:a0"}}]
+    assert dim["mode"] == "restart"
+    commands = {}
+    for option in dim["actions"][0]["choose"]:
+        event = int(re.search(r"== (\d+)", option["conditions"][0]["value_template"])[1])
+        commands[event] = option["sequence"][0]
+    commands["released"] = dim["actions"][0]["default"][0]
+    for command in commands.values():
+        assert command["action"] == "deconz.configure"
+        assert (command["data"]["entity"], command["data"]["field"]) == ("light.wohnzimmer_dekolights", "/action")
+    assert commands[1001]["data"]["data"] == {"on": True, "bri_inc": 254, "transitiontime": 40}
+    assert commands[2001]["data"]["data"] == {"bri_inc": -254, "transitiontime": 40}
+    assert commands["released"]["data"]["data"] == {"bri_inc": 0}
+    assert "(1001, 2001, 1003, 2003)" in dim["conditions"][0]["value_template"]

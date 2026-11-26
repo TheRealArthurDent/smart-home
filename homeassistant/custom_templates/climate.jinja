@@ -1,0 +1,7 @@
+{#- Dew point in °C of a temperature (°C) and a relative humidity (%) sensor, Magnus formula with the constants of
+    Sonntag (17.62, 243.12 °C, for -45 to 60 °C over water), rounded to 0.1. Used by packages/climate.yaml. -#}
+{%- macro dew_point(temperature, humidity) -%}
+  {%- set t = states(temperature) | float -%}
+  {%- set g = log(states(humidity) | float / 100) + 17.62 * t / (243.12 + t) -%}
+  {{- (243.12 * g / (17.62 - g)) | round(1) -}}
+{%- endmacro -%}

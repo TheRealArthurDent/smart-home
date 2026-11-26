@@ -52,6 +52,8 @@ services:
       - ./homeassistant/configuration.yaml:/config/configuration.yaml:ro
       - ./homeassistant/packages:/config/packages:ro
       - ./homeassistant/dashboards:/config/dashboards:ro
+      # Jinja macros shared by the packages' templates
+      - ./homeassistant/custom_templates:/config/custom_templates:ro
       # Virtual twins of the devices on testbench, empty elsewhere (smart_home_homeassistant_virtual_devices)
       - ./homeassistant-virtual:/config/virtual:ro
       # Integrations of the real devices on raspi, empty where the twins are
