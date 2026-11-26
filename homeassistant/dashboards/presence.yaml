@@ -24,7 +24,7 @@ views:
           {% for someone in states.person | sort(attribute='name') %}
 
           **{{ someone.name }}**: {{ someone.state }}, since {{ relative_time(someone.last_changed) }}
-          (source: {{ someone.attributes.source or 'none' }})
+          (source: {{ someone.attributes.get('source') or 'none' }})
 
           {% for tracker in someone.attributes.device_trackers | default([]) %}
           - {{ state_attr(tracker, 'friendly_name') or tracker }}: {{ states(tracker) }},
