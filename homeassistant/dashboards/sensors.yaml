@@ -1,0 +1,208 @@
+# Sensors, replacing Grafana's "Sensors" dashboard (#2) with built-in cards only. Two section views: one section per
+# place with its temperature, humidity and dew point (packages/climate.yaml) and, where there is one, its brightness;
+# then their history as hourly statistics over a week. The LUMI sensors report humidity on the plain id and
+# temperature on _2, the others the other way round.
+title: Sensoren
+views:
+  - title: Klima
+    path: climate
+    icon: mdi:thermometer
+    type: sections
+    max_columns: 4
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wohnzimmer
+            icon: mdi:sofa
+          - type: tile
+            entity: sensor.wohnzimmer_wohnzimmer_2
+            name: Temperatur
+          - type: tile
+            entity: sensor.wohnzimmer_wohnzimmer
+            name: Luftfeuchtigkeit
+          - type: tile
+            entity: sensor.dew_point_living_room
+            name: Taupunkt
+          - type: tile
+            entity: sensor.wohnzimmer_lichtsensor_wohnzimmer
+            name: Helligkeit
+      - type: grid
+        cards:
+          - type: heading
+            heading: Schlafzimmer
+            icon: mdi:bed
+          - type: tile
+            entity: sensor.schlafzimmer_schlafzimmer_2
+            name: Temperatur
+          - type: tile
+            entity: sensor.schlafzimmer_schlafzimmer
+            name: Luftfeuchtigkeit
+          - type: tile
+            entity: sensor.dew_point_bedroom
+            name: Taupunkt
+      - type: grid
+        cards:
+          - type: heading
+            heading: Schlafzimmer 2
+            icon: mdi:bed
+          - type: tile
+            entity: sensor.schlafzimmer_schlafzimmer2
+            name: Temperatur
+          - type: tile
+            entity: sensor.schlafzimmer_schlafzimmer2_2
+            name: Luftfeuchtigkeit
+          - type: tile
+            entity: sensor.dew_point_bedroom_2
+            name: Taupunkt
+      - type: grid
+        cards:
+          - type: heading
+            heading: Büro
+            icon: mdi:desk
+          - type: tile
+            entity: sensor.buro_buro_2
+            name: Temperatur
+          - type: tile
+            entity: sensor.buro_buro
+            name: Luftfeuchtigkeit
+          - type: tile
+            entity: sensor.dew_point_office
+            name: Taupunkt
+          - type: tile
+            entity: sensor.buro_lichtsensor_buro
+            name: Helligkeit
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bad
+            icon: mdi:shower
+          - type: tile
+            entity: sensor.bad_bath_2
+            name: Temperatur
+          - type: tile
+            entity: sensor.bad_bath
+            name: Luftfeuchtigkeit
+          - type: tile
+            entity: sensor.dew_point_bathroom
+            name: Taupunkt
+      - type: grid
+        cards:
+          - type: heading
+            heading: Draußen
+            icon: mdi:tree
+          - type: tile
+            entity: sensor.garten_aussentemperatur_2
+            name: Temperatur
+          - type: tile
+            entity: sensor.garten_aussentemperatur
+            name: Luftfeuchtigkeit
+          - type: tile
+            entity: sensor.dew_point_outside
+            name: Taupunkt
+      - type: grid
+        cards:
+          - type: heading
+            heading: Draußen 2
+            icon: mdi:tree
+          - type: tile
+            entity: sensor.garten_aussentemperatur2
+            name: Temperatur
+          - type: tile
+            entity: sensor.garten_aussentemperatur2_2
+            name: Luftfeuchtigkeit
+          - type: tile
+            entity: sensor.dew_point_outside_2
+            name: Taupunkt
+  - title: Verlauf
+    path: history
+    icon: mdi:chart-line
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: statistics-graph
+            title: Temperatur
+            chart_type: line
+            period: hour
+            days_to_show: 7
+            stat_types:
+              - mean
+            entities:
+              - entity: sensor.wohnzimmer_wohnzimmer_2
+                name: Wohnzimmer
+              - entity: sensor.schlafzimmer_schlafzimmer_2
+                name: Schlafzimmer
+              - entity: sensor.schlafzimmer_schlafzimmer2
+                name: Schlafzimmer 2
+              - entity: sensor.buro_buro_2
+                name: Büro
+              - entity: sensor.bad_bath_2
+                name: Bad
+              - entity: sensor.garten_aussentemperatur_2
+                name: Draußen
+              - entity: sensor.garten_aussentemperatur2
+                name: Draußen 2
+      - type: grid
+        cards:
+          - type: statistics-graph
+            title: Luftfeuchtigkeit
+            chart_type: line
+            period: hour
+            days_to_show: 7
+            stat_types:
+              - mean
+            entities:
+              - entity: sensor.wohnzimmer_wohnzimmer
+                name: Wohnzimmer
+              - entity: sensor.schlafzimmer_schlafzimmer
+                name: Schlafzimmer
+              - entity: sensor.schlafzimmer_schlafzimmer2_2
+                name: Schlafzimmer 2
+              - entity: sensor.buro_buro
+                name: Büro
+              - entity: sensor.bad_bath
+                name: Bad
+              - entity: sensor.garten_aussentemperatur
+                name: Draußen
+              - entity: sensor.garten_aussentemperatur2_2
+                name: Draußen 2
+      - type: grid
+        cards:
+          - type: statistics-graph
+            title: Taupunkt
+            chart_type: line
+            period: hour
+            days_to_show: 7
+            stat_types:
+              - mean
+            entities:
+              - entity: sensor.dew_point_living_room
+                name: Wohnzimmer
+              - entity: sensor.dew_point_bedroom
+                name: Schlafzimmer
+              - entity: sensor.dew_point_bedroom_2
+                name: Schlafzimmer 2
+              - entity: sensor.dew_point_office
+                name: Büro
+              - entity: sensor.dew_point_bathroom
+                name: Bad
+              - entity: sensor.dew_point_outside
+                name: Draußen
+              - entity: sensor.dew_point_outside_2
+                name: Draußen 2
+      - type: grid
+        cards:
+          - type: statistics-graph
+            title: Helligkeit
+            chart_type: line
+            period: hour
+            days_to_show: 7
+            stat_types:
+              - mean
+            entities:
+              - entity: sensor.wohnzimmer_lichtsensor_wohnzimmer
+                name: Wohnzimmer
+              - entity: sensor.buro_lichtsensor_buro
+                name: Büro

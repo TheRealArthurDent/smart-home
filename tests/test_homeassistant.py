@@ -1519,3 +1519,34 @@ def test_the_office_shutter_button_half_closes_an_open_shutter_and_opens_any_oth
         attributes = {("cover.buro_shutter_office", "current_position"): current}
         assert render(position, state_attr=lambda entity, name: attributes[(entity, name)]) == expected, current
     assert button["mode"] == "single"
+
+
+LUX_SENSORS = ["sensor.wohnzimmer_lichtsensor_wohnzimmer", "sensor.buro_lichtsensor_buro"]
+
+
+def sensor_dashboard():
+    return yaml.safe_load((CONFIG_DIR / "dashboards" / "sensors.yaml").read_text())
+
+
+def test_the_sensor_dashboard_is_a_built_in_sections_view():
+    """Replaces Grafana's "Sensors" dashboard."""
+    dashboard = configuration()["lovelace"]["dashboards"]["dashboard-sensors"]
+    assert (dashboard["mode"], dashboard["filename"], dashboard["title"]) == ("yaml", "dashboards/sensors.yaml",
+                                                                              "Sensoren")
+    assert "custom:" not in (CONFIG_DIR / "dashboards" / "sensors.yaml").read_text()
+    # Current values per place, then their history
+    assert [(view["path"], view["type"]) for view in sensor_dashboard()["views"]] == [("climate", "sections"),
+                                                                                      ("history", "sections")]
+
+
+def test_the_sensor_dashboard_shows_every_climate_sensor_with_its_dew_point_and_history():
+    cards = dashboard_cards(sensor_dashboard())
+    tiles = [card["entity"] for card in cards if card["type"] == "tile"]
+    graphs = {card["title"]: [e if isinstance(e, str) else e["entity"] for e in card["entities"]]
+              for card in cards if card["type"] == "statistics-graph"}
+    temperatures = [temperature for temperature, _ in CLIMATE_SENSORS.values()]
+    humidities = [humidity for _, humidity in CLIMATE_SENSORS.values()]
+    dew = [f"sensor.dew_point_{place}" for place in CLIMATE_SENSORS]
+    assert sorted(tiles) == sorted(temperatures + humidities + dew + LUX_SENSORS)
+    assert graphs == {"Temperatur": temperatures, "Luftfeuchtigkeit": humidities, "Taupunkt": dew,
+                      "Helligkeit": LUX_SENSORS}
