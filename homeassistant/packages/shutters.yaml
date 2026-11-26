@@ -305,6 +305,26 @@ automation:
           shutter: office
           position: open
 
+  # Node-RED's "Button | Shutter Office" (a TRADFRI shortcut button; 1002 = pressed)
+  - id: shutters_office_button
+    alias: Taster im Büro öffnet den Rollladen oder schließt ihn halb
+    description: Ganz offen wird halb offen, jede andere Position wird ganz offen, auch nach Handbetätigung.
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "84:ba:20:ff:fe:d3:f5:d2"
+          event: 1002
+    actions:
+      - action: script.shutter_move
+        data:
+          shutter: office
+          position: >-
+            {{ 'half_open' if state_attr('cover.buro_shutter_office', 'current_position') | int(0) == 100
+               else 'open' }}
+          override: true
+
   - id: shutters_bedroom_night
     alias: Rollladen Schlafzimmer zu zur nautischen Dämmerung und um 22 Uhr
     description: Nur, wenn er weitgehend offen ist.

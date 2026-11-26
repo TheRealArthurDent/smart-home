@@ -1506,3 +1506,16 @@ def test_holding_the_decoration_lights_button_lets_deconz_dim():
     assert commands[2001]["data"]["data"] == {"bri_inc": -254, "transitiontime": 40}
     assert commands["released"]["data"]["data"] == {"bri_inc": 0}
     assert "(1001, 2001, 1003, 2003)" in dim["conditions"][0]["value_template"]
+
+
+def test_the_office_shutter_button_half_closes_an_open_shutter_and_opens_any_other():
+    """Node-RED's "Button | Shutter Office": fully open goes half open, anything else opens, with override."""
+    button = automation("shutters", "shutters_office_button")
+    assert button["triggers"] == [{"trigger": "event", "event_type": "deconz_event",
+                                   "event_data": {"unique_id": "84:ba:20:ff:fe:d3:f5:d2", "event": 1002}}]
+    [(shutter, position, override)] = shutter_calls(button["actions"])
+    assert (shutter, override) == ("office", True)
+    for current, expected in ((100, "half_open"), (99, "open"), (40, "open"), (0, "open"), (None, "open")):
+        attributes = {("cover.buro_shutter_office", "current_position"): current}
+        assert render(position, state_attr=lambda entity, name: attributes[(entity, name)]) == expected, current
+    assert button["mode"] == "single"
