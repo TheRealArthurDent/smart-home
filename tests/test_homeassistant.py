@@ -419,6 +419,31 @@ def test_the_presence_dashboard_comes_from_the_repo():
     assert "person." not in text.replace("states.person", "")
 
 
+def test_the_presence_dashboard_lists_people_without_a_tracker():
+    """Home Assistant raises on a missing attribute (people without trackers have no source), so the card must not
+    read one with a dot."""
+    views = yaml.safe_load((CONFIG_DIR / "dashboards" / "presence.yaml").read_text())["views"]
+    content = next(card["content"] for view in views for card in view.get("cards", [])
+                   if card.get("type") == "markdown" and "states.person" in card.get("content", ""))
+
+    class Attributes(dict):
+        def __getattr__(self, name):
+            if name in self:
+                return self[name]
+            raise AttributeError(name)
+
+    class Person:
+        name = "Somebody"
+        state = "unknown"
+        last_changed = None
+        attributes = Attributes()
+
+    env = jinja2.Environment(undefined=jinja2.StrictUndefined)
+    env.globals.update(relative_time=lambda _: "-", state_attr=lambda *_: None, states=lambda _: "-")
+    rendered = env.from_string(content).render(states={"person": [Person()], "device_tracker": []})
+    assert "Somebody" in rendered and "none" in rendered
+
+
 VIRTUAL_DIR = ROOT / "homeassistant-virtual"
 # Domains of physical devices; testbench has neither the Zigbee stick nor the Shellies of raspi
 DEVICE_DOMAINS = ("light", "switch", "binary_sensor", "sensor", "cover", "media_player")
