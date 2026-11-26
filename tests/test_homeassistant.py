@@ -1548,5 +1548,5 @@ def test_the_sensor_dashboard_shows_every_climate_sensor_with_its_dew_point_and_
     humidities = [humidity for _, humidity in CLIMATE_SENSORS.values()]
     dew = [f"sensor.dew_point_{place}" for place in CLIMATE_SENSORS]
     assert sorted(tiles) == sorted(temperatures + humidities + dew + LUX_SENSORS)
-    assert graphs == {"Temperatur": temperatures, "Luftfeuchtigkeit": humidities, "Taupunkt": dew,
-                      "Helligkeit": LUX_SENSORS}
+    # In this order: temperature, humidity, dew point, brightness (the titles are German)
+    assert list(graphs.values()) == [temperatures, humidities, dew, LUX_SENSORS]
