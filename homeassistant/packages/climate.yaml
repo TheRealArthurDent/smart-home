@@ -1,0 +1,24 @@
+# Climate (#2): the outside temperature on MQTT for the display next to the door, an ESP8266 reading
+# climate/outside/temperature. ioBroker's mqtt-client published it the same way (retained, QoS 1), so the display
+# gets the last value whenever it connects.
+
+automation:
+  - id: outside_temperature_to_mqtt
+    alias: Außentemperatur fürs Display per MQTT senden
+    description: Retained auf climate/outside/temperature, bei jeder Änderung und nach dem Start.
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: sensor.garten_aussentemperatur2
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: template
+        value_template: "{{ states('sensor.garten_aussentemperatur2') | is_number }}"
+    actions:
+      - action: mqtt.publish
+        data:
+          topic: climate/outside/temperature
+          payload: "{{ states('sensor.garten_aussentemperatur2') }}"
+          qos: 1
+          retain: true
