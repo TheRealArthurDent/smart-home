@@ -961,13 +961,37 @@ def test_shutters_half_open_shortly_before_nautical_dusk():
     """Node-RED: 30 minutes before nautical dusk (sun 12° below the horizon); the sun sinks about 4° in that time."""
     dusk = automation("shutters", "shutters_dusk")
     assert [sun_trigger(t) for t in dusk["triggers"]] == [("numeric_state", "sun.sun", "elevation", None, -8)]
-    assert shutter_calls(dusk["actions"]) == [(s, "half_open", True) for s in ("office", "garden", "terrace")]
+    calls = shutter_calls([a for a in dusk["actions"] if "if" not in a])
+    assert calls == [(s, "half_open", True) for s in ("office", "garden", "terrace")]
 
 
-def test_the_kitchen_shutter_half_opens_at_midnight():
+def holds(condition, day):
+    """Whether a template condition holds at noon of the given day in Berlin, where Home Assistant's now() lives."""
+    from zoneinfo import ZoneInfo
+    now = datetime.datetime.combine(day, datetime.time(12), ZoneInfo("Europe/Berlin"))
+    return jinja2.Environment().from_string(condition["value_template"]).render(now=lambda: now).strip() == "True"
+
+
+SUMMER_DAY, WINTER_DAY = datetime.date(2026, 7, 1), datetime.date(2026, 11, 26)
+
+
+def test_in_winter_time_the_kitchen_shutter_half_opens_with_the_others_at_dusk():
+    dusk = automation("shutters", "shutters_dusk")
+    kitchen = [a for a in dusk["actions"] if "if" in a]
+    assert len(kitchen) == 1
+    assert [c["condition"] for c in kitchen[0]["if"]] == ["template"]
+    assert holds(kitchen[0]["if"][0], WINTER_DAY)
+    assert not holds(kitchen[0]["if"][0], SUMMER_DAY)
+    assert shutter_calls(kitchen[0]["then"]) == [("kitchen", "half_open", True)]
+
+
+def test_in_summer_time_the_kitchen_shutter_half_opens_at_midnight():
     midnight = automation("shutters", "shutters_midnight")
     assert midnight["triggers"] == [{"trigger": "time", "at": "00:00:00"}]
     assert shutter_calls(midnight["actions"]) == [("kitchen", "half_open", True)]
+    assert [c["condition"] for c in midnight["conditions"]] == ["template"]
+    assert holds(midnight["conditions"][0], SUMMER_DAY)
+    assert not holds(midnight["conditions"][0], WINTER_DAY)
 
 
 def test_shutters_open_in_the_morning_but_not_on_guests_or_sleepers():

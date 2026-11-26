@@ -148,7 +148,7 @@ template:
 automation:
   - id: shutters_dusk
     alias: Rollläden halb zu vor der nautischen Dämmerung
-    description: Büro, Garten und Terrasse etwa 30 Minuten vor der nautischen Dämmerung.
+    description: Büro, Garten und Terrasse etwa 30 Minuten vor der nautischen Dämmerung, im Winter auch die Küche.
     mode: single
     triggers:
       # The sun sinks about 4° in the 30 minutes before nautical dusk (-12°)
@@ -168,13 +168,27 @@ automation:
                 shutter: "{{ repeat.item }}"
                 position: half_open
                 override: true
+      # The kitchen joins them in winter time; in summer time dusk comes late enough for midnight
+      - if:
+          - condition: template
+            value_template: "{{ now().dst().total_seconds() == 0 }}"
+        then:
+          - action: script.shutter_move
+            data:
+              shutter: kitchen
+              position: half_open
+              override: true
 
   - id: shutters_midnight
-    alias: Rollladen Küche halb zu um Mitternacht
+    alias: Rollladen Küche halb zu um Mitternacht (Sommerzeit)
+    description: Im Winter schließt die Küche schon mit den anderen in der Dämmerung.
     mode: single
     triggers:
       - trigger: time
         at: "00:00:00"
+    conditions:
+      - condition: template
+        value_template: "{{ now().dst().total_seconds() > 0 }}"
     actions:
       - action: script.shutter_move
         data:
