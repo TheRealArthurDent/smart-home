@@ -63,6 +63,49 @@ automation:
             - light.wohnzimmer_dekolights
             - light.wohnzimmer_weihnachtssterne
 
+  # Holding dims the DekoLights (the Christmas stars are plugs). deCONZ dims by itself: bri_inc with a transition
+  # over the whole range when held, bri_inc 0 stops it on release. Node-RED's 1-step loop lagged.
+  - id: decoration_lights_hold_dim
+    alias: Taster der Dekobeleuchtung dimmt beim Halten
+    mode: restart
+    triggers:
+      - trigger: event
+        event_type: deconz_event
+        event_data:
+          unique_id: "5c:c7:c1:ff:fe:83:4b:a0"
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.event.data.event in (1001, 2001, 1003, 2003) }}"
+    actions:
+      - choose:
+          - alias: Oben gehalten, heller
+            conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.event == 1001 }}"
+            sequence:
+              - action: deconz.configure
+                data:
+                  entity: light.wohnzimmer_dekolights
+                  field: /action
+                  data: {"on": true, bri_inc: 254, transitiontime: 40}
+          - alias: Unten gehalten, dunkler
+            conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.event == 2001 }}"
+            sequence:
+              - action: deconz.configure
+                data:
+                  entity: light.wohnzimmer_dekolights
+                  field: /action
+                  data: {bri_inc: -254, transitiontime: 40}
+        default:
+          - alias: Losgelassen, Dimmen anhalten
+            action: deconz.configure
+            data:
+              entity: light.wohnzimmer_dekolights
+              field: /action
+              data: {bri_inc: 0}
+
   - id: decoration_lights_switch
     alias: Schalter schaltet die Dekobeleuchtung um
     mode: queued

@@ -1479,3 +1479,25 @@ def test_the_dew_point_follows_the_magnus_formula():
     for celsius, relative, expected in [(20, 50, "9.3"), (25, 60, "16.7"), (0, 100, "0.0"), (-5, 80, "-7.9")]:
         states = {temperature: str(celsius), humidity: str(relative)}
         assert render(sensor["state"], states=states.get, log=math.log) == expected, (celsius, relative)
+
+
+def test_holding_the_decoration_lights_button_lets_deconz_dim():
+    """Node-RED stepped the brightness by 1 every 20 ms, which lagged. deCONZ dims by itself: one bri_inc with a
+    transition when the button is held, bri_inc 0 (stop) when it is released. "on" is quoted: YAML reads a bare on as
+    true, which deCONZ would not take as its on field."""
+    dim = automation("lights", "decoration_lights_hold_dim")
+    assert dim["triggers"] == [{"trigger": "event", "event_type": "deconz_event",
+                                "event_data": {"unique_id": "5c:c7:c1:ff:fe:83:4b:a0"}}]
+    assert dim["mode"] == "restart"
+    commands = {}
+    for option in dim["actions"][0]["choose"]:
+        event = int(re.search(r"== (\d+)", option["conditions"][0]["value_template"])[1])
+        commands[event] = option["sequence"][0]
+    commands["released"] = dim["actions"][0]["default"][0]
+    for command in commands.values():
+        assert command["action"] == "deconz.configure"
+        assert (command["data"]["entity"], command["data"]["field"]) == ("light.wohnzimmer_dekolights", "/action")
+    assert commands[1001]["data"]["data"] == {"on": True, "bri_inc": 254, "transitiontime": 40}
+    assert commands[2001]["data"]["data"] == {"bri_inc": -254, "transitiontime": 40}
+    assert commands["released"]["data"]["data"] == {"bri_inc": 0}
+    assert "(1001, 2001, 1003, 2003)" in dim["conditions"][0]["value_template"]
