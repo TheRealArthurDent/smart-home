@@ -23,9 +23,8 @@ automation:
           qos: 1
           retain: true
 
-# Dew points of every device measuring temperature and humidity, Magnus formula with the constants of Sonntag
-# (17.62, 243.12 °C, for -45 to 60 °C over water). The LUMI sensors report humidity on the plain id
-# and temperature on _2, the others the other way round.
+# Dew points of every device measuring temperature and humidity, by the macro in custom_templates/climate.jinja.
+# The LUMI sensors report humidity on the plain id and temperature on _2, the others the other way round.
 template:
   - sensor:
       - name: Taupunkt Wohnzimmer
@@ -38,9 +37,8 @@ template:
           {{ states('sensor.wohnzimmer_wohnzimmer_2') | is_number and
           states('sensor.wohnzimmer_wohnzimmer') | float(0) > 0 }}
         state: >-
-          {% set t = states('sensor.wohnzimmer_wohnzimmer_2') | float %}
-          {% set g = log(states('sensor.wohnzimmer_wohnzimmer') | float / 100) + 17.62 * t / (243.12 + t) %}
-          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+          {% from 'climate.jinja' import dew_point -%}
+          {{ dew_point('sensor.wohnzimmer_wohnzimmer_2', 'sensor.wohnzimmer_wohnzimmer') }}
       - name: Taupunkt Schlafzimmer
         unique_id: dew_point_bedroom
         default_entity_id: sensor.dew_point_bedroom
@@ -51,9 +49,8 @@ template:
           {{ states('sensor.schlafzimmer_schlafzimmer_2') | is_number and
           states('sensor.schlafzimmer_schlafzimmer') | float(0) > 0 }}
         state: >-
-          {% set t = states('sensor.schlafzimmer_schlafzimmer_2') | float %}
-          {% set g = log(states('sensor.schlafzimmer_schlafzimmer') | float / 100) + 17.62 * t / (243.12 + t) %}
-          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+          {% from 'climate.jinja' import dew_point -%}
+          {{ dew_point('sensor.schlafzimmer_schlafzimmer_2', 'sensor.schlafzimmer_schlafzimmer') }}
       - name: Taupunkt Schlafzimmer 2
         unique_id: dew_point_bedroom_2
         default_entity_id: sensor.dew_point_bedroom_2
@@ -64,9 +61,8 @@ template:
           {{ states('sensor.schlafzimmer_schlafzimmer2') | is_number and
           states('sensor.schlafzimmer_schlafzimmer2_2') | float(0) > 0 }}
         state: >-
-          {% set t = states('sensor.schlafzimmer_schlafzimmer2') | float %}
-          {% set g = log(states('sensor.schlafzimmer_schlafzimmer2_2') | float / 100) + 17.62 * t / (243.12 + t) %}
-          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+          {% from 'climate.jinja' import dew_point -%}
+          {{ dew_point('sensor.schlafzimmer_schlafzimmer2', 'sensor.schlafzimmer_schlafzimmer2_2') }}
       - name: Taupunkt Büro
         unique_id: dew_point_office
         default_entity_id: sensor.dew_point_office
@@ -77,9 +73,8 @@ template:
           {{ states('sensor.buro_buro_2') | is_number and
           states('sensor.buro_buro') | float(0) > 0 }}
         state: >-
-          {% set t = states('sensor.buro_buro_2') | float %}
-          {% set g = log(states('sensor.buro_buro') | float / 100) + 17.62 * t / (243.12 + t) %}
-          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+          {% from 'climate.jinja' import dew_point -%}
+          {{ dew_point('sensor.buro_buro_2', 'sensor.buro_buro') }}
       - name: Taupunkt Bad
         unique_id: dew_point_bathroom
         default_entity_id: sensor.dew_point_bathroom
@@ -90,9 +85,8 @@ template:
           {{ states('sensor.bad_bath_2') | is_number and
           states('sensor.bad_bath') | float(0) > 0 }}
         state: >-
-          {% set t = states('sensor.bad_bath_2') | float %}
-          {% set g = log(states('sensor.bad_bath') | float / 100) + 17.62 * t / (243.12 + t) %}
-          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+          {% from 'climate.jinja' import dew_point -%}
+          {{ dew_point('sensor.bad_bath_2', 'sensor.bad_bath') }}
       - name: Taupunkt draußen
         unique_id: dew_point_outside
         default_entity_id: sensor.dew_point_outside
@@ -103,9 +97,8 @@ template:
           {{ states('sensor.garten_aussentemperatur_2') | is_number and
           states('sensor.garten_aussentemperatur') | float(0) > 0 }}
         state: >-
-          {% set t = states('sensor.garten_aussentemperatur_2') | float %}
-          {% set g = log(states('sensor.garten_aussentemperatur') | float / 100) + 17.62 * t / (243.12 + t) %}
-          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+          {% from 'climate.jinja' import dew_point -%}
+          {{ dew_point('sensor.garten_aussentemperatur_2', 'sensor.garten_aussentemperatur') }}
       - name: Taupunkt draußen 2
         unique_id: dew_point_outside_2
         default_entity_id: sensor.dew_point_outside_2
@@ -116,6 +109,5 @@ template:
           {{ states('sensor.garten_aussentemperatur2') | is_number and
           states('sensor.garten_aussentemperatur2_2') | float(0) > 0 }}
         state: >-
-          {% set t = states('sensor.garten_aussentemperatur2') | float %}
-          {% set g = log(states('sensor.garten_aussentemperatur2_2') | float / 100) + 17.62 * t / (243.12 + t) %}
-          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+          {% from 'climate.jinja' import dew_point -%}
+          {{ dew_point('sensor.garten_aussentemperatur2', 'sensor.garten_aussentemperatur2_2') }}

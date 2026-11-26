@@ -66,6 +66,7 @@ def test_ui_state_lives_in_a_volume_and_the_repo_config_is_read_only():
         "./homeassistant/configuration.yaml:/config/configuration.yaml:ro",
         "./homeassistant/packages:/config/packages:ro",
         "./homeassistant/dashboards:/config/dashboards:ro",
+        "./homeassistant/custom_templates:/config/custom_templates:ro",
         "./homeassistant-virtual:/config/virtual:ro",
         "./homeassistant-real:/config/real:ro",
     ]
@@ -1467,18 +1468,22 @@ def test_every_climate_sensor_gets_a_dew_point():
         assert sensor["name"].startswith("Taupunkt ")
         assert (sensor["device_class"], sensor["unit_of_measurement"], sensor["state_class"]) == (
             "temperature", "°C", "measurement")
-        assert temperature in sensor["state"] and humidity in sensor["state"]
+        # One formula for all of them, in custom_templates/
+        assert sensor["state"] == ("{% from 'climate.jinja' import dew_point -%} "
+                                   f"{{{{ dew_point('{temperature}', '{humidity}') }}}}")
         # Unavailable while either value is missing, instead of a dew point of 0 °C
         assert sensor["availability"] == (f"{{{{ states('{temperature}') | is_number"
                                           f" and states('{humidity}') | float(0) > 0 }}}}")
 
 
 def test_the_dew_point_follows_the_magnus_formula():
-    sensor = dew_points()["dew_point_living_room"]
-    temperature, humidity = CLIMATE_SENSORS["living_room"]
     for celsius, relative, expected in [(20, 50, "9.3"), (25, 60, "16.7"), (0, 100, "0.0"), (-5, 80, "-7.9")]:
-        states = {temperature: str(celsius), humidity: str(relative)}
-        assert render(sensor["state"], states=states.get, log=math.log) == expected, (celsius, relative)
+        # A new environment each time: Jinja caches an import, with the states it saw first
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(CONFIG_DIR / "custom_templates"))
+        env.filters["float"] = to_float
+        env.globals.update(log=math.log, states={"sensor.t": str(celsius), "sensor.h": str(relative)}.get)
+        template = env.from_string("{% from 'climate.jinja' import dew_point %}{{ dew_point('sensor.t', 'sensor.h') }}")
+        assert template.render().strip() == expected, (celsius, relative)
 
 
 def test_holding_the_decoration_lights_button_lets_deconz_dim():
