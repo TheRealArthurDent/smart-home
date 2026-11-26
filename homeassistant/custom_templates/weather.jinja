@@ -1,0 +1,23 @@
+{#- The current warnings of the DWD integration (the region is set in the UI) that ask for the shutters, as a JSON
+    list of their numbers: thunderstorms (DWD codes 31-49 and 90-96) and wind (51-58), from level 2 ("markant") up.
+    Node-RED left out everything else, like frost, snow or heat. Used by packages/weather_warnings.yaml. -#}
+{%- macro severe_warnings() -%}
+  {%- set entity = integration_entities('dwd_weather_warnings') | select('search', 'aktuelle_warnstufe') | first
+                   | default(none) -%}
+  {%- set ns = namespace(found=[]) -%}
+  {%- if entity -%}
+    {%- for i in range(1, (state_attr(entity, 'warning_count') or 0) | int + 1) -%}
+      {%- set kind = state_attr(entity, 'warning_' ~ i ~ '_type') | int(0) -%}
+      {%- set level = state_attr(entity, 'warning_' ~ i ~ '_level') | int(0) -%}
+      {%- if level >= 2 and (31 <= kind <= 49 or 51 <= kind <= 58 or 90 <= kind <= 96) -%}
+        {%- set ns.found = ns.found + [i] -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+  {{- ns.found | to_json -}}
+{%- endmacro -%}
+
+{#- The DWD sensor of the current warnings -#}
+{%- macro warning_sensor() -%}
+  {{- integration_entities('dwd_weather_warnings') | select('search', 'aktuelle_warnstufe') | first | default('') -}}
+{%- endmacro -%}

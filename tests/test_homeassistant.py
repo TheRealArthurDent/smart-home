@@ -1550,3 +1550,75 @@ def test_the_sensor_dashboard_shows_every_climate_sensor_with_its_dew_point_and_
     assert sorted(tiles) == sorted(temperatures + humidities + dew + LUX_SENSORS)
     # In this order: temperature, humidity, dew point, brightness (the titles are German)
     assert list(graphs.values()) == [temperatures, humidities, dew, LUX_SENSORS]
+
+
+# Weather warnings (#2), replacing Node-RED's "Weather warnings": thunderstorms and wind from "markant" up, as a push
+# to the app asking whether to close the shutters.
+DWD_CURRENT = "sensor.region_aktuelle_warnstufe"
+
+
+def render_weather(template, warnings, **context):
+    """Renders with the macros of custom_templates/ and a DWD sensor holding the warnings as (type, level)."""
+    attributes = {"warning_count": len(warnings)}
+    for i, (kind, level) in enumerate(warnings, start=1):
+        attributes |= {f"warning_{i}_type": kind, f"warning_{i}_level": level, f"warning_{i}_headline": f"W{i}",
+                       f"warning_{i}_start": "2026-11-26T14:00:00+00:00", f"warning_{i}_end": "2026-11-26T20:00:00+00:00"}
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(CONFIG_DIR / "custom_templates"))
+    env.filters["to_json"] = json.dumps
+    env.filters["from_json"] = json.loads
+    env.globals.update(integration_entities=lambda name: [DWD_CURRENT, "sensor.region_vorwarnstufe"]
+                       if name == "dwd_weather_warnings" else [],
+                       state_attr=lambda entity, name: attributes.get(name) if entity == DWD_CURRENT else None)
+    env.tests["search"] = lambda value, pattern: re.search(pattern, value) is not None
+    return env.from_string(template).render(**context).strip()
+
+
+def severe_weather():
+    return next(sensor for block in package("weather_warnings")["template"] for sensor in block.get("binary_sensor", [])
+                if sensor["unique_id"] == "severe_weather_warning")
+
+
+def test_only_thunderstorm_and_wind_warnings_from_markant_up_count():
+    """ioBroker's levels 3 to 5 ("markant", severe and extreme weather) are Home Assistant's 2 to 4; its types 0 and 1 are DWD's
+    thunderstorm (31-49, 90-96) and wind (51-58) codes."""
+    state = severe_weather()["state"]
+    cases = [([], "False"), ([(31, 1)], "False"), ([(31, 2)], "True"), ([(52, 3)], "True"), ([(95, 4)], "True"),
+             ([(22, 2)], "False"), ([(59, 3)], "False"), ([(70, 1), (84, 1), (57, 2)], "True"), ([(50, 2)], "False")]
+    for warnings, expected in cases:
+        assert render_weather(state, warnings) == expected, warnings
+
+
+def test_the_warning_sensor_finds_dwd_without_naming_the_region():
+    """The DWD sensor's id holds the region; the package finds it by the integration instead."""
+    text = (CONFIG_DIR / "packages" / "weather_warnings.yaml").read_text()
+    assert "integration_entities('dwd_weather_warnings')" in (CONFIG_DIR / "custom_templates" / "weather.jinja").read_text()
+    assert "munchen" not in text and "münchen" not in text.lower()
+
+
+def test_a_severe_warning_asks_on_the_phone_whether_to_close_the_shutters():
+    notify = automation("weather_warnings", "weather_warning_notify")
+    assert notify["triggers"] == [{"trigger": "state", "entity_id": "binary_sensor.severe_weather_warning",
+                                   "from": "off", "to": "on"}]
+    [action] = [a for a in notify["actions"] if "action" in a]
+    # The notify service names the phone, so it is set in the app (input_text), not in this public repo
+    assert action["action"] == "notify.{{ states('input_text.notify_service') }}"
+    assert [a["action"] for a in action["data"]["data"]["actions"]] == [
+        "WEATHER_WARNING_CLOSE", "WEATHER_WARNING_HALF_CLOSE", "WEATHER_WARNING_IGNORE"]
+    assert {"condition": "template", "value_template": "{{ states('input_text.notify_service') | length > 0 }}"} \
+        in notify["conditions"]
+    helper = package("weather_warnings")["input_text"]["notify_service"]
+    assert "initial" not in helper
+
+
+def test_the_answer_to_a_weather_warning_moves_every_shutter_with_override():
+    answer = automation("weather_warnings", "weather_warning_answer")
+    assert {(t["event_type"], t["event_data"]["action"]) for t in answer["triggers"]} == {
+        ("mobile_app_notification_action", "WEATHER_WARNING_CLOSE"),
+        ("mobile_app_notification_action", "WEATHER_WARNING_HALF_CLOSE")}
+    calls = shutter_calls(answer["actions"], SHUTTERS)
+    assert sorted(s for s, _, _ in calls) == sorted(SHUTTERS)
+    assert {o for _, _, o in calls} == {True}
+    [position] = {p for _, p, _ in calls}
+    for action, expected in (("WEATHER_WARNING_CLOSE", "closed"), ("WEATHER_WARNING_HALF_CLOSE", "half_open")):
+        trigger = {"event": {"data": {"action": action}}}
+        assert render(position, trigger=trigger) == expected

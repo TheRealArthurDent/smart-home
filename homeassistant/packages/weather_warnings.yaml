@@ -1,0 +1,90 @@
+# Weather warnings (#2), replacing Node-RED's "Weather warnings" tab, which asked on Telegram whether to close the
+# shutters. Now a push to the Home Assistant app with three buttons; a button's answer only reaches Home Assistant
+# when the phone is at home or on the VPN. The warnings come from the DWD integration (set up in the UI with the
+# region); custom_templates/weather.jinja picks those that matter. The notify service names the phone, so it is set
+# in the app (input_text.notify_service, e.g. mobile_app_<phone>), not here.
+
+input_text:
+  notify_service:
+    name: Benachrichtigungsdienst
+    icon: mdi:cellphone-message
+    max: 100
+
+template:
+  - binary_sensor:
+      - name: Unwetterwarnung
+        unique_id: severe_weather_warning
+        default_entity_id: binary_sensor.severe_weather_warning
+        device_class: safety
+        state: >-
+          {% from 'weather.jinja' import severe_warnings -%}
+          {{ severe_warnings() | from_json | count > 0 }}
+
+automation:
+  - id: weather_warning_notify
+    alias: Unwetterwarnung aufs Handy, mit der Frage nach den Rollläden
+    description: Bei Gewitter oder Sturm ab Stufe markant, wie in Node-RED.
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.severe_weather_warning
+        from: "off"
+        to: "on"
+    conditions:
+      - condition: template
+        value_template: "{{ states('input_text.notify_service') | length > 0 }}"
+    actions:
+      - variables:
+          message: |-
+            {% from 'weather.jinja' import severe_warnings, warning_sensor -%}
+            {% set entity = warning_sensor() -%}
+            {% for i in severe_warnings() | from_json -%}
+            {% set start = state_attr(entity, 'warning_' ~ i ~ '_start') | as_datetime -%}
+            {% set end = state_attr(entity, 'warning_' ~ i ~ '_end') | as_datetime -%}
+            {{ state_attr(entity, 'warning_' ~ i ~ '_headline') }}
+            {%- if start and end %} ({{ start | as_local | as_timestamp | timestamp_custom('%d.%m. %H:%M') }} bis
+            {{- ' ' ~ end | as_local | as_timestamp | timestamp_custom('%d.%m. %H:%M') }}){% endif %}
+            {{ state_attr(entity, 'warning_' ~ i ~ '_description') or '' }}
+            {% endfor -%}
+            Sollen die Rollläden zugehen?
+      - action: "notify.{{ states('input_text.notify_service') }}"
+        data:
+          title: Unwetterwarnung
+          message: "{{ message }}"
+          data:
+            tag: weather_warning
+            actions:
+              - action: WEATHER_WARNING_CLOSE
+                title: Schließen
+              - action: WEATHER_WARNING_HALF_CLOSE
+                title: Halb schließen
+              - action: WEATHER_WARNING_IGNORE
+                title: Ignorieren
+
+  - id: weather_warning_answer
+    alias: Antwort auf die Unwetterwarnung bewegt die Rollläden
+    description: Schließen oder halb schließen, auch wenn ein Rollladen von Hand bewegt wurde.
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: WEATHER_WARNING_CLOSE
+      - trigger: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: WEATHER_WARNING_HALF_CLOSE
+    actions:
+      - repeat:
+          for_each:
+            - office
+            - kitchen
+            - bedroom
+            - garden
+            - terrace
+          sequence:
+            - action: script.shutter_move
+              data:
+                shutter: "{{ repeat.item }}"
+                position: "{{ 'closed' if trigger.event.data.action == 'WEATHER_WARNING_CLOSE' else 'half_open' }}"
+                override: true
