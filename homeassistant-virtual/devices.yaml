@@ -125,6 +125,90 @@ input_number:
     step: 0.5
     mode: box
     unit_of_measurement: °C
+  virtual_wohnzimmer_wohnzimmer:
+    name: Wohnzimmer Luftfeuchtigkeit (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    unit_of_measurement: "%"
+  virtual_schlafzimmer_schlafzimmer_2:
+    name: Schlafzimmer Temperatur (virtuell)
+    min: -10
+    max: 40
+    step: 0.1
+    mode: box
+    unit_of_measurement: °C
+  virtual_schlafzimmer_schlafzimmer:
+    name: Schlafzimmer Luftfeuchtigkeit (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    unit_of_measurement: "%"
+  virtual_schlafzimmer_schlafzimmer2:
+    name: Schlafzimmer2 Temperatur (virtuell)
+    min: -10
+    max: 40
+    step: 0.1
+    mode: box
+    unit_of_measurement: °C
+  virtual_schlafzimmer_schlafzimmer2_2:
+    name: Schlafzimmer2 Luftfeuchtigkeit (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    unit_of_measurement: "%"
+  virtual_buro_buro_2:
+    name: Büro Temperatur (virtuell)
+    min: -10
+    max: 40
+    step: 0.1
+    mode: box
+    unit_of_measurement: °C
+  virtual_buro_buro:
+    name: Büro Luftfeuchtigkeit (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    unit_of_measurement: "%"
+  virtual_bad_bath_2:
+    name: Bath Temperatur (virtuell)
+    min: -10
+    max: 40
+    step: 0.1
+    mode: box
+    unit_of_measurement: °C
+  virtual_bad_bath:
+    name: Bath Luftfeuchtigkeit (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    unit_of_measurement: "%"
+  virtual_garten_aussentemperatur_2:
+    name: Außentemperatur Temperatur (virtuell)
+    min: -30
+    max: 45
+    step: 0.1
+    mode: box
+    unit_of_measurement: °C
+  virtual_garten_aussentemperatur:
+    name: Außentemperatur Luftfeuchtigkeit (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    unit_of_measurement: "%"
+  virtual_garten_aussentemperatur2_2:
+    name: Außentemperatur2 Luftfeuchtigkeit (virtuell)
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    unit_of_measurement: "%"
   virtual_wohnzimmer_dekolights_brightness:
     name: DekoLights, Helligkeit (virtuell)
     min: 1
@@ -512,6 +596,78 @@ template:
         state: "{{ states('input_number.virtual_garten_aussentemperatur2') }}"
         device_class: temperature
         unit_of_measurement: °C
+      - name: Wohnzimmer Luftfeuchtigkeit
+        unique_id: virtual_wohnzimmer_wohnzimmer
+        default_entity_id: sensor.wohnzimmer_wohnzimmer
+        state: "{{ states('input_number.virtual_wohnzimmer_wohnzimmer') }}"
+        device_class: humidity
+        unit_of_measurement: "%"
+      - name: Schlafzimmer Temperatur
+        unique_id: virtual_schlafzimmer_schlafzimmer_2
+        default_entity_id: sensor.schlafzimmer_schlafzimmer_2
+        state: "{{ states('input_number.virtual_schlafzimmer_schlafzimmer_2') }}"
+        device_class: temperature
+        unit_of_measurement: °C
+      - name: Schlafzimmer Luftfeuchtigkeit
+        unique_id: virtual_schlafzimmer_schlafzimmer
+        default_entity_id: sensor.schlafzimmer_schlafzimmer
+        state: "{{ states('input_number.virtual_schlafzimmer_schlafzimmer') }}"
+        device_class: humidity
+        unit_of_measurement: "%"
+      - name: Schlafzimmer2 Temperatur
+        unique_id: virtual_schlafzimmer_schlafzimmer2
+        default_entity_id: sensor.schlafzimmer_schlafzimmer2
+        state: "{{ states('input_number.virtual_schlafzimmer_schlafzimmer2') }}"
+        device_class: temperature
+        unit_of_measurement: °C
+      - name: Schlafzimmer2 Luftfeuchtigkeit
+        unique_id: virtual_schlafzimmer_schlafzimmer2_2
+        default_entity_id: sensor.schlafzimmer_schlafzimmer2_2
+        state: "{{ states('input_number.virtual_schlafzimmer_schlafzimmer2_2') }}"
+        device_class: humidity
+        unit_of_measurement: "%"
+      - name: Büro Temperatur
+        unique_id: virtual_buro_buro_2
+        default_entity_id: sensor.buro_buro_2
+        state: "{{ states('input_number.virtual_buro_buro_2') }}"
+        device_class: temperature
+        unit_of_measurement: °C
+      - name: Büro Luftfeuchtigkeit
+        unique_id: virtual_buro_buro
+        default_entity_id: sensor.buro_buro
+        state: "{{ states('input_number.virtual_buro_buro') }}"
+        device_class: humidity
+        unit_of_measurement: "%"
+      - name: Bath Temperatur
+        unique_id: virtual_bad_bath_2
+        default_entity_id: sensor.bad_bath_2
+        state: "{{ states('input_number.virtual_bad_bath_2') }}"
+        device_class: temperature
+        unit_of_measurement: °C
+      - name: Bath Luftfeuchtigkeit
+        unique_id: virtual_bad_bath
+        default_entity_id: sensor.bad_bath
+        state: "{{ states('input_number.virtual_bad_bath') }}"
+        device_class: humidity
+        unit_of_measurement: "%"
+      - name: Außentemperatur Temperatur
+        unique_id: virtual_garten_aussentemperatur_2
+        default_entity_id: sensor.garten_aussentemperatur_2
+        state: "{{ states('input_number.virtual_garten_aussentemperatur_2') }}"
+        device_class: temperature
+        unit_of_measurement: °C
+      - name: Außentemperatur Luftfeuchtigkeit
+        unique_id: virtual_garten_aussentemperatur
+        default_entity_id: sensor.garten_aussentemperatur
+        state: "{{ states('input_number.virtual_garten_aussentemperatur') }}"
+        device_class: humidity
+        unit_of_measurement: "%"
+      - name: Außentemperatur2 Luftfeuchtigkeit
+        unique_id: virtual_garten_aussentemperatur2_2
+        default_entity_id: sensor.garten_aussentemperatur2_2
+        state: "{{ states('input_number.virtual_garten_aussentemperatur2_2') }}"
+        device_class: humidity
+        unit_of_measurement: "%"
 
 script:
   virtual_button_press:

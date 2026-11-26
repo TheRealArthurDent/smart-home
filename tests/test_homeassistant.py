@@ -7,6 +7,7 @@ read-only, so the UI can't change it behind the repo's back.
 
 import datetime
 import json
+import math
 import re
 from pathlib import Path
 
@@ -1437,3 +1438,44 @@ def test_the_outside_temperature_goes_to_mqtt_retained():
         "topic": "climate/outside/temperature", "payload": f"{{{{ states('{OUTSIDE_TEMPERATURE}') }}}}",
         "qos": 1, "retain": True}}]
     assert publish["mode"] == "queued"
+
+
+# Every device measuring temperature and humidity: (temperature, humidity). The LUMI sensors report humidity on the
+# plain id and temperature on _2, the others the other way round.
+CLIMATE_SENSORS = {
+    "living_room": ("sensor.wohnzimmer_wohnzimmer_2", "sensor.wohnzimmer_wohnzimmer"),
+    "bedroom": ("sensor.schlafzimmer_schlafzimmer_2", "sensor.schlafzimmer_schlafzimmer"),
+    "bedroom_2": ("sensor.schlafzimmer_schlafzimmer2", "sensor.schlafzimmer_schlafzimmer2_2"),
+    "office": ("sensor.buro_buro_2", "sensor.buro_buro"),
+    "bathroom": ("sensor.bad_bath_2", "sensor.bad_bath"),
+    "outside": ("sensor.garten_aussentemperatur_2", "sensor.garten_aussentemperatur"),
+    "outside_2": ("sensor.garten_aussentemperatur2", "sensor.garten_aussentemperatur2_2"),
+}
+
+
+def dew_points():
+    return {sensor["unique_id"]: sensor for block in package("climate")["template"]
+            for sensor in block.get("sensor", [])}
+
+
+def test_every_climate_sensor_gets_a_dew_point():
+    sensors = dew_points()
+    assert set(sensors) == {f"dew_point_{place}" for place in CLIMATE_SENSORS}
+    for place, (temperature, humidity) in CLIMATE_SENSORS.items():
+        sensor = sensors[f"dew_point_{place}"]
+        assert sensor["default_entity_id"] == f"sensor.dew_point_{place}"
+        assert sensor["name"].startswith("Taupunkt ")
+        assert (sensor["device_class"], sensor["unit_of_measurement"], sensor["state_class"]) == (
+            "temperature", "°C", "measurement")
+        assert temperature in sensor["state"] and humidity in sensor["state"]
+        # Unavailable while either value is missing, instead of a dew point of 0 °C
+        assert sensor["availability"] == (f"{{{{ states('{temperature}') | is_number"
+                                          f" and states('{humidity}') | float(0) > 0 }}}}")
+
+
+def test_the_dew_point_follows_the_magnus_formula():
+    sensor = dew_points()["dew_point_living_room"]
+    temperature, humidity = CLIMATE_SENSORS["living_room"]
+    for celsius, relative, expected in [(20, 50, "9.3"), (25, 60, "16.7"), (0, 100, "0.0"), (-5, 80, "-7.9")]:
+        states = {temperature: str(celsius), humidity: str(relative)}
+        assert render(sensor["state"], states=states.get, log=math.log) == expected, (celsius, relative)

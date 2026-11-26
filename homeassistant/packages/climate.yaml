@@ -1,4 +1,4 @@
-# Climate (#2): the outside temperature on MQTT for the display next to the door, an ESP8266 reading
+# Climate (#2): dew points, and the outside temperature on MQTT for the display next to the door, an ESP8266 reading
 # climate/outside/temperature. ioBroker's mqtt-client published it the same way (retained, QoS 1), so the display
 # gets the last value whenever it connects.
 
@@ -22,3 +22,100 @@ automation:
           payload: "{{ states('sensor.garten_aussentemperatur2') }}"
           qos: 1
           retain: true
+
+# Dew points of every device measuring temperature and humidity, Magnus formula with the constants of Sonntag
+# (17.62, 243.12 °C, for -45 to 60 °C over water). The LUMI sensors report humidity on the plain id
+# and temperature on _2, the others the other way round.
+template:
+  - sensor:
+      - name: Taupunkt Wohnzimmer
+        unique_id: dew_point_living_room
+        default_entity_id: sensor.dew_point_living_room
+        device_class: temperature
+        unit_of_measurement: °C
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.wohnzimmer_wohnzimmer_2') | is_number and
+          states('sensor.wohnzimmer_wohnzimmer') | float(0) > 0 }}
+        state: >-
+          {% set t = states('sensor.wohnzimmer_wohnzimmer_2') | float %}
+          {% set g = log(states('sensor.wohnzimmer_wohnzimmer') | float / 100) + 17.62 * t / (243.12 + t) %}
+          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+      - name: Taupunkt Schlafzimmer
+        unique_id: dew_point_bedroom
+        default_entity_id: sensor.dew_point_bedroom
+        device_class: temperature
+        unit_of_measurement: °C
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.schlafzimmer_schlafzimmer_2') | is_number and
+          states('sensor.schlafzimmer_schlafzimmer') | float(0) > 0 }}
+        state: >-
+          {% set t = states('sensor.schlafzimmer_schlafzimmer_2') | float %}
+          {% set g = log(states('sensor.schlafzimmer_schlafzimmer') | float / 100) + 17.62 * t / (243.12 + t) %}
+          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+      - name: Taupunkt Schlafzimmer 2
+        unique_id: dew_point_bedroom_2
+        default_entity_id: sensor.dew_point_bedroom_2
+        device_class: temperature
+        unit_of_measurement: °C
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.schlafzimmer_schlafzimmer2') | is_number and
+          states('sensor.schlafzimmer_schlafzimmer2_2') | float(0) > 0 }}
+        state: >-
+          {% set t = states('sensor.schlafzimmer_schlafzimmer2') | float %}
+          {% set g = log(states('sensor.schlafzimmer_schlafzimmer2_2') | float / 100) + 17.62 * t / (243.12 + t) %}
+          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+      - name: Taupunkt Büro
+        unique_id: dew_point_office
+        default_entity_id: sensor.dew_point_office
+        device_class: temperature
+        unit_of_measurement: °C
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.buro_buro_2') | is_number and
+          states('sensor.buro_buro') | float(0) > 0 }}
+        state: >-
+          {% set t = states('sensor.buro_buro_2') | float %}
+          {% set g = log(states('sensor.buro_buro') | float / 100) + 17.62 * t / (243.12 + t) %}
+          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+      - name: Taupunkt Bad
+        unique_id: dew_point_bathroom
+        default_entity_id: sensor.dew_point_bathroom
+        device_class: temperature
+        unit_of_measurement: °C
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.bad_bath_2') | is_number and
+          states('sensor.bad_bath') | float(0) > 0 }}
+        state: >-
+          {% set t = states('sensor.bad_bath_2') | float %}
+          {% set g = log(states('sensor.bad_bath') | float / 100) + 17.62 * t / (243.12 + t) %}
+          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+      - name: Taupunkt draußen
+        unique_id: dew_point_outside
+        default_entity_id: sensor.dew_point_outside
+        device_class: temperature
+        unit_of_measurement: °C
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.garten_aussentemperatur_2') | is_number and
+          states('sensor.garten_aussentemperatur') | float(0) > 0 }}
+        state: >-
+          {% set t = states('sensor.garten_aussentemperatur_2') | float %}
+          {% set g = log(states('sensor.garten_aussentemperatur') | float / 100) + 17.62 * t / (243.12 + t) %}
+          {{ (243.12 * g / (17.62 - g)) | round(1) }}
+      - name: Taupunkt draußen 2
+        unique_id: dew_point_outside_2
+        default_entity_id: sensor.dew_point_outside_2
+        device_class: temperature
+        unit_of_measurement: °C
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.garten_aussentemperatur2') | is_number and
+          states('sensor.garten_aussentemperatur2_2') | float(0) > 0 }}
+        state: >-
+          {% set t = states('sensor.garten_aussentemperatur2') | float %}
+          {% set g = log(states('sensor.garten_aussentemperatur2_2') | float / 100) + 17.62 * t / (243.12 + t) %}
+          {{ (243.12 * g / (17.62 - g)) | round(1) }}
